@@ -1,3 +1,5 @@
-module Game.FMAssistant where
+module Game.FMAssistant
+       ( module Game.FMAssistant.Streaming
+       ) where
 
-import Game.FMAssistant.Internal
+import Game.FMAssistant.Streaming

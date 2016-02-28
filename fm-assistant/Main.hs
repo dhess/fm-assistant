@@ -1,7 +1,11 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
-import Game.FMAssistant.Actions (greet, sup, ciao, goodbye)
+import Control.Concurrent (threadDelay)
+import Game.FMAssistant.Streaming
 import Options.Applicative
+import System.IO.Temp (withSystemTempDirectory)
 
 data Verbosity
   = Normal
@@ -13,49 +17,18 @@ data GlobalOptions =
                 ,cmd :: Command}
 
 data Command
-  = Hello HelloOptions
-  | Sup String
-  | Ciao
-  | GoodBye GoodByeOptions
+  = Install InstallOptions
 
-data HelloOptions =
-  HelloOptions {greeting :: String
-               ,target :: String}
+data InstallOptions =
+  InstallOptions {fileName :: FilePath}
 
-data GoodByeOptions =
-  GoodByeOptions {signoff :: String
-                 ,goodbyeTarget :: String}
+installCmd :: Parser Command
+installCmd = Install <$> installOptions
 
-helloCmd :: Parser Command
-helloCmd = Hello <$> helloOptions
-
-helloOptions :: Parser HelloOptions
-helloOptions =
-  HelloOptions <$>
-  strOption (long "greeting" <>
-             short 'g' <>
-             value "Hello" <>
-             metavar "GREETING" <>
-             help "The greeting") <*>
-  argument str (metavar "TARGET")
-
-supCmd :: Parser Command
-supCmd =
-  Sup <$>
-  (argument str (metavar "TARGET"))
-
-goodByeCmd :: Parser Command
-goodByeCmd = GoodBye <$> goodByeOptions
-
-goodByeOptions :: Parser GoodByeOptions
-goodByeOptions =
-  GoodByeOptions <$>
-  strOption (long "signoff" <>
-             short 's' <>
-             value "Bye" <>
-             metavar "SIGNOFF" <>
-             help "The signoff") <*>
-  argument str (metavar "TARGET")
+installOptions :: Parser InstallOptions
+installOptions =
+  InstallOptions <$>
+    argument str (metavar "FILE")
 
 cmds :: Parser GlobalOptions
 cmds =
@@ -69,18 +42,16 @@ cmds =
         short 'v' <>
         help "Enable verbose mode") <*>
   hsubparser
-    (command "hello" (info helloCmd (progDesc "Say hello")) <>
-     command "sup" (info supCmd (progDesc "Informal greeting")) <>
-     command "ciao"
-             (info (pure Ciao)
-                   (progDesc "Informal goodbye")) <>
-     command "goodbye" (info goodByeCmd (progDesc "Say goodbye")))
+    (command "install" (info installCmd (progDesc "Install a mod")))
 
 run :: GlobalOptions -> IO ()
-run (GlobalOptions False _ (Hello (HelloOptions g t))) = greet g t
-run (GlobalOptions False _ (Sup t)) = sup t
-run (GlobalOptions False _ Ciao) = ciao
-run (GlobalOptions False _ (GoodBye (GoodByeOptions s t))) = goodbye s t
+run (GlobalOptions False _ (Install (InstallOptions fn))) =
+  withSystemTempDirectory
+  "fm-assistant"
+  (\tmpDir ->
+    do putStrLn $ "Unpacking " ++ fn ++ " to " ++ tmpDir
+       unpack tmpDir fn
+       threadDelay $ 10 * 1000000)
 run _ = return ()
 
 main :: IO ()
@@ -88,5 +59,5 @@ main = execParser opts >>= run
   where opts =
           info (helper <*> cmds)
                (fullDesc <>
-                progDesc "Say hello and goodbye" <>
-                header "fm-assistant-cmd - a command-based CLI for fm-assistant")
+                progDesc "Install Football Manager mods" <>
+                header "fm-assistant")
