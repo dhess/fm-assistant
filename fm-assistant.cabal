@@ -9,20 +9,33 @@ License-File:           LICENSE
 Cabal-Version:          >= 1.10
 Build-Type:             Simple
 
+Data-Files:             data/test/test.rar
+                      , data/test/test.zip
+
 Library
   Default-Language:     Haskell2010
   HS-Source-Dirs:       src
   GHC-Options:          -Wall
   Exposed-Modules:      Game.FMAssistant
+                      , Game.FMAssistant.FM16
+                      , Game.FMAssistant.Mod.Kits
                       , Game.FMAssistant.Streaming
+                      , Game.FMAssistant.Types
+                      , Game.FMAssistant.Unpack
+                      , Game.FMAssistant.Util
   Build-Depends:        base >= 4 && < 5
                       , bytestring
+                      , directory
                       , exceptions
+                      , managed
                       , mtl
                       , streaming
                       , streaming-bytestring
+                      , system-filepath
                       , tar
-                      , temporary                        
+                      , temporary
+                      , text
+                      , turtle
                       , transformers
 
 Executable fm-assistant
@@ -33,16 +46,26 @@ Executable fm-assistant
   GHC-Options:          -Wall
   Build-Depends:        base >= 4 && < 5
                       , bytestring
+                      , directory
                       , exceptions
+                      , managed
                       , mtl
                       , optparse-applicative >= 0.11.0
                       , streaming
                       , streaming-bytestring
+                      , system-filepath
                       , tar
                       , temporary
+                      , text
+                      , turtle
                       , transformers
   Other-Modules:        Game.FMAssistant
+                      , Game.FMAssistant.FM16
+                      , Game.FMAssistant.Mod.Kits
                       , Game.FMAssistant.Streaming
+                      , Game.FMAssistant.Types
+                      , Game.FMAssistant.Unpack
+                      , Game.FMAssistant.Util
 
 Test-Suite spec
   Type:                 exitcode-stdio-1.0
@@ -53,16 +76,27 @@ Test-Suite spec
   Main-Is:              Spec.hs
   Build-Depends:        base
                       , bytestring
+                      , directory
                       , exceptions
                       , hspec
+                      , managed
                       , mtl
                       , streaming
                       , streaming-bytestring
+                      , system-filepath
                       , tar
                       , temporary
+                      , text
+                      , turtle
                       , transformers
   Other-Modules:        Game.FMAssistant
+                      , Game.FMAssistant.FM16
+                      , Game.FMAssistant.Mod.Kits
                       , Game.FMAssistant.Streaming
+                      , Game.FMAssistant.Types
+                      , Game.FMAssistant.Unpack
+                      , Game.FMAssistant.Util
+                      , Paths_fm_assistant
 
 Source-Repository head
   Type:                 git
