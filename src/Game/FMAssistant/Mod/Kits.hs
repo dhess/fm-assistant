@@ -30,9 +30,9 @@ import Game.FMAssistant.Types (UserDirFilePath(..))
 -- | Paths to kits.
 --
 -- Note that, for type safety, you cannot construct a 'KitPath'
--- directly and must use the 'makeKitPath' constructor. As kits are
--- always stored in a particular subdirectory of a 'UserDirFilePath',
--- this is not a problem.
+-- directly and must use the 'kitPath' constructor. As kits are always
+-- stored in a particular subdirectory of a 'UserDirFilePath', this is
+-- not a problem.
 newtype KitPath =
   KitPath FilePath
   deriving (Show,Eq,Ord,Data,Typeable)
