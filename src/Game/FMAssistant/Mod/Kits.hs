@@ -40,7 +40,7 @@ newtype KitPath =
 -- | Construct a kit path.
 kitPath :: UserDirFilePath -> KitPath
 kitPath ufp =
-  KitPath $ _userDirFilePath ufp </> "graphics/kits"
+  KitPath $ _userDirFilePath ufp </> "graphics" </> "kits"
 
 -- | Retrieve the 'FilePath' from a 'KitPath'.
 filePath :: KitPath -> FilePath

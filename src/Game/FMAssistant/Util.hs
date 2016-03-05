@@ -59,4 +59,4 @@ mktempdir template =
 defaultSteamDir :: (MonadIO m) => m FilePath
 defaultSteamDir =
   do homeDir <- getHomeDirectory
-     return $ homeDir </> "Documents/Sports Interactive"
+     return $ homeDir </> "Documents" </> "Sports Interactive"
