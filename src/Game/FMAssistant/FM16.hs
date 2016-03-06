@@ -28,8 +28,11 @@ import Game.FMAssistant.Types (Version(..), UserDirFilePath(..))
 import qualified Game.FMAssistant.Util as Util (defaultUserDir)
 
 -- | The game version.
+--
+-- >>> version
+-- Version {_version = "Football Manager 2016"}
 version :: Version
-version = "Football Manager 2016"
+version = Version $ "Football Manager 2016"
 
 -- | The default FM16 user directory, where save games, kits, and some
 -- other mods go.

@@ -22,9 +22,7 @@ module Game.FMAssistant.Types
 
 import Prelude hiding (FilePath)
 import Data.Text (Text)
-import qualified Data.Text as T (pack)
 import Data.Data
-import Data.String (IsString(..))
 import Filesystem.Path.CurrentOS (FilePath)
 import qualified Filesystem.Path.CurrentOS as Filesystem (basename, fromText)
 
@@ -33,9 +31,6 @@ import qualified Filesystem.Path.CurrentOS as Filesystem (basename, fromText)
 newtype Version =
   Version {_version :: Text}
   deriving (Show,Eq,Ord,Data,Typeable)
-
-instance IsString Version where
-  fromString = Version . T.pack
 
 -- | Convert a 'Version' value to a 'FilePath'.
 versionToFilePath :: Version -> FilePath

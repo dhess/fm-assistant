@@ -11,7 +11,7 @@ import qualified System.Directory as Directory (getHomeDirectory)
 import Test.Hspec
 
 import qualified Game.FMAssistant.Mod.Kits as Kits (filePath)
-import Game.FMAssistant.Types (UserDirFilePath(..))
+import Game.FMAssistant.Types (UserDirFilePath(..), Version(..))
 import Game.FMAssistant.FM16
 
 getHomeDir :: IO FilePath
@@ -21,7 +21,7 @@ spec :: Spec
 spec =
   do describe "version" $
        it "is the expected value" $
-         version `shouldBe` "Football Manager 2016"
+         version `shouldBe` Version "Football Manager 2016"
      describe "defaultUserDir" $
        it "is the expected value" $
          do homeDir <- getHomeDir
