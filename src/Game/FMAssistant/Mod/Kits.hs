@@ -39,7 +39,9 @@ newtype KitPath =
   KitPath FilePath
   deriving (Show,Eq,Ord,Data,Typeable)
 
--- | Construct a kit path.
+-- | Kits live in a pre-determined subdirectory of the game's user
+-- directory. This function constructs the path to that subdirectory,
+-- given a particular 'UserDirFilePath'.
 kitPath :: UserDirFilePath -> KitPath
 kitPath ufp =
   KitPath $ _userDirFilePath ufp </> "graphics" </> "kits"
