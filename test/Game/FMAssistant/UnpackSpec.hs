@@ -80,54 +80,54 @@ spec =
        do context "on files with a \"rar\" extension" $
             do it "should unpack a rar file to a temporary directory" $
                  do rf <- liftIO rarFile
-                    let Just unpack = unpackerFor rf
+                    let Just unp = unpackerFor rf
                     runManaged $
-                      do tmpDir <- unpack rf
+                      do tmpDir <- unp rf
                          sysTmpDir <- liftIO systemTmpDir
                          liftIO $ Filesystem.commonPrefix [sysTmpDir, tmpDir] `shouldBe` sysTmpDir
                it "should unpack a.txt from the test file" $
                  do rf <- liftIO rarFile
-                    let Just unpack = unpackerFor rf
+                    let Just unp = unpackerFor rf
                     runManaged $
-                      do tmpDir <- unpack rf
+                      do tmpDir <- unp rf
                          liftIO $ doesFileExist (tmpDir </> "a.txt") `shouldReturn` True
                it "should unpack b.txt from the test file" $
                  do rf <- liftIO rarFile
-                    let Just unpack = unpackerFor rf
+                    let Just unp = unpackerFor rf
                     runManaged $
-                      do tmpDir <- unpack rf
+                      do tmpDir <- unp rf
                          liftIO $ doesFileExist (tmpDir </> "b.txt") `shouldReturn` True
                it "should unpack foo/c.txt from the test file" $
                  do rf <- liftIO rarFile
-                    let Just unpack = unpackerFor rf
+                    let Just unp = unpackerFor rf
                     runManaged $
-                      do tmpDir <- unpack rf
+                      do tmpDir <- unp rf
                          liftIO $ doesFileExist (tmpDir </> "foo" </> "c.txt") `shouldReturn` True
           context "on files with a \"zip\" extension" $
             do it "should unpack a zip file to a temporary directory" $
                  do zf <- liftIO zipFile
-                    let Just unpack = unpackerFor zf
+                    let Just unp = unpackerFor zf
                     runManaged $
-                      do tmpDir <- unpack zf
+                      do tmpDir <- unp zf
                          sysTmpDir <- liftIO systemTmpDir
                          liftIO $ Filesystem.commonPrefix [sysTmpDir, tmpDir] `shouldBe` sysTmpDir
                it "should unpack a.txt from the test file" $
                  do zf <- liftIO zipFile
-                    let Just unpack = unpackerFor zf
+                    let Just unp = unpackerFor zf
                     runManaged $
-                      do tmpDir <- unpack zf
+                      do tmpDir <- unp zf
                          liftIO $ doesFileExist (tmpDir </> "a.txt") `shouldReturn` True
                it "should unpack b.txt from the test file" $
                  do zf <- liftIO zipFile
-                    let Just unpack = unpackerFor zf
+                    let Just unp = unpackerFor zf
                     runManaged $
-                      do tmpDir <- unpack zf
+                      do tmpDir <- unp zf
                          liftIO $ doesFileExist (tmpDir </> "b.txt") `shouldReturn` True
                it "should unpack foo/c.txt from the test file" $
                  do zf <- liftIO zipFile
-                    let Just unpack = unpackerFor zf
+                    let Just unp = unpackerFor zf
                     runManaged $
-                      do tmpDir <- unpack zf
+                      do tmpDir <- unp zf
                          liftIO $ doesFileExist (tmpDir </> "foo" </> "c.txt") `shouldReturn` True
           context "on files without a supported extension" $
             it "should return 'Nothing'" $

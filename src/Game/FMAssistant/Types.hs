@@ -10,17 +10,24 @@ Portability : non-portable
 -}
 
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE Safe #-}
 
 module Game.FMAssistant.Types
-       ( Version(..)
+       ( -- * Types
+         Version(..)
        , versionToFilePath
        , UserDirFilePath(..)
        , ArchiveFilePath(..)
        , archiveName
+         -- * Exceptions
+       , SomeFMAssistantException
+       , fmAssistantExceptionToException
+       , fmAssistantExceptionFromException
        ) where
 
 import Prelude hiding (FilePath)
+import Control.Exception (Exception, SomeException, fromException, toException)
 import Data.Text (Text)
 import Data.Data
 import Filesystem.Path.CurrentOS (FilePath)
@@ -57,3 +64,21 @@ newtype ArchiveFilePath =
 -- FilePath "baz"
 archiveName :: ArchiveFilePath -> FilePath
 archiveName = Filesystem.basename . _archiveFilePath
+
+-- | The root exception type for @fm-assistant@.
+data SomeFMAssistantException =
+  forall e. Exception e => SomeFMAssistantException e
+  deriving (Typeable)
+
+instance Show SomeFMAssistantException where
+  show (SomeFMAssistantException e) = show e
+
+instance Exception SomeFMAssistantException
+
+fmAssistantExceptionToException :: Exception e => e -> SomeException
+fmAssistantExceptionToException = toException . SomeFMAssistantException
+
+fmAssistantExceptionFromException :: Exception e => SomeException -> Maybe e
+fmAssistantExceptionFromException x =
+  do SomeFMAssistantException a <- fromException x
+     cast a
