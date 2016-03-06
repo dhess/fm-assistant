@@ -34,7 +34,7 @@ import Game.FMAssistant.Types (ArchiveFilePath(..))
 import Game.FMAssistant.Util (mktempdir)
 
 -- | Given the filename of an archive file, use the filename's
--- extension to guess which unarchive action to use, and return that
+-- extension to guess which unpack action to use, and return that
 -- action.
 --
 -- If, based on the filename's extension, the archive format is

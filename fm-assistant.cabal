@@ -67,6 +67,15 @@ Executable fm-assistant
                       , Game.FMAssistant.Unpack
                       , Game.FMAssistant.Util
 
+Test-Suite doctest
+  Type:                 exitcode-stdio-1.0
+  Default-Language:     Haskell2010
+  Hs-Source-Dirs:       test
+  Ghc-Options:          -Wall -threaded
+  Main-Is:              doctests.hs
+  Build-Depends:        base
+                      , doctest
+
 Test-Suite spec
   Type:                 exitcode-stdio-1.0
   Default-Language:     Haskell2010

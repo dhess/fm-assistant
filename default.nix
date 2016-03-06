@@ -1,5 +1,5 @@
-{ mkDerivation, base, bytestring, directory, exceptions, hspec
-, managed, mtl, optparse-applicative, stdenv, streaming
+{ mkDerivation, base, bytestring, directory, doctest, exceptions
+, hspec, managed, mtl, optparse-applicative, stdenv, streaming
 , streaming-bytestring, system-filepath, tar, temporary, text
 , transformers, turtle
 }:
@@ -20,8 +20,8 @@ mkDerivation {
     tar temporary text transformers turtle
   ];
   testHaskellDepends = [
-    base bytestring directory exceptions hspec managed mtl streaming
-    streaming-bytestring system-filepath tar temporary text
+    base bytestring directory doctest exceptions hspec managed mtl
+    streaming streaming-bytestring system-filepath tar temporary text
     transformers turtle
   ];
   license = stdenv.lib.licenses.bsd3;

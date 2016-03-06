@@ -4,10 +4,10 @@ let
 
   inherit (nixpkgs) pkgs;
 
-  f = { mkDerivation, base, bytestring, directory, exceptions
-      , hspec, managed, mtl, optparse-applicative, stdenv, streaming
-      , streaming-bytestring, system-filepath, tar, temporary, text
-      , transformers, turtle
+  f = { mkDerivation, base, bytestring, directory, doctest
+      , exceptions, hspec, managed, mtl, optparse-applicative, stdenv
+      , streaming, streaming-bytestring, system-filepath, tar, temporary
+      , text, transformers, turtle
       }:
       mkDerivation {
         pname = "fm-assistant";
@@ -26,8 +26,8 @@ let
           tar temporary text transformers turtle
         ];
         testHaskellDepends = [
-          base bytestring directory exceptions hspec managed mtl streaming
-          streaming-bytestring system-filepath tar temporary text
+          base bytestring directory doctest exceptions hspec managed mtl
+          streaming streaming-bytestring system-filepath tar temporary text
           transformers turtle
         ];
         license = stdenv.lib.licenses.bsd3;

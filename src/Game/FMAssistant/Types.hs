@@ -52,6 +52,7 @@ newtype ArchiveFilePath =
 -- 'ArchiveFilePath', strip off the pathname portion and the trailing
 -- file suffix, and return what remains.
 --
+-- >>> :set -XOverloadedStrings
 -- >>> archiveName $ ArchiveFilePath "/foo/bar/baz.rar"
 -- FilePath "baz"
 archiveName :: ArchiveFilePath -> FilePath
