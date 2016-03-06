@@ -30,6 +30,7 @@ import qualified Filesystem.Path.CurrentOS as Filesystem (basename, extension)
 import Turtle.Format ((%), format, fp)
 import Turtle.Prelude (die, procs)
 
+import Game.FMAssistant.Types (ArchiveFilePath(..))
 import Game.FMAssistant.Util (mktempdir)
 
 -- | Given the filename of an archive file, use the filename's
@@ -38,8 +39,8 @@ import Game.FMAssistant.Util (mktempdir)
 --
 -- If, based on the filename's extension, the archive format is
 -- unsupported, this function returns 'Nothing'.
-unpackerFor :: FilePath -> Maybe (FilePath -> Managed FilePath)
-unpackerFor ar
+unpackerFor :: ArchiveFilePath -> Maybe (ArchiveFilePath -> Managed FilePath)
+unpackerFor (ArchiveFilePath ar)
   | Filesystem.extension ar == Just "zip" = Just unpackZip
   | Filesystem.extension ar == Just "ZIP" = Just unpackZip
   | Filesystem.extension ar == Just "rar" = Just unpackRar
@@ -51,8 +52,8 @@ unpackerFor ar
 --
 -- N.B. that the temporary directory is 'Managed', so it will be
 -- automatically removed when the managed action terminates!
-unpackZip :: FilePath -> Managed FilePath
-unpackZip zipFile =
+unpackZip :: ArchiveFilePath -> Managed FilePath
+unpackZip (ArchiveFilePath zipFile) =
   do tmpDir <- mktempdir (format fp $ Filesystem.basename zipFile)
      procs "unzip" [format fp zipFile, "-d", format fp tmpDir] empty
      return tmpDir
@@ -62,8 +63,8 @@ unpackZip zipFile =
 --
 -- N.B. that the temporary directory is 'Managed', so it will be
 -- automatically removed when the managed action terminates!
-unpackRar :: FilePath -> Managed FilePath
-unpackRar rarFile =
+unpackRar :: ArchiveFilePath -> Managed FilePath
+unpackRar (ArchiveFilePath rarFile) =
   do tmpDir <- mktempdir (format fp $ Filesystem.basename rarFile)
      procs "unrar" ["x", "-v", "-y", "-r", format fp rarFile,  format fp tmpDir] empty
      return tmpDir

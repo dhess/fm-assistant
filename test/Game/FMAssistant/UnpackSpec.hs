@@ -15,6 +15,7 @@ import qualified System.Directory as Directory (doesFileExist, getTemporaryDirec
 import Test.Hspec
 import Paths_fm_assistant
 
+import Game.FMAssistant.Types (ArchiveFilePath(..))
 import Game.FMAssistant.Unpack
 
 systemTmpDir :: IO FilePath
@@ -23,11 +24,11 @@ systemTmpDir = Filesystem.decodeString <$> Directory.getTemporaryDirectory
 doesFileExist :: FilePath -> IO Bool
 doesFileExist fp = Directory.doesFileExist (Filesystem.encodeString fp)
 
-zipFile :: IO FilePath
-zipFile = Filesystem.decodeString <$> getDataFileName "data/test/test.zip"
+zipFile :: IO ArchiveFilePath
+zipFile = ArchiveFilePath <$> Filesystem.decodeString <$> getDataFileName "data/test/test.zip"
 
-rarFile :: IO FilePath
-rarFile = Filesystem.decodeString <$> getDataFileName "data/test/test.rar"
+rarFile :: IO ArchiveFilePath
+rarFile = ArchiveFilePath <$> Filesystem.decodeString <$> getDataFileName "data/test/test.rar"
 
 spec :: Spec
 spec =
@@ -130,7 +131,7 @@ spec =
                          liftIO $ doesFileExist (tmpDir </> "foo" </> "c.txt") `shouldReturn` True
           context "on files without a supported extension" $
             it "should return 'Nothing'" $
-              isNothing (unpackerFor "foo/rar/not-a-rar.xyz") `shouldBe` True
+              isNothing (unpackerFor (ArchiveFilePath "foo/rar/not-a-rar.xyz")) `shouldBe` True
           context "on files with no extension" $
             it "should return 'Nothing'" $
-              isNothing (unpackerFor "foo/rar/not-a-zip") `shouldBe` True
+              isNothing (unpackerFor (ArchiveFilePath "foo/rar/not-a-zip")) `shouldBe` True
