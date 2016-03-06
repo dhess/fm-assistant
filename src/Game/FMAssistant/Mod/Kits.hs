@@ -28,7 +28,7 @@ module Game.FMAssistant.Mod.Kits
        ) where
 
 import Prelude hiding (FilePath)
-import Control.Exception (Exception(..), Handler(..), catches, throw)
+import Control.Exception (Exception(..), throw, try)
 import qualified Control.Foldl as Fold (length, head)
 import Control.Monad (void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -42,7 +42,7 @@ import Turtle.Shell (fold)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirFilePath(..),
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
-import Game.FMAssistant.Unpack (UnpackException, unpack)
+import Game.FMAssistant.Unpack (unpack)
 
 -- | Paths to kits.
 --
@@ -72,7 +72,7 @@ filePath = _kitPath
 -- * Is properly formatted, i.e., not malformed.
 --
 -- If the kit pack is successfully validated, this action returns
--- 'True'. Otherwise, it returns 'False'.
+-- 'Right' @(@). Otherwise, it returns an exception value in a 'Left'.
 --
 -- A kit pack is considered to be malformed if the top-level directory
 -- of the unpacked kit pack contains anything other than a single
@@ -95,18 +95,15 @@ filePath = _kitPath
 --
 -- All known exceptions that could occur while validating the pack are
 -- caught here; these exceptions are not propagated back to the user,
--- rather the action returns 'False' in-band. However, as this action
--- runs in 'IO', other unexpected, unhandled exceptions are always a
--- possibility, of course.
-validateKitPack :: (MonadIO m) => ArchiveFilePath -> m Bool
-validateKitPack archive = liftIO $
-  doit `catches` [Handler (\(_ :: KitPackException) -> return False)
-                 ,Handler (\(_ :: UnpackException) -> return False)]
+-- rather the action them in-band in a 'Left' value. However, as this
+-- action runs in 'IO', other unexpected, unhandled exceptions are
+-- always a possibility, of course.
+validateKitPack :: (MonadIO m, Exception e) => ArchiveFilePath -> m (Either e ())
+validateKitPack archive = liftIO $ try doit
   where
-    doit :: (MonadIO m) => m Bool
+    doit :: (MonadIO m) => m ()
     doit = liftIO $
       do runManaged $ void $ unpackKitPack archive
-         return True
 
 -- | Install a kit pack to the given kit path. Note that this action
 -- will overwrite an existing kit path of the same name (but not
