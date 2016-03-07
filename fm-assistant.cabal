@@ -9,8 +9,9 @@ License-File:           LICENSE
 Cabal-Version:          >= 1.10
 Build-Type:             Simple
 
-Data-Files:             data/test/test.rar
-                      , data/test/test.zip
+Data-Files:             data/test/*.rar
+                      , data/test/*.zip
+                      , data/test/*.tar
 
 Library
   Default-Language:     Haskell2010

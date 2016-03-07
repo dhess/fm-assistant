@@ -72,45 +72,43 @@ kitPath ufp =
 filePath :: KitPath -> FilePath
 filePath = _kitPath
 
--- | Verify that a kit pack:
+-- | Verify that a kit pack archive file:
 --
 -- * Can be successfully unpacked.
 --
 -- * Is properly formatted, i.e., not malformed.
 --
--- If the kit pack is successfully validated, this action returns
--- 'Right' @(@). Otherwise, it returns an exception value in a 'Left'.
---
 -- A kit pack is considered to be malformed if the top-level directory
 -- of the unpacked kit pack contains anything other than a single
 -- subdirectory. Any other arrangement of files and/or directories in
 -- the unpacked archive is considered to be bad kit pack hygiene, as
--- if you were to install more than one kit pack organized this way,
--- there would be no easy way to prevent one pack from overwriting
--- files in another; nor any reliable way to replace an earlier
--- version of a given pack with a later one.
+-- if you were to install more than one kit pack that is organized
+-- this way, there would be no easy way to prevent one pack from
+-- overwriting files in another; nor any reliable way to replace an
+-- earlier version of a given pack with a later one.
 --
--- Note that this action does /not/ install the kit pack, though it
--- does unpack it to a temporary directory in order to test it. (The
--- temporary directory is deleted when the action returns, or if an
--- exception is thrown during the validation process.)
+-- If the kit pack is successfully validated, this action simply
+-- returns a void result; the kit pack is not actually installed, nor
+-- its unpacked contents otherwise kept around.
+--
+-- If the pack is found to be invalid, this action throws an
+-- exception. Exceptions you should expect to occur are either of type
+-- 'KitPackException' or 'Game.FMAssistant.Unpack.UnpackException'; if
+-- you don't care about the particular exception that has occurred but
+-- only want to 'show' it, you can catch
+-- 'Game.FMAssistant.Types.SomeFMAssistantException', as this type
+-- will encapsulate the range of issues that may occur with the kit
+-- pack archive file. (As this action runs in 'IO', other exceptions
+-- may occur, of course, but they will most likely not be an
+-- indication that anything is wrong with the kit pack.)
 --
 -- It's not necessary to run this action prior to attempting to
 -- install the kit pack, as 'installKitPack' will perform the same
 -- checks as this action does. This action is provided primarily to
--- help users weed faulty kit packs out of their collections.
---
--- All known exceptions that could occur while validating the pack are
--- caught here; these exceptions are not propagated back to the user,
--- rather the action them in-band in a 'Left' value. However, as this
--- action runs in 'IO', other unexpected, unhandled exceptions are
--- always a possibility, of course.
-validateKitPack :: (MonadIO m, Exception e) => ArchiveFilePath -> m (Either e ())
-validateKitPack archive = liftIO $ try doit
-  where
-    doit :: (MonadIO m) => m ()
-    doit = liftIO $
-      do runManaged $ void $ unpackKitPack archive
+-- help users weed faulty kit packs out of their collections, e.g., by
+-- using it as a filter on a directory full of kit pack archives.
+validateKitPack :: (MonadIO m) => ArchiveFilePath -> m ()
+validateKitPack archive = liftIO $ runManaged $ void $ unpackKitPack archive
 
 -- | Install a kit pack to the given kit path. Note that this action
 -- will overwrite an existing kit path of the same name (but not
@@ -156,7 +154,6 @@ unpackKitPack archive =
      -- Currently the validation check is quite simple: the archive must
      -- contain just a single directory and no top-level files.
      fold (ls unpackedArchive) ((,) <$> Fold.length <*> Fold.head) >>= \case
-       (0, _) -> throw $ EmptyArchiveFile archive
        (1, Just fp) ->
          do isDir <- testdir fp
             if isDir
@@ -164,9 +161,8 @@ unpackKitPack archive =
                else throw $ MalformedArchive archive
        _ -> throw $ MalformedArchive archive
 
-data KitPackException
-  = EmptyArchiveFile ArchiveFilePath -- ^ The archive is empty
-  | MalformedArchive ArchiveFilePath -- ^ The archive is malformed
+data KitPackException =
+  MalformedArchive ArchiveFilePath  -- ^ The archive is malformed
   deriving (Show,Eq,Typeable)
 
 instance Exception KitPackException where
