@@ -16,27 +16,22 @@ Portability : non-portable
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Mod.Kits
-       ( -- * Kit pack types
-         KitPath
-         -- * Kit pack functions and combinators
-       , kitPath
-       , filePath
-       , installKitPack
+       ( installKitPack
        , validateKitPack
          -- * Kit pack-related exceptions
        , KitPackException(..)
        ) where
 
 import Prelude hiding (FilePath)
-import Control.Exception (Exception(..), throw, try)
+import Control.Exception (Exception(..), throw)
 import qualified Control.Foldl as Fold (length, head)
-import Control.Monad (void, when)
+import Control.Monad (unless, void)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Managed.Safe (Managed, runManaged)
 import Data.Data
 import Filesystem.Path.CurrentOS ((</>), FilePath)
 import qualified Filesystem.Path.CurrentOS as Filesystem (filename)
-import Turtle.Prelude (ls, mv, rmtree, testdir, testpath)
+import Turtle.Prelude (ls, mktree, mv, rmtree, testdir)
 import Turtle.Shell (fold)
 
 import Game.FMAssistant.Types
@@ -44,33 +39,15 @@ import Game.FMAssistant.Types
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
 import Game.FMAssistant.Unpack (unpack)
 
--- | Paths to kits.
---
--- Note that, for type safety, you cannot construct a 'KitPath'
--- directly and must use the 'kitPath' constructor. As kits are always
--- stored in a particular subdirectory of a 'UserDirFilePath', this is
--- not a problem.
-newtype KitPath =
-  KitPath {_kitPath :: FilePath}
-  deriving (Show,Eq,Ord,Data,Typeable)
-
 -- | Kits live in a pre-determined subdirectory of the game's user
 -- directory. This function constructs the path to that subdirectory,
 -- given a particular 'UserDirFilePath'.
 --
 -- >>> :set -XOverloadedStrings
 -- >>> kitPath $ UserDirFilePath "/home/dhess/Football Manager 2016"
--- KitPath {_kitPath = FilePath "/home/dhess/Football Manager 2016/graphics/kits"}
-kitPath :: UserDirFilePath -> KitPath
-kitPath ufp =
-  KitPath $ _userDirFilePath ufp </> "graphics" </> "kits"
-
--- | Retrieve the 'FilePath' from a 'KitPath'.
--- >>> :set -XOverloadedStrings
--- >>> filePath $ kitPath $ UserDirFilePath "/home/dhess/Football Manager 2016"
 -- FilePath "/home/dhess/Football Manager 2016/graphics/kits"
-filePath :: KitPath -> FilePath
-filePath = _kitPath
+kitPath :: UserDirFilePath -> FilePath
+kitPath ufp = _userDirFilePath ufp </> "graphics" </> "kits"
 
 -- | Verify that a kit pack archive file:
 --
@@ -110,33 +87,41 @@ filePath = _kitPath
 validateKitPack :: (MonadIO m) => ArchiveFilePath -> m ()
 validateKitPack archive = liftIO $ runManaged $ void $ unpackKitPack archive
 
--- | Install a kit pack to the given kit path. Note that this action
--- will overwrite an existing kit path of the same name (but not
--- necessarily of a different version: this depends on how the kit
+-- | Install a kit pack to the given user directory. Note that this
+-- action will overwrite an existing kit path of the same name (but
+-- not necessarily of a different version: this depends on how the kit
 -- pack was packaged).
 --
 -- If the kit pack is malformed, this action throws an exception and
 -- aborts the installation -- no kits from the pack will be installed.
-installKitPack :: (MonadIO m) => KitPath -> ArchiveFilePath -> m ()
-installKitPack kp archive = liftIO $
-  runManaged $
-    do unpackedLocation <- unpackKitPack archive
-       -- Remove the existing installed kit pack with the same
-       -- name, if it exists.
-       --
-       -- Note that we use 'Filesystem.filename' to extract the
-       -- directory name under which the kit pack files live
-       -- (i.e., the parent directory). Technically this is a
-       -- directory name, not a filename, as 'findKitPack' only
-       -- returns a path to a directory; but the @system-filepath@
-       -- package makes no semantic distinction between filenames
-       -- and directory names at the end of paths.
-       let parentDirName = Filesystem.filename unpackedLocation
-       let installedLocation = _kitPath kp </> parentDirName
-       exists <- testpath installedLocation
-       when exists $
-         rmtree installedLocation
-       mv unpackedLocation installedLocation
+installKitPack :: (MonadIO m) => UserDirFilePath -> ArchiveFilePath -> m ()
+installKitPack userDir archive = liftIO $
+  -- We should create the top-level kit path directory if it doesn't
+  -- exist (and it doesn't by default), but we should not create the
+  -- user directory if that doesn't exist, as that probably means it's
+  -- wrong, or that the game isn't installed.
+  do userDirExists <- testdir $ _userDirFilePath userDir
+     unless userDirExists $
+       throw $ NoSuchUserDirectory userDir
+     runManaged $
+       do unpackedLocation <- unpackKitPack archive
+          -- Remove the existing installed kit pack with the same
+          -- name, if it exists.
+          --
+          -- Note that we use 'Filesystem.filename' to extract the
+          -- directory name under which the kit pack files live
+          -- (i.e., the parent directory). Technically this is a
+          -- directory name, not a filename, as 'findKitPack' only
+          -- returns a path to a directory; but the @system-filepath@
+          -- package makes no semantic distinction between filenames
+          -- and directory names at the end of paths.
+          let parentDirName = Filesystem.filename unpackedLocation
+          let installedLocation = kitPath userDir </> parentDirName
+          exists <- testdir installedLocation
+          if exists
+             then rmtree installedLocation
+             else mktree $ kitPath userDir
+          mv unpackedLocation installedLocation
 
 -- | Unpack an archive file assumed to contain a kit pack to a
 -- temporary directory. Once unpacked, run a simple validation check
@@ -161,8 +146,9 @@ unpackKitPack archive =
                else throw $ MalformedArchive archive
        _ -> throw $ MalformedArchive archive
 
-data KitPackException =
-  MalformedArchive ArchiveFilePath  -- ^ The archive is malformed
+data KitPackException
+  = NoSuchUserDirectory UserDirFilePath -- ^ The specified user directory doesn't exist
+  | MalformedArchive ArchiveFilePath  -- ^ The archive is malformed
   deriving (Show,Eq,Typeable)
 
 instance Exception KitPackException where

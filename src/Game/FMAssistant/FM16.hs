@@ -15,7 +15,6 @@ Portability : non-portable
 module Game.FMAssistant.FM16
        ( -- * Paths
          defaultUserDir
-       , defaultKitDir
          -- * Other FM16-specific data
        , version
        ) where
@@ -23,7 +22,6 @@ module Game.FMAssistant.FM16
 import Prelude hiding (FilePath)
 import Control.Monad.IO.Class (MonadIO)
 
-import Game.FMAssistant.Mod.Kits (KitPath, kitPath)
 import Game.FMAssistant.Types (Version(..), UserDirFilePath(..))
 import qualified Game.FMAssistant.Util as Util (defaultUserDir)
 
@@ -38,7 +36,3 @@ version = Version $ "Football Manager 2016"
 -- other mods go.
 defaultUserDir :: (MonadIO m) => m UserDirFilePath
 defaultUserDir = Util.defaultUserDir version
-
--- | The default FM16 kit directory.
-defaultKitDir :: (MonadIO m) => m KitPath
-defaultKitDir = kitPath <$> defaultUserDir

@@ -10,7 +10,6 @@ import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString)
 import qualified System.Directory as Directory (getHomeDirectory)
 import Test.Hspec
 
-import qualified Game.FMAssistant.Mod.Kits as Kits (filePath)
 import Game.FMAssistant.Types (UserDirFilePath(..), Version(..))
 import Game.FMAssistant.FM16
 
@@ -26,7 +25,3 @@ spec =
        it "is the expected value" $
          do homeDir <- getHomeDir
             defaultUserDir `shouldReturn` UserDirFilePath (homeDir </> "Documents/Sports Interactive/Football Manager 2016")
-     describe "defaultKitDir" $
-       it "is the expected value" $
-         do homeDir <- getHomeDir
-            Kits.filePath <$> defaultKitDir `shouldReturn` (homeDir </> "Documents/Sports Interactive/Football Manager 2016/graphics/kits")
