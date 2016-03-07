@@ -76,10 +76,10 @@ spec =
               let kitDir = _userDirFilePath dir </> "graphics" </> "kits"
               in
                 do dummyPackV10Zip >>= installKitPack dir
+                   sillyKitsZip >>= installKitPack dir
                    doesFileExist (kitDir </> "Dummy kit pack" </> "config.xml") `shouldReturn` True
                    doesFileExist (kitDir </> "Dummy kit pack" </> "flamengo_1.png") `shouldReturn` True
                    doesFileExist (kitDir </> "Dummy kit pack" </> "santos_1.png") `shouldReturn` True
-                   sillyKitsZip >>= installKitPack dir
                    doesFileExist (kitDir </> "Silly kits" </> "config.xml") `shouldReturn` True
                    doesFileExist (kitDir </> "Silly kits" </> "flam_1.png") `shouldReturn` True
                    doesFileExist (kitDir </> "Silly kits" </> "foo_3.png") `shouldReturn` True
@@ -102,6 +102,16 @@ spec =
                    doesFileExist (kitDir </> "Dummy kit pack" </> "flamengo_1.png") `shouldReturn` True
                    doesFileExist (kitDir </> "Dummy kit pack" </> "santos_1.png") `shouldReturn` False
                    doesFileExist (kitDir </> "Dummy kit pack" </> "vasco_1.png") `shouldReturn` True
+          it "doesn't remove other kits when installing a new version" $
+            withTmpUserDir $ \dir ->
+              let kitDir = _userDirFilePath dir </> "graphics" </> "kits"
+              in
+                do dummyPackV10Zip >>= installKitPack dir
+                   sillyKitsZip >>= installKitPack dir
+                   dummyPackV11Zip >>= installKitPack dir
+                   doesFileExist (kitDir </> "Silly kits" </> "config.xml") `shouldReturn` True
+                   doesFileExist (kitDir </> "Silly kits" </> "flam_1.png") `shouldReturn` True
+                   doesFileExist (kitDir </> "Silly kits" </> "foo_3.png") `shouldReturn` True
           it "won't install a malformed pack" $
             withTmpUserDir $ \dir ->
               (malformedPackRar >>= installKitPack dir) `shouldThrow` anyKitPackException
