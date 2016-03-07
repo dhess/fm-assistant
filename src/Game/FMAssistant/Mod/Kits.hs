@@ -57,11 +57,18 @@ newtype KitPath =
 -- | Kits live in a pre-determined subdirectory of the game's user
 -- directory. This function constructs the path to that subdirectory,
 -- given a particular 'UserDirFilePath'.
+--
+-- >>> :set -XOverloadedStrings
+-- >>> kitPath $ UserDirFilePath "/home/dhess/Football Manager 2016"
+-- KitPath {_kitPath = FilePath "/home/dhess/Football Manager 2016/graphics/kits"}
 kitPath :: UserDirFilePath -> KitPath
 kitPath ufp =
   KitPath $ _userDirFilePath ufp </> "graphics" </> "kits"
 
 -- | Retrieve the 'FilePath' from a 'KitPath'.
+-- >>> :set -XOverloadedStrings
+-- >>> filePath $ kitPath $ UserDirFilePath "/home/dhess/Football Manager 2016"
+-- FilePath "/home/dhess/Football Manager 2016/graphics/kits"
 filePath :: KitPath -> FilePath
 filePath = _kitPath
 
