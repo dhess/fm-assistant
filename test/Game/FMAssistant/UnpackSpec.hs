@@ -26,16 +26,16 @@ doesFileExist :: FilePath -> IO Bool
 doesFileExist fp = Directory.doesFileExist (Filesystem.encodeString fp)
 
 zipFile :: IO ArchiveFilePath
-zipFile = ArchiveFilePath <$> Filesystem.decodeString <$> getDataFileName "data/test/test.zip"
+zipFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/test.zip"
 
 damagedZipFile :: IO ArchiveFilePath
-damagedZipFile = ArchiveFilePath <$> Filesystem.decodeString <$> getDataFileName "data/test/damaged-test.zip"
+damagedZipFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/damaged-test.zip"
 
 rarFile :: IO ArchiveFilePath
-rarFile = ArchiveFilePath <$> Filesystem.decodeString <$> getDataFileName "data/test/test.rar"
+rarFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/test.rar"
 
 damagedRarFile :: IO ArchiveFilePath
-damagedRarFile = ArchiveFilePath <$> Filesystem.decodeString <$> getDataFileName "data/test/damaged-test.rar"
+damagedRarFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/damaged-test.rar"
 
 anyUnpackException :: Selector UnpackException
 anyUnpackException = const True
