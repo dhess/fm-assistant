@@ -39,8 +39,8 @@ import qualified Data.Text as T (intercalate)
 import Filesystem.Path.CurrentOS (FilePath)
 import qualified Filesystem.Path.CurrentOS as Filesystem (basename, extension)
 import Turtle (ExitCode)
-import Turtle.Format ((%), format, fp)
-import Turtle.Prelude (ProcFailed(..), die, procs)
+import Turtle.Format (format, fp)
+import Turtle.Prelude (ProcFailed(..), procs)
 
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), fmAssistantExceptionToException,
