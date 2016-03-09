@@ -29,15 +29,19 @@ module Game.FMAssistant.Types
 import Prelude hiding (FilePath)
 import Control.Exception (Exception, SomeException, fromException, toException)
 import Data.Text (Text)
+import qualified Data.Text as T (unpack)
 import Data.Data
 import Filesystem.Path.CurrentOS (FilePath)
-import qualified Filesystem.Path.CurrentOS as Filesystem (basename, fromText)
+import qualified Filesystem.Path.CurrentOS as Filesystem (basename, encodeString, fromText)
 
 -- | Game's name and version, e.g., "Football Manager 2016". This is
 -- often used as the component of a pathname.
 newtype Version =
   Version {_version :: Text}
-  deriving (Show,Eq,Ord,Data,Typeable)
+  deriving (Eq,Ord,Data,Typeable)
+
+instance Show Version where
+  show = T.unpack . _version
 
 -- | Convert a 'Version' value to a 'FilePath'.
 versionToFilePath :: Version -> FilePath
@@ -47,13 +51,19 @@ versionToFilePath = Filesystem.fromText . _version
 -- saves, kits, and most other mods, are stored.
 newtype UserDirFilePath =
   UserDirFilePath {_userDirFilePath :: FilePath}
-  deriving (Show,Eq,Ord,Data,Typeable)
+  deriving (Eq,Ord,Data,Typeable)
+
+instance Show UserDirFilePath where
+  show = Filesystem.encodeString . _userDirFilePath
 
 -- | The type for paths which point to an archive file (ZIP, RAR,
 -- etc.).
 newtype ArchiveFilePath =
   ArchiveFilePath {_archiveFilePath :: FilePath}
-  deriving (Show,Eq,Ord,Data,Typeable)
+  deriving (Eq,Ord,Data,Typeable)
+
+instance Show ArchiveFilePath where
+  show = Filesystem.encodeString . _archiveFilePath
 
 -- | Return the name of an archive file; that is, given an
 -- 'ArchiveFilePath', strip off the pathname portion and the trailing

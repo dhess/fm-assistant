@@ -149,7 +149,11 @@ unpackKitPack archive =
 data KitPackException
   = NoSuchUserDirectory UserDirFilePath -- ^ The specified user directory doesn't exist
   | MalformedArchive ArchiveFilePath  -- ^ The archive is malformed
-  deriving (Show,Eq,Typeable)
+  deriving (Eq,Typeable)
+
+instance Show KitPackException where
+  show (NoSuchUserDirectory fp) = show fp ++ ": The game user directory doesn't exist"
+  show (MalformedArchive fp) = show fp ++ ": Malformed or invalid kit pack"
 
 instance Exception KitPackException where
   toException = fmAssistantExceptionToException

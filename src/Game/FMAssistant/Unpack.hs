@@ -120,7 +120,11 @@ data UnpackException
                                        -- failed; failed command line
                                        -- and process exit code are
                                        -- provided
-  deriving (Show,Eq,Typeable)
+  deriving (Eq,Typeable)
+
+instance Show UnpackException where
+  show (UnsupportedArchive fp) = show fp ++ ": Unsupported archive type"
+  show (UnpackingError cmdLine exitCode) = "An error occurred during unpacking (exit code " ++ show exitCode ++ ")"
 
 instance Exception UnpackException where
   toException = fmAssistantExceptionToException

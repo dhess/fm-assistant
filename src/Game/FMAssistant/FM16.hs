@@ -28,7 +28,7 @@ import qualified Game.FMAssistant.Util as Util (defaultUserDir)
 -- | The game version.
 --
 -- >>> version
--- Version {_version = "Football Manager 2016"}
+-- Football Manager 2016
 version :: Version
 version = Version "Football Manager 2016"
 
