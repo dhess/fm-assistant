@@ -75,6 +75,8 @@ Executable fm-assistant
                       , Game.FMAssistant.Types
                       , Game.FMAssistant.Unpack
                       , Game.FMAssistant.Util
+                      , KitPack
+                      , Util
 
 Test-Suite doctest
   Type:                 exitcode-stdio-1.0

@@ -2,62 +2,33 @@
 
 module Main where
 
-import Control.Concurrent (threadDelay)
-import Game.FMAssistant.Streaming
 import Options.Applicative
-import System.IO.Temp (withSystemTempDirectory)
+import System.Exit (ExitCode(..), exitWith)
 
-data Verbosity
-  = Normal
-  | Verbose
+import qualified KitPack (Command, run, parser)
 
 data GlobalOptions =
-  GlobalOptions {quiet :: Bool
-                ,verbose :: Verbosity
-                ,cmd :: Command}
+  GlobalOptions {_cmd :: Command}
 
 data Command
-  = Install InstallOptions
+  = KitPack KitPack.Command
 
-data InstallOptions =
-  InstallOptions {fileName :: FilePath}
-
-installCmd :: Parser Command
-installCmd = Install <$> installOptions
-
-installOptions :: Parser InstallOptions
-installOptions =
-  InstallOptions <$>
-    argument str (metavar "FILE")
+kitPackCmd :: Parser Command
+kitPackCmd = KitPack <$> KitPack.parser
 
 cmds :: Parser GlobalOptions
 cmds =
   GlobalOptions <$>
-  switch (long "quiet" <>
-          short 'q' <>
-          help "Be quiet") <*>
-  flag Normal
-       Verbose
-       (long "verbose" <>
-        short 'v' <>
-        help "Enable verbose mode") <*>
   hsubparser
-    (command "install" (info installCmd (progDesc "Install a mod")))
+    (command "kitpack" (info kitPackCmd (progDesc "Kit pack commands")))
 
-run :: GlobalOptions -> IO ()
-run (GlobalOptions False _ (Install (InstallOptions fn))) =
-  withSystemTempDirectory
-  "fm-assistant"
-  (\tmpDir ->
-    do putStrLn $ "Unpacking " ++ fn ++ " to " ++ tmpDir
-       unpack tmpDir fn
-       threadDelay $ 10 * 1000000)
-run _ = return ()
+run :: GlobalOptions -> IO ExitCode
+run (GlobalOptions (KitPack cmd)) = KitPack.run cmd
 
-main :: IO ()
-main = execParser opts >>= run
+main :: IO ExitCode
+main = execParser opts >>= run >>= exitWith
   where opts =
           info (helper <*> cmds)
                (fullDesc <>
-                progDesc "Install Football Manager mods" <>
+                progDesc "Manage Football Manager mods" <>
                 header "fm-assistant")
