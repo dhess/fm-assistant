@@ -18,14 +18,16 @@ module Game.FMAssistant.Util
        ( defaultUserDir
        , getHomeDirectory
        , mktempdir
+       , fpToHumanText
        ) where
 
 import Prelude hiding (FilePath)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Managed.Safe (Managed)
 import Data.Text (Text)
+import qualified Data.Text as T (intercalate)
 import Filesystem.Path.CurrentOS ((</>), FilePath)
-import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString)
+import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString, toText)
 import qualified System.Directory as Directory (getHomeDirectory, getTemporaryDirectory)
 import qualified Turtle.Prelude as Turtle (mktempdir)
 
@@ -50,6 +52,12 @@ mktempdir template =
   do sysTmpDir <- liftIO $ Filesystem.decodeString <$> Directory.getTemporaryDirectory
      Turtle.mktempdir sysTmpDir template
 
+-- | As 'toText', but strips the 'Either' off the return value and
+-- appends "(invalid encoding)" to the resulting text in case 'toText'
+-- returns a 'Left' value.
+fpToHumanText :: FilePath -> Text
+fpToHumanText =
+  either (\s -> T.intercalate " " [s, "(invalid encoding)"]) id . Filesystem.toText
 
 -- Not currently exported.
 --
