@@ -75,9 +75,9 @@ unpackerFor (ArchiveFilePath ar)
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpack :: ArchiveFilePath -> Managed FilePath
 unpack ar =
-  do case unpackerFor ar of
-       Just unpacker -> unpacker ar
-       Nothing -> throw $ UnsupportedArchive ar
+  case unpackerFor ar of
+    Just unpacker -> unpacker ar
+    Nothing -> throw $ UnsupportedArchive ar
 
 -- | Unpack a ZIP archive to a temporary directory, whose path is
 -- returned.
