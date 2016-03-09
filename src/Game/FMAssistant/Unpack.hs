@@ -89,10 +89,15 @@ unpack ar =
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpackZip :: ArchiveFilePath -> Managed FilePath
-unpackZip (ArchiveFilePath zipFile) =
+unpackZip ar@(ArchiveFilePath zipFile) =
   do tmpDir <- mktempdir (format fp $ Filesystem.basename zipFile)
-     runUnpack "unzip" [format fp zipFile, "-d", format fp tmpDir]
+     liftIO $
+       catch (procs "unzip" [format fp zipFile, "-d", format fp tmpDir] empty)  (throwM . toUnpackingError)
      return tmpDir
+  where
+    toUnpackingError :: ProcFailed -> UnpackException
+    toUnpackingError (ProcFailed cmd args exitCode) =
+      UnzipError ar (cmd <> T.intercalate " " args ) exitCode
 
 -- | Unpack a RAR archive to a temporary directory, whose path is
 -- returned.
@@ -103,33 +108,33 @@ unpackZip (ArchiveFilePath zipFile) =
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpackRar :: ArchiveFilePath -> Managed FilePath
-unpackRar (ArchiveFilePath rarFile) =
+unpackRar ar@(ArchiveFilePath rarFile) =
   do tmpDir <- mktempdir (format fp $ Filesystem.basename rarFile)
-     runUnpack "unrar" ["x", "-v", "-y", "-r", format fp rarFile,  format fp tmpDir]
+     liftIO $
+       catch (procs "unrar" ["x", "-v", "-y", "-r", format fp rarFile,  format fp tmpDir] empty) (throwM . toUnpackingError)
      return tmpDir
-
--- | Wraps 'procs' with a handler which re-throws 'ProcFailed' as
--- 'UnpackException', for nicer error reporting.
-runUnpack :: (MonadIO m) => Text -> [Text] -> m ()
-runUnpack cmd args =
-  liftIO $ catch (procs cmd args empty) (throwM . toUnpackingError)
+  where
+    toUnpackingError :: ProcFailed -> UnpackException
+    toUnpackingError (ProcFailed cmd args exitCode) =
+      UnrarError ar (cmd <> T.intercalate " " args ) exitCode
 
 data UnpackException
   = UnsupportedArchive ArchiveFilePath -- ^ The archive file type is unsupported
-  | UnpackingError Text ExitCode       -- ^ The unpacking command
-                                       -- failed; failed command line
-                                       -- and process exit code are
-                                       -- provided
+  | UnzipError ArchiveFilePath Text ExitCode -- ^ The unzip command
+                                             -- failed; failed command
+                                             -- line and process exit
+                                             -- code are provided
+  | UnrarError ArchiveFilePath Text ExitCode -- ^ The unrar command
+                                             -- failed; failed command
+                                             -- line and process exit
+                                             -- code are provided
   deriving (Eq,Typeable)
 
 instance Show UnpackException where
-  show (UnsupportedArchive fp) = show fp ++ ": Unsupported archive type"
-  show (UnpackingError cmdLine exitCode) = "An error occurred during unpacking (exit code " ++ show exitCode ++ ")"
+  show (UnsupportedArchive ar) = show ar ++ ": Unsupported archive type"
+  show (UnzipError ar _ exitCode) = show ar ++ ": unzip command failed, make sure it's in your path and check the file (exit code " ++ show exitCode ++ ")"
+  show (UnrarError ar _ exitCode) = show ar ++ ": unrar command failed, make sure it's in your path and check the file (exit code " ++ show exitCode ++ ")"
 
 instance Exception UnpackException where
   toException = fmAssistantExceptionToException
   fromException = fmAssistantExceptionFromException
-
-toUnpackingError :: ProcFailed -> UnpackException
-toUnpackingError (ProcFailed cmd args exitCode) =
-  UnpackingError (cmd <> T.intercalate " " args) exitCode
