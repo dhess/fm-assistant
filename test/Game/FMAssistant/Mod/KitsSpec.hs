@@ -124,7 +124,7 @@ spec =
               (unsupportedFile >>= installKitPack dir) `shouldThrow` anyUnpackException
           it "fails if the specified archive doesn't exist" $
             withTmpUserDir $ \dir ->
-              installKitPack dir (ArchiveFilePath "/this/doesn't/exist.zip") `shouldThrow` anyUnpackException
+              installKitPack dir (ArchiveFilePath "/this/doesn't/exist.zip") `shouldThrow` anyIOException
           it "fails if the user directory doesn't exist" $
             withTmpUserDir $ \dir ->
               let missingUserDir = UserDirFilePath $ _userDirFilePath dir </> "missing"

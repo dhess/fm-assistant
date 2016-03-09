@@ -19,6 +19,7 @@ Library
   GHC-Options:          -Wall
   Exposed-Modules:      Game.FMAssistant
                       , Game.FMAssistant.FM16
+                      , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod.Kits
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
@@ -26,11 +27,13 @@ Library
                       , Game.FMAssistant.Util
   Build-Depends:        base >= 4 && < 5
                       , bytestring
+                      , containers
                       , directory
                       , exceptions
                       , foldl
                       , managed
                       , mtl
+                      , resourcet
                       , streaming
                       , streaming-bytestring
                       , system-filepath
@@ -48,12 +51,14 @@ Executable fm-assistant
   GHC-Options:          -Wall
   Build-Depends:        base >= 4 && < 5
                       , bytestring
+                      , containers
                       , directory
                       , exceptions
                       , foldl
                       , managed
                       , mtl
                       , optparse-applicative >= 0.11.0
+                      , resourcet
                       , streaming
                       , streaming-bytestring
                       , system-filepath
@@ -64,6 +69,7 @@ Executable fm-assistant
                       , transformers
   Other-Modules:        Game.FMAssistant
                       , Game.FMAssistant.FM16
+                      , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod.Kits
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
@@ -88,12 +94,14 @@ Test-Suite spec
   Main-Is:              Spec.hs
   Build-Depends:        base
                       , bytestring
+                      , containers
                       , directory
                       , exceptions
                       , foldl
                       , hspec
                       , managed
                       , mtl
+                      , resourcet
                       , streaming
                       , streaming-bytestring
                       , system-filepath
@@ -104,6 +112,7 @@ Test-Suite spec
                       , transformers
   Other-Modules:        Game.FMAssistant
                       , Game.FMAssistant.FM16
+                      , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod.Kits
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types

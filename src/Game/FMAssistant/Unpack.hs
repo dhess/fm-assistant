@@ -12,6 +12,7 @@ Functions for unpacking the various archive types (RAR, ZIP, etc.).
 -}
 
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE Trustworthy #-}
 
@@ -37,11 +38,12 @@ import Data.Monoid ((<>))
 import Data.Text (Text)
 import qualified Data.Text as T (intercalate)
 import Filesystem.Path.CurrentOS (FilePath)
-import qualified Filesystem.Path.CurrentOS as Filesystem (basename, extension)
+import qualified Filesystem.Path.CurrentOS as Filesystem (basename)
 import Turtle (ExitCode)
 import Turtle.Format (format, fp)
 import Turtle.Prelude (ProcFailed(..), procs)
 
+import Game.FMAssistant.Magic (Magic(..), identifyArchive)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), fmAssistantExceptionToException,
         fmAssistantExceptionFromException)
@@ -53,13 +55,12 @@ import Game.FMAssistant.Util (mktempdir)
 --
 -- If, based on the filename's extension, the archive format is
 -- unsupported, this function returns 'Nothing'.
-unpackerFor :: ArchiveFilePath -> Maybe (ArchiveFilePath -> Managed FilePath)
-unpackerFor (ArchiveFilePath ar)
-  | Filesystem.extension ar == Just "zip" = Just unpackZip
-  | Filesystem.extension ar == Just "ZIP" = Just unpackZip
-  | Filesystem.extension ar == Just "rar" = Just unpackRar
-  | Filesystem.extension ar == Just "RAR" = Just unpackRar
-  | otherwise = Nothing
+unpackerFor :: (MonadIO m) => ArchiveFilePath -> m (Maybe (ArchiveFilePath -> Managed FilePath))
+unpackerFor ar =
+  identifyArchive ar >>= \case
+    Just Zip -> return $ Just unpackZip
+    Just Rar -> return $ Just unpackRar
+    Nothing -> return Nothing
 
 -- | Attempt to guess the format of the specified archive file and
 -- unpack it to a temporary directory, whose path is returned.
@@ -75,7 +76,7 @@ unpackerFor (ArchiveFilePath ar)
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpack :: ArchiveFilePath -> Managed FilePath
 unpack ar =
-  case unpackerFor ar of
+  unpackerFor ar >>= \case
     Just unpacker -> unpacker ar
     Nothing -> throw $ UnsupportedArchive ar
 
