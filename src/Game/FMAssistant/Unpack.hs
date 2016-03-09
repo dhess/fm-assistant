@@ -29,9 +29,8 @@ module Game.FMAssistant.Unpack
 
 import Prelude hiding (FilePath)
 import Control.Applicative (empty)
-import Control.Exception (Exception(..), catch, throw)
-import Control.Monad.Catch (throwM)
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Exception (Exception(..), throw)
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Managed.Safe (Managed)
 import Data.Data
 import Data.Monoid ((<>))
@@ -39,9 +38,9 @@ import Data.Text (Text)
 import qualified Data.Text as T (intercalate)
 import Filesystem.Path.CurrentOS (FilePath)
 import qualified Filesystem.Path.CurrentOS as Filesystem (basename)
-import Turtle (ExitCode)
+import Turtle (ExitCode(..))
 import Turtle.Format (format, fp)
-import Turtle.Prelude (ProcFailed(..), procs)
+import Turtle.Prelude (procStrict)
 
 import Game.FMAssistant.Magic (Magic(..), identifyArchive)
 import Game.FMAssistant.Types
@@ -90,14 +89,15 @@ unpack ar =
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpackZip :: ArchiveFilePath -> Managed FilePath
 unpackZip ar@(ArchiveFilePath zipFile) =
-  do tmpDir <- mktempdir (format fp $ Filesystem.basename zipFile)
-     liftIO $
-       catch (procs "unzip" [format fp zipFile, "-d", format fp tmpDir] empty)  (throwM . toUnpackingError)
-     return tmpDir
-  where
-    toUnpackingError :: ProcFailed -> UnpackException
-    toUnpackingError (ProcFailed cmd args exitCode) =
-      UnzipError ar (cmd <> T.intercalate " " args ) exitCode
+  let unzipCmd :: Text
+      unzipCmd = "unzip"
+  in
+    do tmpDir <- mktempdir (format fp $ Filesystem.basename zipFile)
+       let args = [format fp zipFile, "-d", format fp tmpDir]
+       (exitCode, _) <- procStrict unzipCmd args empty
+       if exitCode /= ExitSuccess
+          then throw $ UnzipError ar (unzipCmd <> T.intercalate " " args ) exitCode
+          else return tmpDir
 
 -- | Unpack a RAR archive to a temporary directory, whose path is
 -- returned.
@@ -109,14 +109,15 @@ unpackZip ar@(ArchiveFilePath zipFile) =
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpackRar :: ArchiveFilePath -> Managed FilePath
 unpackRar ar@(ArchiveFilePath rarFile) =
-  do tmpDir <- mktempdir (format fp $ Filesystem.basename rarFile)
-     liftIO $
-       catch (procs "unrar" ["x", "-v", "-y", "-r", format fp rarFile,  format fp tmpDir] empty) (throwM . toUnpackingError)
-     return tmpDir
-  where
-    toUnpackingError :: ProcFailed -> UnpackException
-    toUnpackingError (ProcFailed cmd args exitCode) =
-      UnrarError ar (cmd <> T.intercalate " " args ) exitCode
+  let unrarCmd :: Text
+      unrarCmd = "unrar"
+  in
+    do tmpDir <- mktempdir (format fp $ Filesystem.basename rarFile)
+       let args = ["x", "-v", "-y", "-r", format fp rarFile,  format fp tmpDir]
+       (exitCode, _) <- procStrict unrarCmd args empty
+       if exitCode /= ExitSuccess
+          then throw $ UnrarError ar (unrarCmd <> T.intercalate " " args ) exitCode
+          else return tmpDir
 
 data UnpackException
   = UnsupportedArchive ArchiveFilePath -- ^ The archive file type is unsupported
