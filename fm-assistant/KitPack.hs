@@ -9,17 +9,15 @@ module KitPack
 import Options.Applicative
 
 import Prelude hiding (FilePath)
-import Control.Monad (void)
+import Control.Monad (forM, unless, void)
 import qualified Data.Text as T (concat)
 import qualified Data.Text.IO as T (putStrLn)
-import Filesystem.Path.CurrentOS (FilePath)
-import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString)
 import Game.FMAssistant.Mod.Kits (validateKitPack)
 import Game.FMAssistant.Types (ArchiveFilePath(..))
 import Game.FMAssistant.Util (fpToHumanText)
 import System.Exit (ExitCode(..))
 
-import Util (catchesMost)
+import Util (anyFailure, catchesMost, toFpList)
 
 data Command
   = Install InstallOptions
@@ -37,7 +35,8 @@ installOptions =
     some (argument str (metavar "FILE [FILE] ..."))
 
 data ValidateOptions =
-  ValidateOptions {_validateFileNames :: [String]}
+  ValidateOptions {_onlyShowInvalid :: Bool
+                  ,_validateFileNames :: [String]}
 
 validateCmd :: Parser Command
 validateCmd = Validate <$> validateOptions
@@ -45,7 +44,8 @@ validateCmd = Validate <$> validateOptions
 validateOptions :: Parser ValidateOptions
 validateOptions =
   ValidateOptions <$>
-    some (argument str (metavar "FILE [FILE] ..."))
+  switch (long "only-invalid" <> help "Only show invalid kit packs") <*>
+  some (argument str (metavar "FILE [FILE] ..."))
 
 parser :: Parser Command
 parser =
@@ -53,31 +53,20 @@ parser =
     (command "install" (info installCmd (progDesc "Install kit packs")) <>
      command "validate" (info validateCmd (progDesc "Validate kit packs")))
 
-anyFailure :: ExitCode -> [ExitCode] -> ExitCode
-anyFailure failCode codes =
-  if all ((==) ExitSuccess) codes
-     then ExitSuccess
-     else failCode
-
 run :: Command -> IO ExitCode
 run (Install (InstallOptions fns)) =
-  let fps :: [FilePath]
-      fps = map Filesystem.decodeString fns
-  in
-    do codes <- mapM (\fp ->
+    do codes <- forM (toFpList fns)
+                     (\fp ->
                        do T.putStrLn $ fpToHumanText fp
                           return ExitSuccess)
-                     fps
        return $ anyFailure (ExitFailure 1) codes
-run (Validate (ValidateOptions fns)) =
-  let fps :: [FilePath]
-      fps = map Filesystem.decodeString fns
-  in
-    do codes <- mapM (\fp ->
+run (Validate (ValidateOptions onlyInvalid fns)) =
+    do codes <- forM (toFpList fns)
+                     (\fp ->
                        do exitCode <- catchesMost $
                             do void $ validateKitPack (ArchiveFilePath fp)
-                               T.putStrLn $ T.concat [fpToHumanText fp, ": valid kit pack"]
+                               unless onlyInvalid $
+                                 T.putStrLn $ T.concat [fpToHumanText fp, ": valid kit pack"]
                                return ExitSuccess
                           return exitCode)
-                     fps
        return $ anyFailure (ExitFailure 1) codes
