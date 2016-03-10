@@ -161,9 +161,9 @@ data KitPackException
 
 instance Show KitPackException where
   show (NoSuchUserDirectory fp) = show fp ++ ": The game user directory doesn't exist"
-  show (EmptyArchive fp) = show fp ++ ": The kit pack is empty"
-  show (SingleFileArchive fp) = show fp ++ ": The kit pack contains just a single file"
-  show (MultipleFilesOrDirectories fp) = show fp ++ ": The kit pack should have a single top-level directory"
+  show (EmptyArchive fp) = show fp ++ ": Malformed (kit pack is empty)"
+  show (SingleFileArchive fp) = show fp ++ ": Malformed (kit pack contains just a single file)"
+  show (MultipleFilesOrDirectories fp) = show fp ++ ": Malformed (kit pack stores multiple files/directories at top level)"
 
 instance Exception KitPackException where
   toException = fmAssistantExceptionToException
