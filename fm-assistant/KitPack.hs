@@ -9,7 +9,7 @@ module KitPack
 import Options.Applicative
 
 import Prelude hiding (FilePath)
-import Control.Monad (forM, unless, void)
+import Control.Monad (forM, forM_, unless, void)
 import qualified Data.Text as T (concat)
 import qualified Data.Text.IO as T (putStrLn)
 import Game.FMAssistant.Mod.Kits (validateKitPack)
@@ -17,7 +17,7 @@ import Game.FMAssistant.Types (ArchiveFilePath(..))
 import Game.FMAssistant.Util (fpToHumanText)
 import System.Exit (ExitCode(..))
 
-import Util (anyFailure, catchesMost, toFpList)
+import Util (anyFailure, catchesMost, catchesMostQuietly, toFpList)
 
 data Command
   = Install InstallOptions
@@ -36,6 +36,7 @@ installOptions =
 
 data ValidateOptions =
   ValidateOptions {_onlyShowInvalid :: Bool
+                  ,_validateQuietly :: Bool
                   ,_validateFileNames :: [String]}
 
 validateCmd :: Parser Command
@@ -44,7 +45,12 @@ validateCmd = Validate <$> validateOptions
 validateOptions :: Parser ValidateOptions
 validateOptions =
   ValidateOptions <$>
-  switch (long "only-invalid" <> help "Only show invalid kit packs") <*>
+  switch (long "only-invalid" <>
+          short 'i' <>
+          help "Only show invalid kit packs") <*>
+  switch (long "quiet" <>
+          short 'q' <>
+          help "Only show filenames of valid kit packs (or invalid kit packs, if --only-invalid is specified). In this mode the program always returns a 0 exit code.") <*>
   some (argument str (metavar "FILE [FILE] ..."))
 
 parser :: Parser Command
@@ -55,18 +61,26 @@ parser =
 
 run :: Command -> IO ExitCode
 run (Install (InstallOptions fns)) =
-    do codes <- forM (toFpList fns)
-                     (\fp ->
-                       do T.putStrLn $ fpToHumanText fp
-                          return ExitSuccess)
-       return $ anyFailure (ExitFailure 1) codes
-run (Validate (ValidateOptions onlyInvalid fns)) =
-    do codes <- forM (toFpList fns)
-                     (\fp ->
-                       do exitCode <- catchesMost $
-                            do void $ validateKitPack (ArchiveFilePath fp)
-                               unless onlyInvalid $
-                                 T.putStrLn $ T.concat [fpToHumanText fp, ": valid kit pack"]
-                               return ExitSuccess
-                          return exitCode)
-       return $ anyFailure (ExitFailure 1) codes
+  do codes <- forM (toFpList fns)
+                    (\fp ->
+                      do T.putStrLn $ fpToHumanText fp
+                         return ExitSuccess)
+     return $ anyFailure (ExitFailure 1) codes
+run (Validate (ValidateOptions onlyInvalid False fns)) =
+  do codes <- forM (toFpList fns)
+                   (\fp ->
+                     do exitCode <- catchesMost $
+                          do void $ validateKitPack (ArchiveFilePath fp)
+                             unless onlyInvalid $
+                               T.putStrLn $ T.concat [fpToHumanText fp, ": valid kit pack"]
+                             return ExitSuccess
+                        return exitCode)
+     return $ anyFailure (ExitFailure 1) codes
+run (Validate (ValidateOptions onlyInvalid True fns)) =
+  do forM_ (toFpList fns)
+           (\fp ->
+             catchesMostQuietly $
+               do void $ validateKitPack (ArchiveFilePath fp)
+                  unless onlyInvalid $
+                    T.putStrLn $ fpToHumanText fp)
+     return ExitSuccess
