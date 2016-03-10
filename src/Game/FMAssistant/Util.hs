@@ -19,16 +19,19 @@ module Game.FMAssistant.Util
        , getHomeDirectory
        , mktempdir
        , fpToHumanText
+       , executeQuietly
        ) where
 
 import Prelude hiding (FilePath)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Managed.Safe (Managed)
 import Data.Text (Text)
-import qualified Data.Text as T (intercalate)
+import qualified Data.Text as T (intercalate, unpack)
 import Filesystem.Path.CurrentOS ((</>), FilePath)
 import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString, toText)
 import qualified System.Directory as Directory (getHomeDirectory, getTemporaryDirectory)
+import System.Exit (ExitCode)
+import System.Process.Streaming (execute, exitCode, piped, proc)
 import qualified Turtle.Prelude as Turtle (mktempdir)
 
 import Game.FMAssistant.Types (Version(..), versionToFilePath, UserDirFilePath(..))
@@ -58,6 +61,18 @@ mktempdir template =
 fpToHumanText :: FilePath -> Text
 fpToHumanText =
   either (\s -> T.intercalate " " [s, "(invalid encoding)"]) id . Filesystem.toText
+
+-- | Execute an external program and return the 'ExitCode'. Both
+-- stderr and stdout are discarded.
+executeQuietly
+        :: (MonadIO m)
+        => Text
+        -- ^ Command
+        -> [Text]
+        -- ^ Arguments
+        -> m ExitCode
+        -- ^ Exit code
+executeQuietly cmd args = liftIO $ execute (piped (proc (T.unpack cmd) (map T.unpack args))) exitCode
 
 -- Not currently exported.
 --

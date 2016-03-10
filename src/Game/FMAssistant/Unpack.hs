@@ -28,7 +28,6 @@ module Game.FMAssistant.Unpack
        ) where
 
 import Prelude hiding (FilePath)
-import Control.Applicative (empty)
 import Control.Exception (Exception(..), throw)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Managed.Safe (Managed)
@@ -38,15 +37,14 @@ import Data.Text (Text)
 import qualified Data.Text as T (intercalate)
 import Filesystem.Path.CurrentOS (FilePath)
 import qualified Filesystem.Path.CurrentOS as Filesystem (basename)
-import Turtle (ExitCode(..))
-import Turtle.Format (format, fp)
-import Turtle.Prelude (procStrict)
+import System.Exit (ExitCode(..))
+import Turtle (format, fp)
 
 import Game.FMAssistant.Magic (Magic(..), identifyArchive)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), fmAssistantExceptionToException,
         fmAssistantExceptionFromException)
-import Game.FMAssistant.Util (mktempdir)
+import Game.FMAssistant.Util (executeQuietly, mktempdir)
 
 -- | Given the filename of an archive file, use the filename's
 -- extension to guess which unpack action to use, and return that
@@ -94,7 +92,7 @@ unpackZip ar@(ArchiveFilePath zipFile) =
   in
     do tmpDir <- mktempdir (format fp $ Filesystem.basename zipFile)
        let args = [format fp zipFile, "-d", format fp tmpDir]
-       (exitCode, _) <- procStrict unzipCmd args empty
+       exitCode <- executeQuietly unzipCmd args
        if exitCode /= ExitSuccess
           then throw $ UnzipError ar (unzipCmd <> T.intercalate " " args ) exitCode
           else return tmpDir
@@ -114,7 +112,7 @@ unpackRar ar@(ArchiveFilePath rarFile) =
   in
     do tmpDir <- mktempdir (format fp $ Filesystem.basename rarFile)
        let args = ["x", "-v", "-y", "-r", format fp rarFile,  format fp tmpDir]
-       (exitCode, _) <- procStrict unrarCmd args empty
+       exitCode <- executeQuietly unrarCmd args
        if exitCode /= ExitSuccess
           then throw $ UnrarError ar (unrarCmd <> T.intercalate " " args ) exitCode
           else return tmpDir
