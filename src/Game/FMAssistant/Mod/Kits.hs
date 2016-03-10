@@ -139,21 +139,31 @@ unpackKitPack archive =
      -- Currently the validation check is quite simple: the archive must
      -- contain just a single directory and no top-level files.
      fold (ls unpackedArchive) ((,) <$> Fold.length <*> Fold.head) >>= \case
+       (0, _) -> throw $ EmptyArchive archive
        (1, Just fp) ->
          do isDir <- testdir fp
             if isDir
                then return fp
-               else throw $ MalformedArchive archive
-       _ -> throw $ MalformedArchive archive
+               else throw $ SingleFileArchive archive
+       _ -> throw $ MultipleFilesOrDirectories archive
 
 data KitPackException
-  = NoSuchUserDirectory UserDirFilePath -- ^ The specified user directory doesn't exist
-  | MalformedArchive ArchiveFilePath  -- ^ The archive is malformed
+  = NoSuchUserDirectory UserDirFilePath
+    -- ^ The specified user directory doesn't exist
+  | EmptyArchive ArchiveFilePath
+    -- ^ The archive is empty
+  | SingleFileArchive ArchiveFilePath
+    -- ^ The archive contains just a single file
+  | MultipleFilesOrDirectories ArchiveFilePath
+    -- ^ The archive contains multiple files or directories at the top
+    -- level
   deriving (Eq,Typeable)
 
 instance Show KitPackException where
   show (NoSuchUserDirectory fp) = show fp ++ ": The game user directory doesn't exist"
-  show (MalformedArchive fp) = show fp ++ ": Malformed or invalid kit pack"
+  show (EmptyArchive fp) = show fp ++ ": The kit pack is empty"
+  show (SingleFileArchive fp) = show fp ++ ": The kit pack contains just a single file"
+  show (MultipleFilesOrDirectories fp) = show fp ++ ": The kit pack should have a single top-level directory"
 
 instance Exception KitPackException where
   toException = fmAssistantExceptionToException
