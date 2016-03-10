@@ -25,12 +25,12 @@ module Game.FMAssistant.Mod.Kits
 import Prelude hiding (FilePath)
 import Control.Exception (Exception(..), throw)
 import qualified Control.Foldl as Fold (length, head)
-import Control.Monad (unless, void)
+import Control.Monad (unless, void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Managed.Safe (Managed, runManaged)
 import Data.Data
 import Filesystem.Path.CurrentOS ((</>), FilePath)
-import qualified Filesystem.Path.CurrentOS as Filesystem (filename)
+import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString, filename)
 import Turtle.Prelude (ls, mktree, mv, rmtree, testdir)
 import Turtle.Shell (fold)
 
@@ -136,6 +136,7 @@ installKitPack userDir archive = liftIO $
 unpackKitPack :: ArchiveFilePath -> Managed FilePath
 unpackKitPack archive =
   do unpackedArchive <- unpack archive
+     fixUp unpackedArchive
      -- Currently the validation check is quite simple: the archive must
      -- contain just a single directory and no top-level files.
      fold (ls unpackedArchive) ((,) <$> Fold.length <*> Fold.head) >>= \case
@@ -146,6 +147,21 @@ unpackKitPack archive =
                then return fp
                else throw $ SingleFileArchive archive
        _ -> throw $ MultipleFilesOrDirectories archive
+
+-- | Attempt to fix up common issues with kit packs.
+fixUp :: (MonadIO m) => FilePath -> m ()
+fixUp fp = void $ osxFixUp fp
+
+-- | Remove any top-level "__MACOSX" subdirectory.
+osxFixUp :: (MonadIO m) => FilePath -> m FilePath
+osxFixUp fp =
+  let osxdir :: FilePath
+      osxdir = fp </> (Filesystem.decodeString "__MACOSX")
+  in
+    do exists <- testdir osxdir
+       when exists $
+         rmtree osxdir
+       return fp
 
 data KitPackException
   = NoSuchUserDirectory UserDirFilePath
