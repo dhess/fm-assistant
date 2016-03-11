@@ -32,7 +32,6 @@ Library
                       , exceptions
                       , filepath
                       , foldl
-                      , managed
                       , mtl
                       , process-streaming
                       , resourcet
@@ -58,7 +57,6 @@ Executable fm-assistant
                       , exceptions
                       , filepath
                       , foldl
-                      , managed
                       , mtl
                       , optparse-applicative >= 0.11.0
                       , process-streaming
@@ -106,7 +104,6 @@ Test-Suite spec
                       , filepath
                       , foldl
                       , hspec
-                      , managed
                       , mtl
                       , process-streaming
                       , resourcet

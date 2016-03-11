@@ -5,7 +5,7 @@ module Game.FMAssistant.UtilSpec
        ) where
 
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Managed (runManaged)
+import Control.Monad.Trans.Resource (runResourceT)
 import Data.List (isPrefixOf)
 import System.Directory (doesDirectoryExist, getHomeDirectory, getTemporaryDirectory)
 import System.FilePath ((</>))
@@ -20,10 +20,15 @@ spec =
        it "returns the expected value" $
          do homeDir <- getHomeDirectory
             defaultUserDir (Version "foo bar") `shouldReturn` UserDirFilePath (homeDir </> "Documents/Sports Interactive/foo bar")
-     describe "mktempdir" $
+     describe "createTempDirectory" $
        do it "creates a temporary directory in the system temporary directory" $
             do sysTmpDir <- getTemporaryDirectory
-               runManaged $
-                 do tmpDir <- mktempdir "Foo"
+               runResourceT $
+                 do (_, tmpDir) <- createTempDirectory "Foo"
                     liftIO $ isPrefixOf sysTmpDir tmpDir `shouldBe` True
                     liftIO $ doesDirectoryExist tmpDir `shouldReturn` True
+          it "removes the temporary directory when finished" $
+            do tmpDir <- runResourceT $
+                 do (_, td) <- createTempDirectory "Foo"
+                    return td
+               doesDirectoryExist tmpDir `shouldReturn` False

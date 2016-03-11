@@ -16,19 +16,17 @@ Helpful functions and combinators.
 
 module Game.FMAssistant.Util
        ( defaultUserDir
-       , mktempdir
+       , createTempDirectory
        , executeQuietly
        ) where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Managed.Safe (Managed)
-import qualified Data.Text as T (pack)
-import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString, encodeString)
-import System.Directory (getHomeDirectory, getTemporaryDirectory)
+import Control.Monad.Trans.Resource (MonadResource, ReleaseKey, allocate)
+import System.Directory (getHomeDirectory, getTemporaryDirectory, removeDirectoryRecursive)
 import System.Exit (ExitCode)
 import System.FilePath ((</>))
+import qualified System.IO.Temp as System (createTempDirectory)
 import System.Process.Streaming (execute, exitCode, piped, proc)
-import qualified Turtle.Prelude as Turtle (mktempdir)
 
 import Game.FMAssistant.Types (Version(..), UserDirFilePath(..))
 
@@ -38,12 +36,18 @@ defaultUserDir version =
   do steamDir <- defaultSteamDir
      return $ UserDirFilePath (steamDir </> _version version)
 
--- | A wrapper around 'Turtle.mktempdir' which always uses the system
--- temporary directory as the parent.
-mktempdir :: FilePath -> Managed FilePath
-mktempdir template =
-  do sysTmpDir <- liftIO $ Filesystem.decodeString <$> getTemporaryDirectory
-     Filesystem.encodeString <$> Turtle.mktempdir sysTmpDir (T.pack template)
+-- | Create a temporary directory and register it with 'ResourceT' so
+-- that it's cleaned up properly.
+createTempDirectory
+        :: (MonadResource m)
+        => String
+        -- ^ Temp directory filename template
+        -> m (ReleaseKey, FilePath)
+        -- ^ The 'ReleaseKey' and name of the temporary directory
+createTempDirectory template =
+  do tmpDir <- liftIO getTemporaryDirectory
+     allocate (System.createTempDirectory tmpDir template)
+              (\tmp -> removeDirectoryRecursive tmp)
 
 -- | Execute an external program and return the 'ExitCode'. Both
 -- stderr and stdout are discarded.

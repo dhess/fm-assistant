@@ -27,9 +27,10 @@ module Game.FMAssistant.Unpack
        , UnpackException(..)
        ) where
 
-import Control.Exception (Exception(..), throw)
+import Control.Exception (Exception(..))
+import Control.Monad.Catch (MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
-import Control.Monad.Managed.Safe (Managed)
+import Control.Monad.Trans.Resource (MonadResource, ReleaseKey)
 import Data.Data
 import Data.Monoid ((<>))
 import System.Exit (ExitCode(..))
@@ -39,7 +40,7 @@ import Game.FMAssistant.Magic (Magic(..), identifyArchive)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), fmAssistantExceptionToException,
         fmAssistantExceptionFromException)
-import Game.FMAssistant.Util (executeQuietly, mktempdir)
+import Game.FMAssistant.Util (executeQuietly, createTempDirectory)
 
 -- | Given the filename of an archive file, use the filename's
 -- extension to guess which unpack action to use, and return that
@@ -47,7 +48,7 @@ import Game.FMAssistant.Util (executeQuietly, mktempdir)
 --
 -- If, based on the filename's extension, the archive format is
 -- unsupported, this function returns 'Nothing'.
-unpackerFor :: (MonadIO m) => ArchiveFilePath -> m (Maybe (ArchiveFilePath -> FilePath -> m ()))
+unpackerFor :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> m (Maybe (ArchiveFilePath -> FilePath -> m ()))
 unpackerFor ar =
   identifyArchive ar >>= \case
     Just Zip -> return $ Just unpackZip
@@ -55,10 +56,8 @@ unpackerFor ar =
     Nothing -> return Nothing
 
 -- | Attempt to guess the format of the specified archive file and
--- unpack it to a temporary directory, whose path is returned.
---
--- N.B. that the temporary directory is 'Managed', so it will be
--- automatically removed when the managed action terminates!
+-- unpack it to a temporary directory, whose path and 'ReleaseKey' are
+-- returned.
 --
 -- If the archive file format cannot be guessed or is not supported,
 -- this action throws an 'UnpackException' with a value of
@@ -66,20 +65,20 @@ unpackerFor ar =
 --
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
-unpack :: ArchiveFilePath -> Managed FilePath
+unpack :: (MonadResource m) => ArchiveFilePath -> m (ReleaseKey, FilePath)
 unpack ar@(ArchiveFilePath fn) =
   unpackerFor ar >>= \case
-    Nothing -> throw $ UnsupportedArchive ar
+    Nothing -> throwM $ UnsupportedArchive ar
     Just unpacker ->
-      do tmpDir <- mktempdir (takeBaseName fn)
+      do resource@(_, tmpDir) <- createTempDirectory (takeBaseName fn)
          unpacker ar tmpDir
-         return tmpDir
+         return resource
 
 -- | Unpack a ZIP archive to the given directory.
 --
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
-unpackZip :: (MonadIO m) => ArchiveFilePath -> FilePath -> m ()
+unpackZip :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> FilePath -> m ()
 unpackZip ar@(ArchiveFilePath zipFile) unpackDir =
   let unzipCmd :: FilePath
       unzipCmd = "unzip"
@@ -89,13 +88,13 @@ unpackZip ar@(ArchiveFilePath zipFile) unpackDir =
     do exitCode <- executeQuietly unzipCmd args
        if exitCode == ExitSuccess
           then return ()
-          else throw $ UnzipError ar (unzipCmd <> unwords args ) exitCode
+          else throwM $ UnzipError ar (unzipCmd <> unwords args ) exitCode
 
 -- | Unpack a RAR archive to the given directory.
 --
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
-unpackRar :: (MonadIO m) => ArchiveFilePath -> FilePath -> m ()
+unpackRar :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> FilePath -> m ()
 unpackRar ar@(ArchiveFilePath rarFile) unpackDir =
   let unrarCmd :: FilePath
       unrarCmd = "unrar"
@@ -105,7 +104,7 @@ unpackRar ar@(ArchiveFilePath rarFile) unpackDir =
     do exitCode <- executeQuietly unrarCmd args
        if exitCode == ExitSuccess
           then return ()
-          else throw $ UnrarError ar (unrarCmd <> unwords args ) exitCode
+          else throwM $ UnrarError ar (unrarCmd <> unwords args ) exitCode
 
 data UnpackException
   = UnsupportedArchive ArchiveFilePath -- ^ The archive file type is unsupported
