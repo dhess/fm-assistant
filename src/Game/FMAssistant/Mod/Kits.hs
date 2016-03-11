@@ -13,7 +13,7 @@ Portability : non-portable
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE Safe #-}
 
 module Game.FMAssistant.Mod.Kits
        ( installKitPack
@@ -24,21 +24,19 @@ module Game.FMAssistant.Mod.Kits
 
 import Control.Exception (Exception(..))
 import Control.Monad.Catch (MonadThrow, throwM)
-import qualified Control.Foldl as Fold (length, head)
+import qualified Control.Foldl as Fold (fold, length, head)
 import Control.Monad (unless, void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Resource (MonadResource, ReleaseKey, release, runResourceT)
 import Data.Data
-import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString, encodeString)
 import System.Directory (createDirectoryIfMissing, doesDirectoryExist, removeDirectoryRecursive, renameDirectory)
 import System.FilePath ((</>), takeFileName)
-import Turtle.Prelude (ls)
-import Turtle.Shell (fold)
 
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirFilePath(..),
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
 import Game.FMAssistant.Unpack (unpack)
+import Game.FMAssistant.Util (listDirectory)
 
 -- | Kits live in a pre-determined subdirectory of the game's user
 -- directory. This function constructs the path to that subdirectory,
@@ -141,15 +139,14 @@ unpackKitPack archive =
      fixUp unpackedArchive
      -- Currently the validation check is quite simple: the archive must
      -- contain just a single directory and no top-level files.
-     fold (ls (Filesystem.decodeString unpackedArchive)) ((,) <$> Fold.length <*> Fold.head) >>= \case
+     ls <- listDirectory unpackedArchive
+     case Fold.fold ((,) <$> Fold.length <*> Fold.head) ls of
        (0, _) -> throwM $ EmptyArchive archive
-       (1, Just ffp) ->
-         let fp = Filesystem.encodeString ffp
-         in
-           do isDir <- liftIO $ doesDirectoryExist fp
-              if isDir
-                 then return (rkey, fp)
-                 else throwM $ SingleFileArchive archive
+       (1, Just fp) ->
+        do isDir <- liftIO $ doesDirectoryExist fp
+           if isDir
+              then return (rkey, fp)
+              else throwM $ SingleFileArchive archive
        _ -> throwM $ MultipleFilesOrDirectories archive
 
 -- | Attempt to fix up common issues with kit packs.

@@ -41,7 +41,6 @@ Library
                       , tar
                       , temporary
                       , text
-                      , turtle
                       , transformers
 
 Executable fm-assistant
@@ -67,7 +66,6 @@ Executable fm-assistant
                       , tar
                       , temporary
                       , text
-                      , turtle
                       , transformers
   Other-Modules:        Game.FMAssistant
                       , Game.FMAssistant.FM16
@@ -113,7 +111,6 @@ Test-Suite spec
                       , tar
                       , temporary
                       , text
-                      , turtle
                       , transformers
   Other-Modules:        Game.FMAssistant
                       , Game.FMAssistant.FM16

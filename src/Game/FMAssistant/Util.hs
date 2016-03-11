@@ -17,14 +17,15 @@ Helpful functions and combinators.
 module Game.FMAssistant.Util
        ( defaultUserDir
        , createTempDirectory
+       , listDirectory
        , executeQuietly
        ) where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Resource (MonadResource, ReleaseKey, allocate)
-import System.Directory (getHomeDirectory, getTemporaryDirectory, removeDirectoryRecursive)
+import System.Directory (getHomeDirectory, getDirectoryContents, getTemporaryDirectory, removeDirectoryRecursive)
 import System.Exit (ExitCode)
-import System.FilePath ((</>))
+import System.FilePath ((</>), combine)
 import qualified System.IO.Temp as System (createTempDirectory)
 import System.Process.Streaming (execute, exitCode, piped, proc)
 
@@ -48,6 +49,14 @@ createTempDirectory template =
   do tmpDir <- liftIO getTemporaryDirectory
      allocate (System.createTempDirectory tmpDir template)
               (\tmp -> removeDirectoryRecursive tmp)
+
+-- | List a directory, excluding "." and "..". Note that the returned
+-- 'FilePath's include the full directory path.
+listDirectory :: (MonadIO m) => FilePath -> m [FilePath]
+listDirectory path = liftIO $
+  do ls <- filter f <$> getDirectoryContents path
+     return $ map (combine path) ls
+  where f filename = filename /= "." && filename /= ".."
 
 -- | Execute an external program and return the 'ExitCode'. Both
 -- stderr and stdout are discarded.
