@@ -47,7 +47,7 @@ import Game.FMAssistant.Util (executeQuietly, mktempdir)
 --
 -- If, based on the filename's extension, the archive format is
 -- unsupported, this function returns 'Nothing'.
-unpackerFor :: (MonadIO m) => ArchiveFilePath -> m (Maybe (ArchiveFilePath -> Managed FilePath))
+unpackerFor :: (MonadIO m) => ArchiveFilePath -> m (Maybe (ArchiveFilePath -> FilePath -> m ()))
 unpackerFor ar =
   identifyArchive ar >>= \case
     Just Zip -> return $ Just unpackZip
@@ -67,50 +67,45 @@ unpackerFor ar =
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpack :: ArchiveFilePath -> Managed FilePath
-unpack ar =
+unpack ar@(ArchiveFilePath fn) =
   unpackerFor ar >>= \case
-    Just unpacker -> unpacker ar
     Nothing -> throw $ UnsupportedArchive ar
+    Just unpacker ->
+      do tmpDir <- mktempdir (takeBaseName fn)
+         unpacker ar tmpDir
+         return tmpDir
 
--- | Unpack a ZIP archive to a temporary directory, whose path is
--- returned.
---
--- N.B. that the temporary directory is 'Managed', so it will be
--- automatically removed when the managed action terminates!
+-- | Unpack a ZIP archive to the given directory.
 --
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
-unpackZip :: ArchiveFilePath -> Managed FilePath
-unpackZip ar@(ArchiveFilePath zipFile) =
+unpackZip :: (MonadIO m) => ArchiveFilePath -> FilePath -> m ()
+unpackZip ar@(ArchiveFilePath zipFile) unpackDir =
   let unzipCmd :: FilePath
       unzipCmd = "unzip"
+      args :: [String]
+      args = [zipFile, "-d", unpackDir]
   in
-    do tmpDir <- mktempdir (takeBaseName zipFile)
-       let args = [zipFile, "-d", tmpDir]
-       exitCode <- executeQuietly unzipCmd args
-       if exitCode /= ExitSuccess
-          then throw $ UnzipError ar (unzipCmd <> unwords args ) exitCode
-          else return tmpDir
+    do exitCode <- executeQuietly unzipCmd args
+       if exitCode == ExitSuccess
+          then return ()
+          else throw $ UnzipError ar (unzipCmd <> unwords args ) exitCode
 
--- | Unpack a RAR archive to a temporary directory, whose path is
--- returned.
---
--- N.B. that the temporary directory is 'Managed', so it will be
--- automatically removed when the managed action terminates!
+-- | Unpack a RAR archive to the given directory.
 --
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
-unpackRar :: ArchiveFilePath -> Managed FilePath
-unpackRar ar@(ArchiveFilePath rarFile) =
+unpackRar :: (MonadIO m) => ArchiveFilePath -> FilePath -> m ()
+unpackRar ar@(ArchiveFilePath rarFile) unpackDir =
   let unrarCmd :: FilePath
       unrarCmd = "unrar"
+      args :: [String]
+      args = ["x", "-v", "-y", "-r", rarFile, unpackDir]
   in
-    do tmpDir <- mktempdir (takeBaseName rarFile)
-       let args = ["x", "-v", "-y", "-r", rarFile,  tmpDir]
-       exitCode <- executeQuietly unrarCmd args
-       if exitCode /= ExitSuccess
-          then throw $ UnrarError ar (unrarCmd <> unwords args ) exitCode
-          else return tmpDir
+    do exitCode <- executeQuietly unrarCmd args
+       if exitCode == ExitSuccess
+          then return ()
+          else throw $ UnrarError ar (unrarCmd <> unwords args ) exitCode
 
 data UnpackException
   = UnsupportedArchive ArchiveFilePath -- ^ The archive file type is unsupported

@@ -17,6 +17,7 @@ import Paths_fm_assistant
 
 import Game.FMAssistant.Types (ArchiveFilePath(..))
 import Game.FMAssistant.Unpack
+import Game.FMAssistant.Util (mktempdir)
 
 unsupportedFile :: IO ArchiveFilePath
 unsupportedFile = ArchiveFilePath <$> getDataFileName "data/test/test.tar"
@@ -42,66 +43,78 @@ spec =
        do it "should unpack a zip file to a temporary directory" $
             runManaged $
               do zf <- liftIO zipFile
-                 tmpDir <- unpackZip zf
+                 tmpDir <- mktempdir "UnpackSpec"
+                 unpackZip zf tmpDir
                  sysTmpDir <- liftIO getTemporaryDirectory
                  liftIO $ isPrefixOf sysTmpDir tmpDir `shouldBe` True
           it "should unpack a.txt from the test file" $
             runManaged $
               do zf <- liftIO zipFile
-                 tmpDir <- unpackZip zf
+                 tmpDir <- mktempdir "UnpackSpec"
+                 unpackZip zf tmpDir
                  liftIO $ doesFileExist (tmpDir </> "a.txt") `shouldReturn` True
           it "should unpack b.txt from the test file" $
             runManaged $
               do zf <- liftIO zipFile
-                 tmpDir <- unpackZip zf
+                 tmpDir <- mktempdir "UnpackSpec"
+                 unpackZip zf tmpDir
                  liftIO $ doesFileExist (tmpDir </> "b.txt") `shouldReturn` True
           it "should unpack foo/c.txt from the test file" $
             runManaged $
               do zf <- liftIO zipFile
-                 tmpDir <- unpackZip zf
+                 tmpDir <- mktempdir "UnpackSpec"
+                 unpackZip zf tmpDir
                  liftIO $ doesFileExist (tmpDir </> "foo" </> "c.txt") `shouldReturn` True
           it "should fail when used on a damaged ZIP file" $
             (runManaged $
                do zf <- liftIO damagedZipFile
-                  void $ unpackZip zf) `shouldThrow` anyUnpackException
+                  tmpDir <- mktempdir "UnpackSpec"
+                  unpackZip zf tmpDir) `shouldThrow` anyUnpackException
           it "should fail when used on a RAR file" $
             (runManaged $
                do rf <- liftIO rarFile
-                  void $ unpackZip rf) `shouldThrow` anyUnpackException
+                  tmpDir <- mktempdir "UnpackSpec"
+                  unpackZip rf tmpDir) `shouldThrow` anyUnpackException
           it "should fail when the file doesn't exist" $
-            (runManaged $ void $ unpackZip (ArchiveFilePath "/does/not/exist.zip")) `shouldThrow` anyUnpackException
+            (runManaged $ mktempdir "UnpackSpec" >>= unpackZip (ArchiveFilePath "/does/not/exist.zip")) `shouldThrow` anyUnpackException
      describe "unpackRar" $
        do it "should unpack a rar file to a temporary directory" $
             runManaged $
               do rf <- liftIO rarFile
-                 tmpDir <- unpackRar rf
+                 tmpDir <- mktempdir "UnpackSpec"
+                 unpackRar rf tmpDir
                  sysTmpDir <- liftIO getTemporaryDirectory
                  liftIO $ isPrefixOf sysTmpDir tmpDir `shouldBe` True
           it "should unpack a.txt from the test file" $
             runManaged $
               do rf <- liftIO rarFile
-                 tmpDir <- unpackRar rf
+                 tmpDir <- mktempdir "UnpackSpec"
+                 unpackRar rf tmpDir
                  liftIO $ doesFileExist (tmpDir </> "a.txt") `shouldReturn` True
           it "should unpack b.txt from the test file" $
             runManaged $
               do rf <- liftIO rarFile
-                 tmpDir <- unpackRar rf
+                 tmpDir <- mktempdir "UnpackSpec"
+                 unpackRar rf tmpDir
                  liftIO $ doesFileExist (tmpDir </> "b.txt") `shouldReturn` True
           it "should unpack foo/c.txt from the test file" $
             runManaged $
               do rf <- liftIO rarFile
-                 tmpDir <- unpackRar rf
+                 tmpDir <- mktempdir "UnpackSpec"
+                 unpackRar rf tmpDir
                  liftIO $ doesFileExist (tmpDir </> "foo" </> "c.txt") `shouldReturn` True
           it "should fail when used on a damaged RAR file" $
             (runManaged $
                do rf <- liftIO damagedRarFile
-                  void $ unpackRar rf) `shouldThrow` anyUnpackException
+                  tmpDir <- mktempdir "UnpackSpec"
+                  unpackRar rf tmpDir) `shouldThrow` anyUnpackException
           it "should fail when used on a ZIP file" $
             (runManaged $
                do zf <- liftIO zipFile
-                  void $ unpackRar zf) `shouldThrow` anyUnpackException
+                  tmpDir <- mktempdir "UnpackSpec"
+                  unpackRar zf tmpDir) `shouldThrow` anyUnpackException
           it "should fail when the file doesn't exist" $
-            (runManaged $ void $ unpackRar (ArchiveFilePath "/does/not/exist.rar")) `shouldThrow` anyUnpackException
+            (runManaged $ mktempdir "UnpackSpec" >>= unpackRar (ArchiveFilePath "/does/not/exist.rar")) `shouldThrow` anyUnpackException
      describe "unpack" $
        do context "on RAR files" $
             do it "should unpack the file to a temporary directory" $
@@ -162,54 +175,62 @@ spec =
        do context "on files with a \"rar\" extension" $
             do it "should unpack a rar file to a temporary directory" $
                  do rf <- liftIO rarFile
-                    Just unp <- unpackerFor rf
                     runManaged $
-                      do tmpDir <- unp rf
+                      do Just unp <- unpackerFor rf
+                         tmpDir <- mktempdir "UnpackSpec"
+                         unp rf tmpDir
                          sysTmpDir <- liftIO getTemporaryDirectory
                          liftIO $ isPrefixOf sysTmpDir tmpDir `shouldBe` True
                it "should unpack a.txt from the test file" $
                  do rf <- liftIO rarFile
-                    Just unp <- unpackerFor rf
                     runManaged $
-                      do tmpDir <- unp rf
+                      do Just unp <- unpackerFor rf
+                         tmpDir <- mktempdir "UnpackSpec"
+                         unp rf tmpDir
                          liftIO $ doesFileExist (tmpDir </> "a.txt") `shouldReturn` True
                it "should unpack b.txt from the test file" $
                  do rf <- liftIO rarFile
-                    Just unp <- unpackerFor rf
                     runManaged $
-                      do tmpDir <- unp rf
+                      do Just unp <- unpackerFor rf
+                         tmpDir <- mktempdir "UnpackSpec"
+                         unp rf tmpDir
                          liftIO $ doesFileExist (tmpDir </> "b.txt") `shouldReturn` True
                it "should unpack foo/c.txt from the test file" $
                  do rf <- liftIO rarFile
-                    Just unp <- unpackerFor rf
                     runManaged $
-                      do tmpDir <- unp rf
+                      do Just unp <- unpackerFor rf
+                         tmpDir <- mktempdir "UnpackSpec"
+                         unp rf tmpDir
                          liftIO $ doesFileExist (tmpDir </> "foo" </> "c.txt") `shouldReturn` True
           context "on files with a \"zip\" extension" $
             do it "should unpack a zip file to a temporary directory" $
                  do zf <- liftIO zipFile
-                    Just unp <- unpackerFor zf
                     runManaged $
-                      do tmpDir <- unp zf
+                      do Just unp <- unpackerFor zf
+                         tmpDir <- mktempdir "UnpackSpec"
+                         unp zf tmpDir
                          sysTmpDir <- liftIO getTemporaryDirectory
                          liftIO $ isPrefixOf sysTmpDir tmpDir `shouldBe` True
                it "should unpack a.txt from the test file" $
                  do zf <- liftIO zipFile
-                    Just unp <- unpackerFor zf
                     runManaged $
-                      do tmpDir <- unp zf
+                      do Just unp <- unpackerFor zf
+                         tmpDir <- mktempdir "UnpackSpec"
+                         unp zf tmpDir
                          liftIO $ doesFileExist (tmpDir </> "a.txt") `shouldReturn` True
                it "should unpack b.txt from the test file" $
                  do zf <- liftIO zipFile
-                    Just unp <- unpackerFor zf
                     runManaged $
-                      do tmpDir <- unp zf
+                      do Just unp <- unpackerFor zf
+                         tmpDir <- mktempdir "UnpackSpec"
+                         unp zf tmpDir
                          liftIO $ doesFileExist (tmpDir </> "b.txt") `shouldReturn` True
                it "should unpack foo/c.txt from the test file" $
                  do zf <- liftIO zipFile
-                    Just unp <- unpackerFor zf
                     runManaged $
-                      do tmpDir <- unp zf
+                      do Just unp <- unpackerFor zf
+                         tmpDir <- mktempdir "UnpackSpec"
+                         unp zf tmpDir
                          liftIO $ doesFileExist (tmpDir </> "foo" </> "c.txt") `shouldReturn` True
           context "on unsupported archive types" $
             it "should return 'Nothing'" $
