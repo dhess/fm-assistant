@@ -4,17 +4,12 @@ module Game.FMAssistant.FM16Spec
        ( spec
        ) where
 
-import Prelude hiding (FilePath)
-import Filesystem.Path.CurrentOS ((</>), FilePath)
-import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString)
-import qualified System.Directory as Directory (getHomeDirectory)
+import System.Directory (getHomeDirectory)
+import System.FilePath ((</>))
 import Test.Hspec
 
 import Game.FMAssistant.Types (UserDirFilePath(..), Version(..))
 import Game.FMAssistant.FM16
-
-getHomeDir :: IO FilePath
-getHomeDir = Filesystem.decodeString <$> Directory.getHomeDirectory
 
 spec :: Spec
 spec =
@@ -23,5 +18,5 @@ spec =
          version `shouldBe` Version "Football Manager 2016"
      describe "defaultUserDir" $
        it "is the expected value" $
-         do homeDir <- getHomeDir
+         do homeDir <- getHomeDirectory
             defaultUserDir `shouldReturn` UserDirFilePath (homeDir </> "Documents/Sports Interactive/Football Manager 2016")

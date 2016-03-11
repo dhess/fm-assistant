@@ -5,14 +5,10 @@ module Util
        ( anyFailure
        , catchesMost
        , catchesMostQuietly
-       , toFpList
        ) where
 
-import Prelude hiding (FilePath)
 import Control.Exception (IOException)
 import Control.Monad.Catch (Handler(..), catches)
-import Filesystem.Path.CurrentOS (FilePath)
-import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString, encodeString)
 import Game.FMAssistant.Mod.Kits (KitPackException(..))
 import Game.FMAssistant.Types (ArchiveFilePath(..), UserDirFilePath(..))
 import Game.FMAssistant.Unpack (UnpackException(..))
@@ -55,32 +51,26 @@ handleIOQuietly e =
     Just fn -> putStrLn fn
     _ -> return () -- Probably an error, pass on it for now.
 
-putFpLn :: FilePath -> IO ()
-putFpLn = putStrLn . Filesystem.encodeString
-
 handleUnpackQuietly :: UnpackException -> IO ()
 handleUnpackQuietly (UnsupportedArchive (ArchiveFilePath fp)) =
-  putFpLn fp
+  putStrLn fp
 handleUnpackQuietly (UnzipError (ArchiveFilePath fp) _ _) =
-  putFpLn fp
+  putStrLn fp
 handleUnpackQuietly (UnrarError (ArchiveFilePath fp) _ _) =
-  putFpLn fp
+  putStrLn fp
 
 handleKitPackQuietly :: KitPackException -> IO ()
 handleKitPackQuietly (NoSuchUserDirectory (UserDirFilePath fp)) =
-  putFpLn fp
+  putStrLn fp
 handleKitPackQuietly (EmptyArchive (ArchiveFilePath fp)) =
-  putFpLn fp
+  putStrLn fp
 handleKitPackQuietly (SingleFileArchive (ArchiveFilePath fp)) =
-  putFpLn fp
+  putStrLn fp
 handleKitPackQuietly (MultipleFilesOrDirectories (ArchiveFilePath fp)) =
-  putFpLn fp
+  putStrLn fp
 
 catchesMostQuietly :: IO () -> IO ()
 catchesMostQuietly action =
   catches action most
   where
     most = [Handler handleIOQuietly, Handler handleUnpackQuietly, Handler handleKitPackQuietly]
-
-toFpList :: [String] -> [FilePath]
-toFpList = map Filesystem.decodeString

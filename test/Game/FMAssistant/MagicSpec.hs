@@ -5,8 +5,6 @@ module Game.FMAssistant.MagicSpec
        ( spec
        ) where
 
-import Prelude hiding (FilePath)
-import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString)
 import Test.Hspec
 import Paths_fm_assistant
 
@@ -14,31 +12,31 @@ import Game.FMAssistant.Types (ArchiveFilePath(..))
 import Game.FMAssistant.Magic
 
 unsupportedFile :: IO ArchiveFilePath
-unsupportedFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/test.tar"
+unsupportedFile = ArchiveFilePath <$> getDataFileName "data/test/test.tar"
 
 zipFile :: IO ArchiveFilePath
-zipFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/test.zip"
+zipFile = ArchiveFilePath <$> getDataFileName "data/test/test.zip"
 
 damagedZipFile :: IO ArchiveFilePath
-damagedZipFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/damaged-test.zip"
+damagedZipFile = ArchiveFilePath <$> getDataFileName "data/test/damaged-test.zip"
 
 zipFileWithRarExtension :: IO ArchiveFilePath
-zipFileWithRarExtension = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/test_is_actually_zip.rar"
+zipFileWithRarExtension = ArchiveFilePath <$> getDataFileName "data/test/test_is_actually_zip.rar"
 
 zipFileWithNoExtension :: IO ArchiveFilePath
-zipFileWithNoExtension = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/test_zip"
+zipFileWithNoExtension = ArchiveFilePath <$> getDataFileName "data/test/test_zip"
 
 rarFile :: IO ArchiveFilePath
-rarFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/test.rar"
+rarFile = ArchiveFilePath <$> getDataFileName "data/test/test.rar"
 
 damagedRarFile :: IO ArchiveFilePath
-damagedRarFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/damaged-test.rar"
+damagedRarFile = ArchiveFilePath <$> getDataFileName "data/test/damaged-test.rar"
 
 rarFileWithZipExtension :: IO ArchiveFilePath
-rarFileWithZipExtension = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/test_is_actually_rar.zip"
+rarFileWithZipExtension = ArchiveFilePath <$> getDataFileName "data/test/test_is_actually_rar.zip"
 
 rarFileWithNoExtension :: IO ArchiveFilePath
-rarFileWithNoExtension = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/test_rar"
+rarFileWithNoExtension = ArchiveFilePath <$> getDataFileName "data/test/test_rar"
 
 spec :: Spec
 spec =

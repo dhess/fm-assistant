@@ -4,10 +4,8 @@ module Game.FMAssistant.Mod.KitsSpec
        ( spec
        ) where
 
-import Prelude hiding (FilePath)
-import Filesystem.Path.CurrentOS ((</>), FilePath)
-import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString, encodeString)
-import qualified System.Directory as Directory (doesFileExist)
+import System.Directory (doesFileExist)
+import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
 import Test.Hspec
 import Paths_fm_assistant
@@ -18,37 +16,34 @@ import Game.FMAssistant.Mod.Kits
 
 withTmpUserDir :: (UserDirFilePath -> IO a) -> IO a
 withTmpUserDir action = withSystemTempDirectory "KitSpec" $ \dir ->
-  action (UserDirFilePath $ Filesystem.decodeString dir)
-
-doesFileExist :: FilePath -> IO Bool
-doesFileExist fp = Directory.doesFileExist (Filesystem.encodeString fp)
+  action (UserDirFilePath dir)
 
 unsupportedFile :: IO ArchiveFilePath
-unsupportedFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/test.tar"
+unsupportedFile = ArchiveFilePath <$> getDataFileName "data/test/test.tar"
 
 sillyKitsZip :: IO ArchiveFilePath
-sillyKitsZip = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/Silly kits.zip"
+sillyKitsZip = ArchiveFilePath <$> getDataFileName "data/test/Silly kits.zip"
 
 dummyPackV10Zip :: IO ArchiveFilePath
-dummyPackV10Zip = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/Dummy kit pack v1.0.zip"
+dummyPackV10Zip = ArchiveFilePath <$> getDataFileName "data/test/Dummy kit pack v1.0.zip"
 
 dummyPackV11Zip :: IO ArchiveFilePath
-dummyPackV11Zip = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/Dummy kit pack v1.1.zip"
+dummyPackV11Zip = ArchiveFilePath <$> getDataFileName "data/test/Dummy kit pack v1.1.zip"
 
 malformedPackZip :: IO ArchiveFilePath
-malformedPackZip = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/Malformed dummy kit pack v1.0.zip"
+malformedPackZip = ArchiveFilePath <$> getDataFileName "data/test/Malformed dummy kit pack v1.0.zip"
 
 dummyPackV10Rar :: IO ArchiveFilePath
-dummyPackV10Rar = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/Dummy kit pack v1.0.rar"
+dummyPackV10Rar = ArchiveFilePath <$> getDataFileName "data/test/Dummy kit pack v1.0.rar"
 
 malformedPackRar :: IO ArchiveFilePath
-malformedPackRar = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/Malformed dummy kit pack v1.0.rar"
+malformedPackRar = ArchiveFilePath <$> getDataFileName "data/test/Malformed dummy kit pack v1.0.rar"
 
 damagedZipFile :: IO ArchiveFilePath
-damagedZipFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/damaged-test.zip"
+damagedZipFile = ArchiveFilePath <$> getDataFileName "data/test/damaged-test.zip"
 
 damagedRarFile :: IO ArchiveFilePath
-damagedRarFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/damaged-test.rar"
+damagedRarFile = ArchiveFilePath <$> getDataFileName "data/test/damaged-test.rar"
 
 anyUnpackException :: Selector UnpackException
 anyUnpackException = const True

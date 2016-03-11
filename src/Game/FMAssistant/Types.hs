@@ -16,7 +16,6 @@ Portability : non-portable
 module Game.FMAssistant.Types
        ( -- * Types
          Version(..)
-       , versionToFilePath
        , UserDirFilePath(..)
        , ArchiveFilePath(..)
        , archiveName
@@ -26,26 +25,18 @@ module Game.FMAssistant.Types
        , fmAssistantExceptionFromException
        ) where
 
-import Prelude hiding (FilePath)
 import Control.Exception (Exception, SomeException, fromException, toException)
-import Data.Text (Text)
-import qualified Data.Text as T (unpack)
 import Data.Data
-import Filesystem.Path.CurrentOS (FilePath)
-import qualified Filesystem.Path.CurrentOS as Filesystem (basename, encodeString, fromText)
+import System.FilePath (takeBaseName)
 
 -- | Game's name and version, e.g., "Football Manager 2016". This is
 -- often used as the component of a pathname.
 newtype Version =
-  Version {_version :: Text}
+  Version {_version :: FilePath}
   deriving (Eq,Ord,Data,Typeable)
 
 instance Show Version where
-  show = T.unpack . _version
-
--- | Convert a 'Version' value to a 'FilePath'.
-versionToFilePath :: Version -> FilePath
-versionToFilePath = Filesystem.fromText . _version
+  show = _version
 
 -- | The type for paths which point to a user directory, where game
 -- saves, kits, and most other mods, are stored.
@@ -54,7 +45,7 @@ newtype UserDirFilePath =
   deriving (Eq,Ord,Data,Typeable)
 
 instance Show UserDirFilePath where
-  show = Filesystem.encodeString . _userDirFilePath
+  show = _userDirFilePath
 
 -- | The type for paths which point to an archive file (ZIP, RAR,
 -- etc.).
@@ -63,7 +54,7 @@ newtype ArchiveFilePath =
   deriving (Eq,Ord,Data,Typeable)
 
 instance Show ArchiveFilePath where
-  show = Filesystem.encodeString . _archiveFilePath
+  show = _archiveFilePath
 
 -- | Return the name of an archive file; that is, given an
 -- 'ArchiveFilePath', strip off the pathname portion and the trailing
@@ -71,9 +62,9 @@ instance Show ArchiveFilePath where
 --
 -- >>> :set -XOverloadedStrings
 -- >>> archiveName $ ArchiveFilePath "/foo/bar/baz.rar"
--- FilePath "baz"
+-- "baz"
 archiveName :: ArchiveFilePath -> FilePath
-archiveName = Filesystem.basename . _archiveFilePath
+archiveName = takeBaseName . _archiveFilePath
 
 -- | The root exception type for @fm-assistant@.
 data SomeFMAssistantException =

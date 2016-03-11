@@ -5,40 +5,33 @@ module Game.FMAssistant.UnpackSpec
        ( spec
        ) where
 
-import Prelude hiding (FilePath)
 import Control.Monad (void)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Managed (runManaged)
+import Data.List (isPrefixOf)
 import Data.Maybe (isNothing)
-import Filesystem.Path.CurrentOS ((</>), FilePath)
-import qualified Filesystem.Path.CurrentOS as Filesystem (commonPrefix, decodeString, encodeString)
-import qualified System.Directory as Directory (doesFileExist, getTemporaryDirectory)
+import System.Directory (doesFileExist, getTemporaryDirectory)
+import System.FilePath ((</>))
 import Test.Hspec
 import Paths_fm_assistant
 
 import Game.FMAssistant.Types (ArchiveFilePath(..))
 import Game.FMAssistant.Unpack
 
-systemTmpDir :: IO FilePath
-systemTmpDir = Filesystem.decodeString <$> Directory.getTemporaryDirectory
-
-doesFileExist :: FilePath -> IO Bool
-doesFileExist fp = Directory.doesFileExist (Filesystem.encodeString fp)
-
 unsupportedFile :: IO ArchiveFilePath
-unsupportedFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/test.tar"
+unsupportedFile = ArchiveFilePath <$> getDataFileName "data/test/test.tar"
 
 zipFile :: IO ArchiveFilePath
-zipFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/test.zip"
+zipFile = ArchiveFilePath <$> getDataFileName "data/test/test.zip"
 
 damagedZipFile :: IO ArchiveFilePath
-damagedZipFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/damaged-test.zip"
+damagedZipFile = ArchiveFilePath <$> getDataFileName "data/test/damaged-test.zip"
 
 rarFile :: IO ArchiveFilePath
-rarFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/test.rar"
+rarFile = ArchiveFilePath <$> getDataFileName "data/test/test.rar"
 
 damagedRarFile :: IO ArchiveFilePath
-damagedRarFile = ArchiveFilePath . Filesystem.decodeString <$> getDataFileName "data/test/damaged-test.rar"
+damagedRarFile = ArchiveFilePath <$> getDataFileName "data/test/damaged-test.rar"
 
 anyUnpackException :: Selector UnpackException
 anyUnpackException = const True
@@ -50,8 +43,8 @@ spec =
             runManaged $
               do zf <- liftIO zipFile
                  tmpDir <- unpackZip zf
-                 sysTmpDir <- liftIO systemTmpDir
-                 liftIO $ Filesystem.commonPrefix [sysTmpDir, tmpDir] `shouldBe` sysTmpDir
+                 sysTmpDir <- liftIO getTemporaryDirectory
+                 liftIO $ isPrefixOf sysTmpDir tmpDir `shouldBe` True
           it "should unpack a.txt from the test file" $
             runManaged $
               do zf <- liftIO zipFile
@@ -82,8 +75,8 @@ spec =
             runManaged $
               do rf <- liftIO rarFile
                  tmpDir <- unpackRar rf
-                 sysTmpDir <- liftIO systemTmpDir
-                 liftIO $ Filesystem.commonPrefix [sysTmpDir, tmpDir] `shouldBe` sysTmpDir
+                 sysTmpDir <- liftIO getTemporaryDirectory
+                 liftIO $ isPrefixOf sysTmpDir tmpDir `shouldBe` True
           it "should unpack a.txt from the test file" $
             runManaged $
               do rf <- liftIO rarFile
@@ -115,8 +108,8 @@ spec =
                  runManaged $
                    do rf <- liftIO rarFile
                       tmpDir <- unpack rf
-                      sysTmpDir <- liftIO systemTmpDir
-                      liftIO $ Filesystem.commonPrefix [sysTmpDir, tmpDir] `shouldBe` sysTmpDir
+                      sysTmpDir <- liftIO getTemporaryDirectory
+                      liftIO $ isPrefixOf sysTmpDir tmpDir `shouldBe` True
                it "should unpack a.txt from the test file" $
                  runManaged $
                    do rf <- liftIO rarFile
@@ -141,8 +134,8 @@ spec =
                  runManaged $
                    do zf <- liftIO zipFile
                       tmpDir <- unpack zf
-                      sysTmpDir <- liftIO systemTmpDir
-                      liftIO $ Filesystem.commonPrefix [sysTmpDir, tmpDir] `shouldBe` sysTmpDir
+                      sysTmpDir <- liftIO getTemporaryDirectory
+                      liftIO $ isPrefixOf sysTmpDir tmpDir `shouldBe` True
                it "should unpack a.txt from the test file" $
                  runManaged $
                    do zf <- liftIO zipFile
@@ -172,8 +165,8 @@ spec =
                     Just unp <- unpackerFor rf
                     runManaged $
                       do tmpDir <- unp rf
-                         sysTmpDir <- liftIO systemTmpDir
-                         liftIO $ Filesystem.commonPrefix [sysTmpDir, tmpDir] `shouldBe` sysTmpDir
+                         sysTmpDir <- liftIO getTemporaryDirectory
+                         liftIO $ isPrefixOf sysTmpDir tmpDir `shouldBe` True
                it "should unpack a.txt from the test file" $
                  do rf <- liftIO rarFile
                     Just unp <- unpackerFor rf
@@ -198,8 +191,8 @@ spec =
                     Just unp <- unpackerFor zf
                     runManaged $
                       do tmpDir <- unp zf
-                         sysTmpDir <- liftIO systemTmpDir
-                         liftIO $ Filesystem.commonPrefix [sysTmpDir, tmpDir] `shouldBe` sysTmpDir
+                         sysTmpDir <- liftIO getTemporaryDirectory
+                         liftIO $ isPrefixOf sysTmpDir tmpDir `shouldBe` True
                it "should unpack a.txt from the test file" $
                  do zf <- liftIO zipFile
                     Just unp <- unpackerFor zf

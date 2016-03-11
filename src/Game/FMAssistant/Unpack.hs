@@ -14,7 +14,7 @@ Functions for unpacking the various archive types (RAR, ZIP, etc.).
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE Trustworthy #-}
+{-# LANGUAGE Safe #-}
 
 module Game.FMAssistant.Unpack
        ( -- * Unpacking actions
@@ -27,18 +27,13 @@ module Game.FMAssistant.Unpack
        , UnpackException(..)
        ) where
 
-import Prelude hiding (FilePath)
 import Control.Exception (Exception(..), throw)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Managed.Safe (Managed)
 import Data.Data
 import Data.Monoid ((<>))
-import Data.Text (Text)
-import qualified Data.Text as T (intercalate)
-import Filesystem.Path.CurrentOS (FilePath)
-import qualified Filesystem.Path.CurrentOS as Filesystem (basename)
 import System.Exit (ExitCode(..))
-import Turtle (format, fp)
+import System.FilePath (takeBaseName)
 
 import Game.FMAssistant.Magic (Magic(..), identifyArchive)
 import Game.FMAssistant.Types
@@ -87,14 +82,14 @@ unpack ar =
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpackZip :: ArchiveFilePath -> Managed FilePath
 unpackZip ar@(ArchiveFilePath zipFile) =
-  let unzipCmd :: Text
+  let unzipCmd :: FilePath
       unzipCmd = "unzip"
   in
-    do tmpDir <- mktempdir (format fp $ Filesystem.basename zipFile)
-       let args = [format fp zipFile, "-d", format fp tmpDir]
+    do tmpDir <- mktempdir (takeBaseName zipFile)
+       let args = [zipFile, "-d", tmpDir]
        exitCode <- executeQuietly unzipCmd args
        if exitCode /= ExitSuccess
-          then throw $ UnzipError ar (unzipCmd <> T.intercalate " " args ) exitCode
+          then throw $ UnzipError ar (unzipCmd <> unwords args ) exitCode
           else return tmpDir
 
 -- | Unpack a RAR archive to a temporary directory, whose path is
@@ -107,26 +102,26 @@ unpackZip ar@(ArchiveFilePath zipFile) =
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpackRar :: ArchiveFilePath -> Managed FilePath
 unpackRar ar@(ArchiveFilePath rarFile) =
-  let unrarCmd :: Text
+  let unrarCmd :: FilePath
       unrarCmd = "unrar"
   in
-    do tmpDir <- mktempdir (format fp $ Filesystem.basename rarFile)
-       let args = ["x", "-v", "-y", "-r", format fp rarFile,  format fp tmpDir]
+    do tmpDir <- mktempdir (takeBaseName rarFile)
+       let args = ["x", "-v", "-y", "-r", rarFile,  tmpDir]
        exitCode <- executeQuietly unrarCmd args
        if exitCode /= ExitSuccess
-          then throw $ UnrarError ar (unrarCmd <> T.intercalate " " args ) exitCode
+          then throw $ UnrarError ar (unrarCmd <> unwords args ) exitCode
           else return tmpDir
 
 data UnpackException
   = UnsupportedArchive ArchiveFilePath -- ^ The archive file type is unsupported
-  | UnzipError ArchiveFilePath Text ExitCode -- ^ The unzip command
-                                             -- failed; failed command
-                                             -- line and process exit
-                                             -- code are provided
-  | UnrarError ArchiveFilePath Text ExitCode -- ^ The unrar command
-                                             -- failed; failed command
-                                             -- line and process exit
-                                             -- code are provided
+  | UnzipError ArchiveFilePath String ExitCode -- ^ The unzip command
+                                                   -- failed; failed command
+                                                   -- line and process exit
+                                                   -- code are provided
+  | UnrarError ArchiveFilePath String ExitCode -- ^ The unrar command
+                                                   -- failed; failed command
+                                                   -- line and process exit
+                                                   -- code are provided
   deriving (Eq,Typeable)
 
 instance Show UnpackException where

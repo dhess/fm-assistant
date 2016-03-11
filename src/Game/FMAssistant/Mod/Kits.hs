@@ -22,16 +22,16 @@ module Game.FMAssistant.Mod.Kits
        , KitPackException(..)
        ) where
 
-import Prelude hiding (FilePath)
 import Control.Exception (Exception(..), throw)
 import qualified Control.Foldl as Fold (length, head)
 import Control.Monad (unless, void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Managed.Safe (Managed, runManaged)
 import Data.Data
-import Filesystem.Path.CurrentOS ((</>), FilePath)
-import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString, filename)
-import Turtle.Prelude (ls, mktree, mv, rmtree, testdir)
+import qualified Filesystem.Path.CurrentOS as Filesystem (decodeString, encodeString)
+import System.Directory (createDirectoryIfMissing, doesDirectoryExist, removeDirectoryRecursive, renameDirectory)
+import System.FilePath ((</>), takeFileName)
+import Turtle.Prelude (ls)
 import Turtle.Shell (fold)
 
 import Game.FMAssistant.Types
@@ -45,7 +45,7 @@ import Game.FMAssistant.Unpack (unpack)
 --
 -- >>> :set -XOverloadedStrings
 -- >>> kitPath $ UserDirFilePath "/home/dhess/Football Manager 2016"
--- FilePath "/home/dhess/Football Manager 2016/graphics/kits"
+-- "/home/dhess/Football Manager 2016/graphics/kits"
 kitPath :: UserDirFilePath -> FilePath
 kitPath ufp = _userDirFilePath ufp </> "graphics" </> "kits"
 
@@ -100,7 +100,7 @@ installKitPack userDir archive = liftIO $
   -- exist (and it doesn't by default), but we should not create the
   -- user directory if that doesn't exist, as that probably means it's
   -- wrong, or that the game isn't installed.
-  do userDirExists <- testdir $ _userDirFilePath userDir
+  do userDirExists <- doesDirectoryExist (_userDirFilePath userDir)
      unless userDirExists $
        throw $ NoSuchUserDirectory userDir
      runManaged $
@@ -108,20 +108,20 @@ installKitPack userDir archive = liftIO $
           -- Remove the existing installed kit pack with the same
           -- name, if it exists.
           --
-          -- Note that we use 'Filesystem.filename' to extract the
-          -- directory name under which the kit pack files live
-          -- (i.e., the parent directory). Technically this is a
-          -- directory name, not a filename, as 'findKitPack' only
-          -- returns a path to a directory; but the @system-filepath@
-          -- package makes no semantic distinction between filenames
-          -- and directory names at the end of paths.
-          let parentDirName = Filesystem.filename unpackedLocation
+          -- Note that we use 'takeFileName' to extract the directory
+          -- name under which the kit pack files live (i.e., the
+          -- parent directory). Technically this is a directory name,
+          -- not a filename, as 'findKitPack' only returns a path to a
+          -- directory; but the @filepath@ package makes no semantic
+          -- distinction between filenames and directory names at the
+          -- end of paths.
+          let parentDirName = takeFileName unpackedLocation
           let installedLocation = kitPath userDir </> parentDirName
-          exists <- testdir installedLocation
+          exists <- liftIO $ doesDirectoryExist installedLocation
           if exists
-             then rmtree installedLocation
-             else mktree $ kitPath userDir
-          mv unpackedLocation installedLocation
+             then liftIO $ removeDirectoryRecursive installedLocation
+             else liftIO $ createDirectoryIfMissing True $ kitPath userDir
+          liftIO $ renameDirectory unpackedLocation installedLocation
 
 -- | Unpack an archive file assumed to contain a kit pack to a
 -- temporary directory. Once unpacked, run a simple validation check
@@ -139,13 +139,15 @@ unpackKitPack archive =
      fixUp unpackedArchive
      -- Currently the validation check is quite simple: the archive must
      -- contain just a single directory and no top-level files.
-     fold (ls unpackedArchive) ((,) <$> Fold.length <*> Fold.head) >>= \case
+     fold (ls (Filesystem.decodeString unpackedArchive)) ((,) <$> Fold.length <*> Fold.head) >>= \case
        (0, _) -> throw $ EmptyArchive archive
-       (1, Just fp) ->
-         do isDir <- testdir fp
-            if isDir
-               then return fp
-               else throw $ SingleFileArchive archive
+       (1, Just ffp) ->
+         let fp = Filesystem.encodeString ffp
+         in
+           do isDir <- liftIO $ doesDirectoryExist fp
+              if isDir
+                 then return fp
+                 else throw $ SingleFileArchive archive
        _ -> throw $ MultipleFilesOrDirectories archive
 
 -- | Attempt to fix up common issues with kit packs.
@@ -156,11 +158,11 @@ fixUp fp = void $ osxFixUp fp
 osxFixUp :: (MonadIO m) => FilePath -> m FilePath
 osxFixUp fp =
   let osxdir :: FilePath
-      osxdir = fp </> (Filesystem.decodeString "__MACOSX")
+      osxdir = fp </> "__MACOSX"
   in
-    do exists <- testdir osxdir
+    do exists <- liftIO $ doesDirectoryExist osxdir
        when exists $
-         rmtree osxdir
+         liftIO $ removeDirectoryRecursive osxdir
        return fp
 
 data KitPackException

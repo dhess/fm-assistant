@@ -30,6 +30,7 @@ Library
                       , containers
                       , directory
                       , exceptions
+                      , filepath
                       , foldl
                       , managed
                       , mtl
@@ -55,6 +56,7 @@ Executable fm-assistant
                       , containers
                       , directory
                       , exceptions
+                      , filepath
                       , foldl
                       , managed
                       , mtl
@@ -101,6 +103,7 @@ Test-Suite spec
                       , containers
                       , directory
                       , exceptions
+                      , filepath
                       , foldl
                       , hspec
                       , managed

@@ -36,7 +36,6 @@ import Data.Data
 import Data.Foldable (foldl')
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map (foldlWithKey', fromList, keys)
-import qualified Filesystem.Path.CurrentOS as Filesystem (encodeString)
 import Streaming (runResourceT)
 
 import Game.FMAssistant.Types (ArchiveFilePath(..))
@@ -51,7 +50,7 @@ isZip = magic zipMagic
 -- | Returns 'True' if the 'ArchiveFilePath' points to a ZIP file.
 isZipArchive :: (MonadIO m) => ArchiveFilePath -> m Bool
 isZipArchive (ArchiveFilePath fp) = liftIO $
-  runResourceT $ isZip $ S.readFile $ Filesystem.encodeString fp
+  runResourceT $ isZip $ S.readFile fp
 
 rarMagic :: BS.ByteString
 rarMagic = "\x52\x61\x72\x21\x1a\x07\x00"
@@ -63,7 +62,7 @@ isRar = magic rarMagic
 -- | Returns 'True' if the 'ArchiveFilePath' points to a RAR file.
 isRarArchive :: (MonadIO m) => ArchiveFilePath -> m Bool
 isRarArchive (ArchiveFilePath fp) = liftIO $
-  runResourceT $ isRar $ S.readFile $ Filesystem.encodeString fp
+  runResourceT $ isRar $ S.readFile fp
 
 magic :: (Monad m) => BS.ByteString -> S.ByteString m r -> m Bool
 magic magicString bs =
@@ -101,4 +100,4 @@ identify bs =
 -- 'ArchiveFilePath'.
 identifyArchive :: (MonadIO m) => ArchiveFilePath -> m (Maybe Magic)
 identifyArchive (ArchiveFilePath fp) = liftIO $
-  runResourceT $ identify $ S.readFile $ Filesystem.encodeString fp
+  runResourceT $ identify $ S.readFile fp
