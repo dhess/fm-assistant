@@ -48,7 +48,7 @@ createTempDirectory
 createTempDirectory template =
   do tmpDir <- liftIO getTemporaryDirectory
      allocate (System.createTempDirectory tmpDir template)
-              (\tmp -> removeDirectoryRecursive tmp)
+              removeDirectoryRecursive
 
 -- | List a directory, excluding "." and "..". Note that the returned
 -- 'FilePath's include the full directory path.

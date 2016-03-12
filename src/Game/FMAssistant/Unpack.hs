@@ -28,6 +28,7 @@ module Game.FMAssistant.Unpack
        ) where
 
 import Control.Exception (Exception(..))
+import Control.Monad (unless)
 import Control.Monad.Catch (MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Trans.Resource (MonadResource, ReleaseKey)
@@ -86,9 +87,8 @@ unpackZip ar@(ArchiveFilePath zipFile) unpackDir =
       args = [zipFile, "-d", unpackDir]
   in
     do exitCode <- executeQuietly unzipCmd args
-       if exitCode == ExitSuccess
-          then return ()
-          else throwM $ UnzipError ar (unzipCmd <> unwords args ) exitCode
+       unless (exitCode == ExitSuccess) $
+         throwM $ UnzipError ar (unzipCmd <> unwords args ) exitCode
 
 -- | Unpack a RAR archive to the given directory.
 --
@@ -102,9 +102,8 @@ unpackRar ar@(ArchiveFilePath rarFile) unpackDir =
       args = ["x", "-v", "-y", "-r", rarFile, unpackDir]
   in
     do exitCode <- executeQuietly unrarCmd args
-       if exitCode == ExitSuccess
-          then return ()
-          else throwM $ UnrarError ar (unrarCmd <> unwords args ) exitCode
+       unless (exitCode == ExitSuccess) $
+         throwM $ UnrarError ar (unrarCmd <> unwords args ) exitCode
 
 data UnpackException
   = UnsupportedArchive ArchiveFilePath -- ^ The archive file type is unsupported

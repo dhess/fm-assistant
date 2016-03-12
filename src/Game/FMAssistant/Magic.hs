@@ -11,7 +11,6 @@ Identify supported file types.
 
 -}
 
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE Trustworthy #-}
@@ -93,7 +92,7 @@ identify bs =
     where
       check _ (Just x) _ _ = Just x
       check prefix _ magicString magicValue
-        | magicString == (BS.take (BS.length magicString) prefix) = Just magicValue
+        | magicString == BS.take (BS.length magicString) prefix = Just magicValue
         | otherwise = Nothing
 
 -- | Attempt to identify the file pointed to by the given
