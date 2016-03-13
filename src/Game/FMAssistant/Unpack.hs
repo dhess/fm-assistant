@@ -31,17 +31,15 @@ import Control.Exception (Exception(..))
 import Control.Monad (unless)
 import Control.Monad.Catch (MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
-import Control.Monad.Trans.Resource (MonadResource, ReleaseKey)
 import Data.Data
 import Data.Monoid ((<>))
 import System.Exit (ExitCode(..))
-import System.FilePath (takeBaseName)
 
 import Game.FMAssistant.Magic (Magic(..), identifyArchive)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), fmAssistantExceptionToException,
         fmAssistantExceptionFromException)
-import Game.FMAssistant.Util (executeQuietly, createTempDirectory)
+import Game.FMAssistant.Util (executeQuietly)
 
 -- | Given the filename of an archive file, use the filename's
 -- extension to guess which unpack action to use, and return that
@@ -57,8 +55,7 @@ unpackerFor ar =
     Nothing -> return Nothing
 
 -- | Attempt to guess the format of the specified archive file and
--- unpack it to a temporary directory, whose path and 'ReleaseKey' are
--- returned.
+-- unpack it to the given directory.
 --
 -- If the archive file format cannot be guessed or is not supported,
 -- this action throws an 'UnpackException' with a value of
@@ -66,14 +63,11 @@ unpackerFor ar =
 --
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
-unpack :: (MonadResource m) => ArchiveFilePath -> m (ReleaseKey, FilePath)
-unpack ar@(ArchiveFilePath fn) =
-  unpackerFor ar >>= \case
+unpack :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> FilePath -> m ()
+unpack archive unpackDir =
+  unpackerFor archive >>= \case
     Nothing -> throwM UnsupportedArchive
-    Just unpacker ->
-      do resource@(_, tmpDir) <- createTempDirectory (takeBaseName fn)
-         unpacker ar tmpDir
-         return resource
+    Just unpacker -> unpacker archive unpackDir
 
 -- | Unpack a ZIP archive to the given directory.
 --

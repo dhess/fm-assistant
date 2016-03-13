@@ -28,16 +28,16 @@ import Control.Monad.Catch (MonadCatch, MonadThrow, catch, throwM)
 import qualified Control.Foldl as Fold (fold, length, head)
 import Control.Monad (unless, void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Trans.Resource (MonadResource, ReleaseKey, release, runResourceT)
+import Control.Monad.Trans.Resource (release, runResourceT)
 import Data.Data
 import System.Directory (createDirectoryIfMissing, doesDirectoryExist, removeDirectoryRecursive, renameDirectory)
-import System.FilePath ((</>), takeFileName)
+import System.FilePath ((</>), takeBaseName, takeFileName)
 
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirFilePath(..),
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
 import Game.FMAssistant.Unpack (UnpackException, unpack)
-import Game.FMAssistant.Util (listDirectory)
+import Game.FMAssistant.Util (createTempDirectory, listDirectory)
 
 -- | Kits live in a pre-determined subdirectory of the game's user
 -- directory. This function constructs the path to that subdirectory,
@@ -85,7 +85,11 @@ kitPath ufp = _userDirFilePath ufp </> "graphics" </> "kits"
 -- help users weed faulty kit packs out of their collections, e.g., by
 -- using it as a filter on a directory full of kit pack archives.
 validateKitPack :: (MonadIO m) => ArchiveFilePath -> m ()
-validateKitPack archive = liftIO $ runResourceT $ unpackKitPack archive >>= release . fst
+validateKitPack ar@(ArchiveFilePath fn) = liftIO $
+  runResourceT $
+    do (rkey, tmpDir) <- createTempDirectory (takeBaseName fn)
+       void $ unpackKitPack ar tmpDir
+       release rkey
 
 -- | Install a kit pack to the given user directory. Note that this
 -- action will overwrite an existing kit path of the same name (but
@@ -95,7 +99,7 @@ validateKitPack archive = liftIO $ runResourceT $ unpackKitPack archive >>= rele
 -- If the kit pack is malformed, this action throws an exception and
 -- aborts the installation -- no kits from the pack will be installed.
 installKitPack :: (MonadThrow m, MonadIO m) => UserDirFilePath -> ArchiveFilePath -> m ()
-installKitPack userDir archive = liftIO $
+installKitPack userDir archive@(ArchiveFilePath fn) = liftIO $
   -- We should create the top-level kit path directory if it doesn't
   -- exist (and it doesn't by default), but we should not create the
   -- user directory if that doesn't exist, as that probably means it's
@@ -104,7 +108,8 @@ installKitPack userDir archive = liftIO $
      unless userDirExists $
        throwM $ NoSuchUserDirectory userDir
      runResourceT $
-       do (rkey, unpackedLocation) <- unpackKitPack archive
+       do (rkey, tmpDir) <- createTempDirectory (takeBaseName fn)
+          kitDir <- unpackKitPack archive tmpDir
           -- Remove the existing installed kit pack with the same
           -- name, if it exists.
           --
@@ -115,39 +120,38 @@ installKitPack userDir archive = liftIO $
           -- directory; but the @filepath@ package makes no semantic
           -- distinction between filenames and directory names at the
           -- end of paths.
-          let parentDirName = takeFileName unpackedLocation
+          let parentDirName = takeFileName kitDir
           let installedLocation = kitPath userDir </> parentDirName
           exists <- liftIO $ doesDirectoryExist installedLocation
           if exists
              then liftIO $ removeDirectoryRecursive installedLocation
              else liftIO $ createDirectoryIfMissing True $ kitPath userDir
-          liftIO $ renameDirectory unpackedLocation installedLocation
+          liftIO $ renameDirectory kitDir installedLocation
           release rkey
 
--- | Unpack an archive file assumed to contain a kit pack to a
--- temporary directory. Once unpacked, run a simple validation check
--- and, if it passes, return a path to the top-level kit pack
--- directory and its 'ReleaseKey'.
+-- | Unpack an archive file assumed to contain a kit pack to the given
+-- parent directory. Once unpacked, run a simple validation check and,
+-- if it passes, return a path to the top-level kit pack directory.
 --
 -- If the validation check fails, or if there is some problem during
 -- the unpacking of the archive, this action will throw an exception.
 -- See the 'KitPackException' type for exceptions specific to kit
 -- packs (although other exceptions are possible, of course, as this
 -- action runs in 'MonadIO'.).
-unpackKitPack :: (MonadCatch m, MonadThrow m, MonadResource m) => ArchiveFilePath -> m (ReleaseKey, FilePath)
-unpackKitPack archive =
-  do (rkey, unpackedArchive) <- catch (unpack archive)
-                                      (\(e :: UnpackException) -> throwM $ UnpackingError archive e)
-     fixUp unpackedArchive
+unpackKitPack :: (MonadCatch m, MonadThrow m, MonadIO m) => ArchiveFilePath -> FilePath -> m FilePath
+unpackKitPack archive unpackDir =
+  do catch (unpack archive unpackDir)
+           (\(e :: UnpackException) -> throwM $ UnpackingError archive e)
+     fixUp unpackDir
      -- Currently the validation check is quite simple: the archive must
      -- contain just a single directory and no top-level files.
-     ls <- listDirectory unpackedArchive
+     ls <- listDirectory unpackDir
      case Fold.fold ((,) <$> Fold.length <*> Fold.head) ls of
        (0, _) -> throwM $ EmptyArchive archive
        (1, Just fp) ->
         do isDir <- liftIO $ doesDirectoryExist fp
            if isDir
-              then return (rkey, fp)
+              then return fp
               else throwM $ SingleFileArchive archive
        _ -> throwM $ MultipleFilesOrDirectories archive
 
