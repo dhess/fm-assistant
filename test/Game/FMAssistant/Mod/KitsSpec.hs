@@ -53,9 +53,9 @@ spec =
        do it "validates proper kit packs" $
             do (dummyPackV10Zip >>= validateKitPack) `shouldReturn` ()
                (dummyPackV10Rar >>= validateKitPack) `shouldReturn` ()
-          it "reports malformed kit packs" $
-            do (malformedPackZip >>= validateKitPack) `shouldThrow` anyKitPackException
-               (malformedPackRar >>= validateKitPack) `shouldThrow` anyKitPackException
+          it "validates malformed kit packs (they'll be patched up during installation)" $
+            do (malformedPackZip >>= validateKitPack) `shouldReturn` ()
+               (malformedPackRar >>= validateKitPack) `shouldReturn` ()
           it "reports invalid archives" $
             do (damagedZipFile >>= validateKitPack) `shouldThrow` anyKitPackException
                (damagedRarFile >>= validateKitPack) `shouldThrow` anyKitPackException
@@ -103,9 +103,22 @@ spec =
                    doesFileExist (kitDir </> "Silly kits" </> "config.xml") `shouldReturn` True
                    doesFileExist (kitDir </> "Silly kits" </> "flam_1.png") `shouldReturn` True
                    doesFileExist (kitDir </> "Silly kits" </> "foo_3.png") `shouldReturn` True
-          it "won't install a malformed pack" $
+          it "installs a malformed ZIP'ed kit pack using the pack's name as a top-level directory" $
             withTmpUserDir $ \dir ->
-              (malformedPackRar >>= installKitPack dir) `shouldThrow` anyKitPackException
+              let kitDir = _userDirFilePath dir </> "graphics" </> "kits"
+              in
+                do malformedPackZip >>= installKitPack dir
+                   doesFileExist (kitDir </> "Malformed dummy kit pack v1.0" </> "config.xml") `shouldReturn` True
+                   doesFileExist (kitDir </> "Malformed dummy kit pack v1.0" </> "flamengo_1.png") `shouldReturn` True
+                   doesFileExist (kitDir </> "Malformed dummy kit pack v1.0" </> "santos_1.png") `shouldReturn` True
+          it "installs a malformed RAR'ed kit pack using the pack's name as a top-level directory" $
+            withTmpUserDir $ \dir ->
+              let kitDir = _userDirFilePath dir </> "graphics" </> "kits"
+              in
+                do malformedPackRar >>= installKitPack dir
+                   doesFileExist (kitDir </> "Malformed dummy kit pack v1.0" </> "config.xml") `shouldReturn` True
+                   doesFileExist (kitDir </> "Malformed dummy kit pack v1.0" </> "flamengo_1.png") `shouldReturn` True
+                   doesFileExist (kitDir </> "Malformed dummy kit pack v1.0" </> "santos_1.png") `shouldReturn` True
           it "won't install a damaged archive file" $
             withTmpUserDir $ \dir ->
               do (damagedZipFile >>= installKitPack dir) `shouldThrow` anyKitPackException

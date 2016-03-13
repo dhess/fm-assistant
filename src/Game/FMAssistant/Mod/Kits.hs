@@ -26,15 +26,15 @@ module Game.FMAssistant.Mod.Kits
 import Control.Exception (Exception(..))
 import Control.Monad.Catch (MonadCatch, MonadThrow, catch, throwM)
 import qualified Control.Foldl as Fold (fold, length, head)
-import Control.Monad (unless, void, when)
+import Control.Monad (forM_, unless, void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Resource (release, runResourceT)
 import Data.Data
-import System.Directory (createDirectoryIfMissing, doesDirectoryExist, removeDirectoryRecursive, renameDirectory)
+import System.Directory (createDirectory, createDirectoryIfMissing, doesDirectoryExist, removeDirectoryRecursive, renameDirectory, renameFile)
 import System.FilePath ((</>), takeBaseName, takeFileName)
 
 import Game.FMAssistant.Types
-       (ArchiveFilePath(..), UserDirFilePath(..),
+       (ArchiveFilePath(..), UserDirFilePath(..), archiveName,
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
 import Game.FMAssistant.Unpack (UnpackException, unpack)
 import Game.FMAssistant.Util (createTempDirectory, listDirectory)
@@ -142,10 +142,26 @@ unpackKitPack :: (MonadCatch m, MonadThrow m, MonadIO m) => ArchiveFilePath -> F
 unpackKitPack archive unpackDir =
   do catch (unpack archive unpackDir)
            (\(e :: UnpackException) -> throwM $ UnpackingError archive e)
-     fixUp unpackDir
-     -- Currently the validation check is quite simple: the archive must
-     -- contain just a single directory and no top-level files.
-     ls <- listDirectory unpackDir
+     -- Note: the pathname we return may be dependent on fix-ups.
+     osxFixUp unpackDir >>= singleDirFixup archive
+
+-- | Remove any top-level "__MACOSX" subdirectory.
+osxFixUp :: (MonadIO m) => FilePath -> m FilePath
+osxFixUp unpackDir =
+  let osxdir :: FilePath
+      osxdir = unpackDir </> "__MACOSX"
+  in
+    do exists <- liftIO $ doesDirectoryExist osxdir
+       when exists $
+         liftIO $ removeDirectoryRecursive osxdir
+       return unpackDir
+
+-- | If the kit pack spews files all over the place, rather than
+-- putting them in a single top-level directory, create a top-level
+-- directory and move everything there.
+singleDirFixup :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> FilePath -> m FilePath
+singleDirFixup archive unpackDir =
+  do ls <- listDirectory unpackDir
      case Fold.fold ((,) <$> Fold.length <*> Fold.head) ls of
        (0, _) -> throwM $ EmptyArchive archive
        (1, Just fp) ->
@@ -153,22 +169,17 @@ unpackKitPack archive unpackDir =
            if isDir
               then return fp
               else throwM $ SingleFileArchive archive
-       _ -> throwM $ MultipleFilesOrDirectories archive
-
--- | Attempt to fix up common issues with kit packs.
-fixUp :: (MonadIO m) => FilePath -> m ()
-fixUp fp = void $ osxFixUp fp
-
--- | Remove any top-level "__MACOSX" subdirectory.
-osxFixUp :: (MonadIO m) => FilePath -> m FilePath
-osxFixUp fp =
-  let osxdir :: FilePath
-      osxdir = fp </> "__MACOSX"
-  in
-    do exists <- liftIO $ doesDirectoryExist osxdir
-       when exists $
-         liftIO $ removeDirectoryRecursive osxdir
-       return fp
+       _ ->
+         let fixupDir = unpackDir </> archiveName archive
+         in
+           do liftIO $
+                do createDirectory fixupDir
+                   forM_ ls $ \fn ->
+                     do isDir <- doesDirectoryExist fn
+                        if isDir
+                           then renameDirectory fn fixupDir
+                           else renameFile fn (fixupDir </> takeFileName fn)
+              return fixupDir
 
 data KitPackException
   = NoSuchUserDirectory UserDirFilePath
@@ -179,9 +190,6 @@ data KitPackException
     -- ^ The archive is empty
   | SingleFileArchive ArchiveFilePath
     -- ^ The archive contains just a single file
-  | MultipleFilesOrDirectories ArchiveFilePath
-    -- ^ The archive contains multiple files or directories at the top
-    -- level
   deriving (Eq,Typeable)
 
 instance Show KitPackException where
@@ -189,7 +197,6 @@ instance Show KitPackException where
   show (UnpackingError fp ue) = show fp ++ ": " ++ show ue
   show (EmptyArchive fp) = show fp ++ ": Malformed (kit pack is empty)"
   show (SingleFileArchive fp) = show fp ++ ": Malformed (kit pack contains just a single file)"
-  show (MultipleFilesOrDirectories fp) = show fp ++ ": Malformed (multiple files/directories at top level)"
 
 instance Exception KitPackException where
   toException = fmAssistantExceptionToException
@@ -201,4 +208,3 @@ kpeGetFileName (NoSuchUserDirectory (UserDirFilePath fp)) = fp
 kpeGetFileName (UnpackingError (ArchiveFilePath fp) _) = fp
 kpeGetFileName (EmptyArchive (ArchiveFilePath fp)) = fp
 kpeGetFileName (SingleFileArchive (ArchiveFilePath fp)) = fp
-kpeGetFileName (MultipleFilesOrDirectories (ArchiveFilePath fp)) = fp
