@@ -11,7 +11,6 @@ import Test.Hspec
 import Paths_fm_assistant
 
 import Game.FMAssistant.Types (ArchiveFilePath(..), UserDirFilePath(..))
-import Game.FMAssistant.Unpack (UnpackException(..))
 import Game.FMAssistant.Mod.Kits
 
 withTmpUserDir :: (UserDirFilePath -> IO a) -> IO a
@@ -45,9 +44,6 @@ damagedZipFile = ArchiveFilePath <$> getDataFileName "data/test/damaged-test.zip
 damagedRarFile :: IO ArchiveFilePath
 damagedRarFile = ArchiveFilePath <$> getDataFileName "data/test/damaged-test.rar"
 
-anyUnpackException :: Selector UnpackException
-anyUnpackException = const True
-
 anyKitPackException :: Selector KitPackException
 anyKitPackException = const True
 
@@ -61,10 +57,10 @@ spec =
             do (malformedPackZip >>= validateKitPack) `shouldThrow` anyKitPackException
                (malformedPackRar >>= validateKitPack) `shouldThrow` anyKitPackException
           it "reports invalid archives" $
-            do (damagedZipFile >>= validateKitPack) `shouldThrow` anyUnpackException
-               (damagedRarFile >>= validateKitPack) `shouldThrow` anyUnpackException
+            do (damagedZipFile >>= validateKitPack) `shouldThrow` anyKitPackException
+               (damagedRarFile >>= validateKitPack) `shouldThrow` anyKitPackException
           it "reports unsupported archive types" $
-            (unsupportedFile >>= validateKitPack) `shouldThrow` anyUnpackException
+            (unsupportedFile >>= validateKitPack) `shouldThrow` anyKitPackException
      describe "installKitPack" $
        do it "installs kit packs in the user directory's kit path" $
             withTmpUserDir $ \dir ->
@@ -112,11 +108,11 @@ spec =
               (malformedPackRar >>= installKitPack dir) `shouldThrow` anyKitPackException
           it "won't install a damaged archive file" $
             withTmpUserDir $ \dir ->
-              do (damagedZipFile >>= installKitPack dir) `shouldThrow` anyUnpackException
-                 (damagedRarFile >>= installKitPack dir) `shouldThrow` anyUnpackException
+              do (damagedZipFile >>= installKitPack dir) `shouldThrow` anyKitPackException
+                 (damagedRarFile >>= installKitPack dir) `shouldThrow` anyKitPackException
           it "fails if the archive format is unsupported" $
             withTmpUserDir $ \dir ->
-              (unsupportedFile >>= installKitPack dir) `shouldThrow` anyUnpackException
+              (unsupportedFile >>= installKitPack dir) `shouldThrow` anyKitPackException
           it "fails if the specified archive doesn't exist" $
             withTmpUserDir $ \dir ->
               installKitPack dir (ArchiveFilePath "/this/doesn't/exist.zip") `shouldThrow` anyIOException

@@ -9,9 +9,7 @@ module Util
 
 import Control.Exception (IOException)
 import Control.Monad.Catch (Handler(..), catches)
-import Game.FMAssistant.Mod.Kits (KitPackException(..))
-import Game.FMAssistant.Types (ArchiveFilePath(..), UserDirFilePath(..))
-import Game.FMAssistant.Unpack (UnpackException(..))
+import Game.FMAssistant.Mod.Kits (KitPackException, kpeGetFileName)
 import System.Exit (ExitCode(..))
 import System.IO (hPrint, stderr)
 import System.IO.Error (ioeGetFileName)
@@ -25,17 +23,14 @@ anyFailure failCode codes =
 handleIO :: IOException -> IO ExitCode
 handleIO e = hPrint stderr e >> return (ExitFailure 1)
 
-handleUnpack :: UnpackException -> IO ExitCode
-handleUnpack e = hPrint stderr e >> return (ExitFailure 2)
-
 handleKitPack :: KitPackException -> IO ExitCode
-handleKitPack e = hPrint stderr e >> return (ExitFailure 3)
+handleKitPack e = hPrint stderr e >> return (ExitFailure 2)
 
 catchesMost :: IO ExitCode -> IO ExitCode
 catchesMost action =
   catches action most
   where
-    most = [Handler handleIO, Handler handleUnpack, Handler handleKitPack]
+    most = [Handler handleIO, Handler handleKitPack]
 
 -- | "Quietly" variants print only the filename associated with the
 -- exception, and don't return an 'ExitCode'. This is useful when
@@ -51,26 +46,11 @@ handleIOQuietly e =
     Just fn -> putStrLn fn
     _ -> return () -- Probably an error, pass on it for now.
 
-handleUnpackQuietly :: UnpackException -> IO ()
-handleUnpackQuietly (UnsupportedArchive (ArchiveFilePath fp)) =
-  putStrLn fp
-handleUnpackQuietly (UnzipError (ArchiveFilePath fp) _ _) =
-  putStrLn fp
-handleUnpackQuietly (UnrarError (ArchiveFilePath fp) _ _) =
-  putStrLn fp
-
 handleKitPackQuietly :: KitPackException -> IO ()
-handleKitPackQuietly (NoSuchUserDirectory (UserDirFilePath fp)) =
-  putStrLn fp
-handleKitPackQuietly (EmptyArchive (ArchiveFilePath fp)) =
-  putStrLn fp
-handleKitPackQuietly (SingleFileArchive (ArchiveFilePath fp)) =
-  putStrLn fp
-handleKitPackQuietly (MultipleFilesOrDirectories (ArchiveFilePath fp)) =
-  putStrLn fp
+handleKitPackQuietly = putStrLn . kpeGetFileName
 
 catchesMostQuietly :: IO () -> IO ()
 catchesMostQuietly action =
   catches action most
   where
-    most = [Handler handleIOQuietly, Handler handleUnpackQuietly, Handler handleKitPackQuietly]
+    most = [Handler handleIOQuietly, Handler handleKitPackQuietly]

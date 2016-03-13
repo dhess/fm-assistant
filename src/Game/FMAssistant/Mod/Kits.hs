@@ -20,10 +20,11 @@ module Game.FMAssistant.Mod.Kits
        , validateKitPack
          -- * Kit pack-related exceptions
        , KitPackException(..)
+       , kpeGetFileName
        ) where
 
 import Control.Exception (Exception(..))
-import Control.Monad.Catch (MonadThrow, throwM)
+import Control.Monad.Catch (MonadCatch, MonadThrow, catch, throwM)
 import qualified Control.Foldl as Fold (fold, length, head)
 import Control.Monad (unless, void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
@@ -35,7 +36,7 @@ import System.FilePath ((</>), takeFileName)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirFilePath(..),
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
-import Game.FMAssistant.Unpack (unpack)
+import Game.FMAssistant.Unpack (UnpackException, unpack)
 import Game.FMAssistant.Util (listDirectory)
 
 -- | Kits live in a pre-determined subdirectory of the game's user
@@ -133,9 +134,10 @@ installKitPack userDir archive = liftIO $
 -- See the 'KitPackException' type for exceptions specific to kit
 -- packs (although other exceptions are possible, of course, as this
 -- action runs in 'MonadIO'.).
-unpackKitPack :: (MonadThrow m, MonadResource m) => ArchiveFilePath -> m (ReleaseKey, FilePath)
+unpackKitPack :: (MonadCatch m, MonadThrow m, MonadResource m) => ArchiveFilePath -> m (ReleaseKey, FilePath)
 unpackKitPack archive =
-  do (rkey, unpackedArchive) <- unpack archive
+  do (rkey, unpackedArchive) <- catch (unpack archive)
+                                      (\(e :: UnpackException) -> throwM $ UnpackingError archive e)
      fixUp unpackedArchive
      -- Currently the validation check is quite simple: the archive must
      -- contain just a single directory and no top-level files.
@@ -167,6 +169,8 @@ osxFixUp fp =
 data KitPackException
   = NoSuchUserDirectory UserDirFilePath
     -- ^ The specified user directory doesn't exist
+  | UnpackingError ArchiveFilePath UnpackException
+    -- ^ An error occurred during the unpacking process
   | EmptyArchive ArchiveFilePath
     -- ^ The archive is empty
   | SingleFileArchive ArchiveFilePath
@@ -178,6 +182,7 @@ data KitPackException
 
 instance Show KitPackException where
   show (NoSuchUserDirectory fp) = show fp ++ ": The game user directory doesn't exist"
+  show (UnpackingError fp ue) = show fp ++ ": " ++ show ue
   show (EmptyArchive fp) = show fp ++ ": Malformed (kit pack is empty)"
   show (SingleFileArchive fp) = show fp ++ ": Malformed (kit pack contains just a single file)"
   show (MultipleFilesOrDirectories fp) = show fp ++ ": Malformed (multiple files/directories at top level)"
@@ -185,3 +190,11 @@ instance Show KitPackException where
 instance Exception KitPackException where
   toException = fmAssistantExceptionToException
   fromException = fmAssistantExceptionFromException
+
+-- | The 'FilePath' associated with the given exception.
+kpeGetFileName :: KitPackException -> FilePath
+kpeGetFileName (NoSuchUserDirectory (UserDirFilePath fp)) = fp
+kpeGetFileName (UnpackingError (ArchiveFilePath fp) _) = fp
+kpeGetFileName (EmptyArchive (ArchiveFilePath fp)) = fp
+kpeGetFileName (SingleFileArchive (ArchiveFilePath fp)) = fp
+kpeGetFileName (MultipleFilesOrDirectories (ArchiveFilePath fp)) = fp

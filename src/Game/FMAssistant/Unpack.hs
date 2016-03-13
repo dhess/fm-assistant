@@ -69,7 +69,7 @@ unpackerFor ar =
 unpack :: (MonadResource m) => ArchiveFilePath -> m (ReleaseKey, FilePath)
 unpack ar@(ArchiveFilePath fn) =
   unpackerFor ar >>= \case
-    Nothing -> throwM $ UnsupportedArchive ar
+    Nothing -> throwM UnsupportedArchive
     Just unpacker ->
       do resource@(_, tmpDir) <- createTempDirectory (takeBaseName fn)
          unpacker ar tmpDir
@@ -80,7 +80,7 @@ unpack ar@(ArchiveFilePath fn) =
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpackZip :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> FilePath -> m ()
-unpackZip ar@(ArchiveFilePath zipFile) unpackDir =
+unpackZip (ArchiveFilePath zipFile) unpackDir =
   let unzipCmd :: FilePath
       unzipCmd = "unzip"
       args :: [String]
@@ -88,14 +88,14 @@ unpackZip ar@(ArchiveFilePath zipFile) unpackDir =
   in
     do exitCode <- executeQuietly unzipCmd args
        unless (exitCode == ExitSuccess) $
-         throwM $ UnzipError ar (unzipCmd <> unwords args ) exitCode
+         throwM $ UnzipError (unzipCmd <> unwords args) exitCode
 
 -- | Unpack a RAR archive to the given directory.
 --
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpackRar :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> FilePath -> m ()
-unpackRar ar@(ArchiveFilePath rarFile) unpackDir =
+unpackRar (ArchiveFilePath rarFile) unpackDir =
   let unrarCmd :: FilePath
       unrarCmd = "unrar"
       args :: [String]
@@ -103,24 +103,24 @@ unpackRar ar@(ArchiveFilePath rarFile) unpackDir =
   in
     do exitCode <- executeQuietly unrarCmd args
        unless (exitCode == ExitSuccess) $
-         throwM $ UnrarError ar (unrarCmd <> unwords args ) exitCode
+         throwM $ UnrarError (unrarCmd <> unwords args) exitCode
 
 data UnpackException
-  = UnsupportedArchive ArchiveFilePath -- ^ The archive file type is unsupported
-  | UnzipError ArchiveFilePath String ExitCode -- ^ The unzip command
-                                                   -- failed; failed command
-                                                   -- line and process exit
-                                                   -- code are provided
-  | UnrarError ArchiveFilePath String ExitCode -- ^ The unrar command
-                                                   -- failed; failed command
-                                                   -- line and process exit
-                                                   -- code are provided
+  = UnsupportedArchive -- ^ The archive format is unsupported
+  | UnzipError String ExitCode -- ^ The unzip command
+                               -- failed; failed command
+                               -- line and process exit
+                               -- code are provided
+  | UnrarError String ExitCode -- ^ The unrar command
+                               -- failed; failed command
+                               -- line and process exit
+                               -- code are provided
   deriving (Eq,Typeable)
 
 instance Show UnpackException where
-  show (UnsupportedArchive ar) = show ar ++ ": Unsupported archive type"
-  show (UnzipError ar _ exitCode) = show ar ++ ": unzip command failed, make sure it's in your path and check the file (exit code " ++ show exitCode ++ ")"
-  show (UnrarError ar _ exitCode) = show ar ++ ": unrar command failed, make sure it's in your path and check the file (exit code " ++ show exitCode ++ ")"
+  show UnsupportedArchive = "Unsupported archive type"
+  show (UnzipError _ exitCode) = "unzip command failed, make sure it's in your path and check the archive (exit code " ++ show exitCode ++ ")"
+  show (UnrarError _ exitCode) = "unrar command failed, make sure it's in your path and check the archive (exit code " ++ show exitCode ++ ")"
 
 instance Exception UnpackException where
   toException = fmAssistantExceptionToException
