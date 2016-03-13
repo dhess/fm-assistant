@@ -143,7 +143,7 @@ unpackKitPack archive unpackDir =
   do catch (unpack archive unpackDir)
            (\(e :: UnpackException) -> throwM $ UnpackingError archive e)
      -- Note: the pathname we return may be dependent on fix-ups.
-     osxFixUp unpackDir >>= singleDirFixup archive
+     osxFixUp unpackDir >>= singleDirFixUp archive
 
 -- | Remove any top-level "__MACOSX" subdirectory.
 osxFixUp :: (MonadIO m) => FilePath -> m FilePath
@@ -159,8 +159,8 @@ osxFixUp unpackDir =
 -- | If the kit pack spews files all over the place, rather than
 -- putting them in a single top-level directory, create a top-level
 -- directory and move everything there.
-singleDirFixup :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> FilePath -> m FilePath
-singleDirFixup archive unpackDir =
+singleDirFixUp :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> FilePath -> m FilePath
+singleDirFixUp archive unpackDir =
   do ls <- listDirectory unpackDir
      case Fold.fold ((,) <$> Fold.length <*> Fold.head) ls of
        (0, _) -> throwM $ EmptyArchive archive
