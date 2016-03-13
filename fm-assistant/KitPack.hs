@@ -9,8 +9,10 @@ module KitPack
 import Options.Applicative
 
 import Control.Monad (forM, forM_, unless, void)
-import Game.FMAssistant.Mod.Kits (validateKitPack)
+import qualified Game.FMAssistant.FM16 as FM16 (version)
+import Game.FMAssistant.Mod.Kits (installKitPack, validateKitPack)
 import Game.FMAssistant.Types (ArchiveFilePath(..))
+import Game.FMAssistant.Util (defaultUserDir)
 import System.Exit (ExitCode(..))
 
 import Util (anyFailure, catchesMost, catchesMostQuietly)
@@ -57,20 +59,22 @@ parser =
 
 run :: Command -> IO ExitCode
 run (Install (InstallOptions fns)) =
-  do codes <- forM fns
+  do userDir <- defaultUserDir FM16.version
+     codes <- forM fns
                    (\fp ->
-                     do putStrLn fp
-                        return ExitSuccess)
+                     catchesMost $
+                       do installKitPack userDir (ArchiveFilePath fp)
+                          putStrLn $ "Installed " ++ fp
+                          return ExitSuccess)
      return $ anyFailure (ExitFailure 1) codes
 run (Validate (ValidateOptions onlyInvalid False fns)) =
   do codes <- forM fns
                    (\fp ->
-                     do exitCode <- catchesMost $
-                          do void $ validateKitPack (ArchiveFilePath fp)
-                             unless onlyInvalid $
-                               putStrLn $ fp ++ ": valid kit pack"
-                             return ExitSuccess
-                        return exitCode)
+                     catchesMost $
+                       do validateKitPack (ArchiveFilePath fp)
+                          unless onlyInvalid $
+                            putStrLn $ fp ++ ": valid kit pack"
+                          return ExitSuccess)
      return $ anyFailure (ExitFailure 1) codes
 run (Validate (ValidateOptions onlyInvalid True fns)) =
   do forM_ fns
