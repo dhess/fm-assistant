@@ -9,10 +9,9 @@ module KitPack
 import Options.Applicative
 
 import Control.Monad (forM, forM_, unless, void)
-import qualified Game.FMAssistant.FM16 as FM16 (version)
+import qualified Game.FMAssistant.FM16 as FM16 (defaultUserDir)
 import Game.FMAssistant.Mod.Kits (installKitPack, validateKitPack)
 import Game.FMAssistant.Types (ArchiveFilePath(..))
-import Game.FMAssistant.Util (defaultUserDir)
 import System.Exit (ExitCode(..))
 
 import Util (anyFailure, catchesMost, catchesMostQuietly)
@@ -59,7 +58,7 @@ parser =
 
 run :: Command -> IO ExitCode
 run (Install (InstallOptions fns)) =
-  do userDir <- defaultUserDir FM16.version
+  do userDir <- FM16.defaultUserDir
      codes <- forM fns
                    (\fp ->
                      catchesMost $
