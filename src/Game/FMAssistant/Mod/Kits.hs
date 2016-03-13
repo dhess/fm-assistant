@@ -175,10 +175,12 @@ singleDirFixup archive unpackDir =
            do liftIO $
                 do createDirectory fixupDir
                    forM_ ls $ \fn ->
-                     do isDir <- doesDirectoryExist fn
-                        if isDir
-                           then renameDirectory fn fixupDir
-                           else renameFile fn (fixupDir </> takeFileName fn)
+                     let newFn = fixupDir </> takeFileName fn
+                     in
+                       do isDir <- doesDirectoryExist fn
+                          if isDir
+                             then renameDirectory fn newFn
+                             else renameFile fn newFn
               return fixupDir
 
 data KitPackException
