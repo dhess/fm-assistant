@@ -49,33 +49,15 @@ import Game.FMAssistant.Util (createTempDirectory, listDirectory)
 kitPath :: UserDirFilePath -> FilePath
 kitPath ufp = _userDirFilePath ufp </> "graphics" </> "kits"
 
--- | Verify that a kit pack archive file:
---
--- * Can be successfully unpacked.
---
--- * Is properly formatted, i.e., not malformed.
---
--- A kit pack is considered to be malformed if the top-level directory
--- of the unpacked kit pack contains anything other than a single
--- subdirectory. Any other arrangement of files and/or directories in
--- the unpacked archive is considered to be bad kit pack hygiene, as
--- if you were to install more than one kit pack that is organized
--- this way, there would be no easy way to prevent one pack from
--- overwriting files in another; nor any reliable way to replace an
--- earlier version of a given pack with a later one.
+-- | Verify that a kit pack archive file is valid, or can be
+-- automatically fixed up so that it's valid.
 --
 -- If the kit pack is successfully validated, this action simply
 -- returns a void result; the kit pack is not actually installed, nor
 -- its unpacked contents otherwise kept around.
 --
--- If the pack is found to be invalid, this action throws an
--- exception. Exceptions you should expect to occur are either of type
--- 'KitPackException' or 'Game.FMAssistant.Unpack.UnpackException'; if
--- you don't care about the particular exception that has occurred but
--- only want to 'show' it, you can catch
--- 'Game.FMAssistant.Types.SomeFMAssistantException', as this type
--- will encapsulate the range of issues that may occur with the kit
--- pack archive file. (As this action runs in 'IO', other exceptions
+-- If the pack is found to be invalid, this action throws a
+-- 'KitPackException'. (As this action runs in 'IO', other exceptions
 -- may occur, of course, but they will most likely not be an
 -- indication that anything is wrong with the kit pack.)
 --
@@ -93,11 +75,13 @@ validateKitPack ar@(ArchiveFilePath fn) = liftIO $
 
 -- | Install a kit pack to the given user directory. Note that this
 -- action will overwrite an existing kit path of the same name (but
--- not necessarily of a different version: this depends on how the kit
--- pack was packaged).
+-- not necessarily the kits from a different version of the same pack:
+-- this depends on how the kit pack was packaged).
 --
--- If the kit pack is malformed, this action throws an exception and
--- aborts the installation -- no kits from the pack will be installed.
+-- If there's a problem unpacking the kit pack; if the kit pack does
+-- not appear to be valid; or if the user directory doesn't exist;
+-- then this action throws an exception and aborts the installation --
+-- no kits from the pack will be installed.
 installKitPack :: (MonadThrow m, MonadIO m) => UserDirFilePath -> ArchiveFilePath -> m ()
 installKitPack userDir archive@(ArchiveFilePath fn) = liftIO $
   -- We should create the top-level kit path directory if it doesn't
@@ -130,14 +114,13 @@ installKitPack userDir archive@(ArchiveFilePath fn) = liftIO $
           release rkey
 
 -- | Unpack an archive file assumed to contain a kit pack to the given
--- parent directory. Once unpacked, run a simple validation check and,
--- if it passes, return a path to the top-level kit pack directory.
+-- parent directory.
 --
--- If the validation check fails, or if there is some problem during
--- the unpacking of the archive, this action will throw an exception.
--- See the 'KitPackException' type for exceptions specific to kit
--- packs (although other exceptions are possible, of course, as this
--- action runs in 'MonadIO'.).
+-- If there is some problem during the unpacking of the archive, or if
+-- the kit pack does not appear to be valid, this action will throw an
+-- exception. See the 'KitPackException' type for exceptions specific
+-- to kit packs (although other exceptions are possible, of course, as
+-- this action runs in 'MonadIO'.).
 unpackKitPack :: (MonadCatch m, MonadThrow m, MonadIO m) => ArchiveFilePath -> FilePath -> m FilePath
 unpackKitPack archive unpackDir =
   do catch (unpack archive unpackDir)
@@ -156,9 +139,11 @@ osxFixUp unpackDir =
          liftIO $ removeDirectoryRecursive osxdir
        return unpackDir
 
--- | If the kit pack spews files all over the place, rather than
--- putting them in a single top-level directory, create a top-level
--- directory and move everything there.
+-- | The kit pack contents should live under a single top-level
+-- directory. This action checks for that condition and attempts to
+-- fix it up, if needed. It also checks for empty or single file
+-- archives, which are not valid kit pack formats. (In either of these
+-- cases, the action will throw a 'KitPackException'.
 singleDirFixUp :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> FilePath -> m FilePath
 singleDirFixUp archive unpackDir =
   do ls <- listDirectory unpackDir
