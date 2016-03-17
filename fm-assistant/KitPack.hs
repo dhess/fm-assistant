@@ -9,12 +9,14 @@ module KitPack
 import Options.Applicative
 
 import Control.Monad (forM, forM_, unless, void)
+import Control.Monad.Catch (Handler(..), catches)
 import qualified Game.FMAssistant.FM16 as FM16 (defaultUserDir)
-import Game.FMAssistant.Mod.Kits (installKitPack, validateKitPack)
+import Game.FMAssistant.Mod.Kits (KitPackException, installKitPack, kpeGetFileName, validateKitPack)
 import Game.FMAssistant.Types (ArchiveFilePath(..))
 import System.Exit (ExitCode(..))
+import System.IO (hPrint, stderr)
 
-import Util (anyFailure, catchesMost, catchesMostQuietly)
+import Util (anyFailure, handleIO, handleIOQuietly)
 
 data Command
   = Install InstallOptions
@@ -83,3 +85,21 @@ run (Validate (ValidateOptions onlyInvalid True fns)) =
                   unless onlyInvalid $
                     putStrLn fp)
      return ExitSuccess
+
+handleKitPack :: KitPackException -> IO ExitCode
+handleKitPack e = hPrint stderr e >> return (ExitFailure 2)
+
+catchesMost :: IO ExitCode -> IO ExitCode
+catchesMost act =
+  catches act most
+  where
+    most = [Handler handleIO, Handler handleKitPack]
+
+handleKitPackQuietly :: KitPackException -> IO ()
+handleKitPackQuietly = putStrLn . kpeGetFileName
+
+catchesMostQuietly :: IO () -> IO ()
+catchesMostQuietly act =
+  catches act most
+  where
+    most = [Handler handleIOQuietly, Handler handleKitPackQuietly]

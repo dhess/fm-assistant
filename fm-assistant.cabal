@@ -21,6 +21,7 @@ Library
                       , Game.FMAssistant.FM16
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod.Kits
+                      , Game.FMAssistant.Mod.Faces
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
                       , Game.FMAssistant.Unpack
@@ -71,10 +72,12 @@ Executable fm-assistant
                       , Game.FMAssistant.FM16
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod.Kits
+                      , Game.FMAssistant.Mod.Faces
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
                       , Game.FMAssistant.Unpack
                       , Game.FMAssistant.Util
+                      , CutoutMegapack
                       , KitPack
                       , Util
 
@@ -116,6 +119,7 @@ Test-Suite spec
                       , Game.FMAssistant.FM16
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod.Kits
+                      , Game.FMAssistant.Mod.Faces
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
                       , Game.FMAssistant.Unpack
