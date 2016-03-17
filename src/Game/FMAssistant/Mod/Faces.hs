@@ -16,7 +16,10 @@ Portability : non-portable
 {-# LANGUAGE Safe #-}
 
 module Game.FMAssistant.Mod.Faces
-       ( installCutoutMegapack
+       ( facePath
+       , iconFacePath
+       , installCutoutMegapack
+       , installCutoutIcons
          -- * Facepack-related exceptions
        , FacePackException(..)
        , fpeGetFileName
@@ -47,6 +50,16 @@ import Game.FMAssistant.Util (createTempDirectory)
 facePath :: UserDirFilePath -> FilePath
 facePath ufp = _userDirFilePath ufp </> "graphics" </> "faces"
 
+-- | Icon face packs live in a pre-determined subdirectory of the
+-- game's user directory. This function constructs the path to that
+-- subdirectory, given a particular 'UserDirFilePath'.
+--
+-- >>> :set -XOverloadedStrings
+-- >>> iconFacePath $ UserDirFilePath "/home/dhess/Football Manager 2016"
+-- "/home/dhess/Football Manager 2016/graphics/iconfaces"
+iconFacePath :: UserDirFilePath -> FilePath
+iconFacePath ufp = _userDirFilePath ufp </> "graphics" </> "iconfaces"
+
 -- | Install the Sortitoutsi "Cutout Megapack" face pack to the given
 -- user directory. Note that this action will overwrite any face pack
 -- which has already been installed.
@@ -56,7 +69,21 @@ facePath ufp = _userDirFilePath ufp </> "graphics" </> "faces"
 -- then this action throws an exception and aborts the installation --
 -- the face pack will not be installed.
 installCutoutMegapack :: (MonadThrow m, MonadIO m) => UserDirFilePath -> ArchiveFilePath -> m ()
-installCutoutMegapack userDir archive@(ArchiveFilePath fn) = liftIO $
+installCutoutMegapack userDir archive = installFaces userDir archive ("sortitoutsi" </> "faces") facePath
+
+-- | Install the Sortitoutsi "Cutout Megapack" face pack to the given
+-- user directory. Note that this action will overwrite any face pack
+-- which has already been installed.
+--
+-- If there's a problem unpacking the face pack; if the kit pack does
+-- not appear to be valid; or if the user directory doesn't exist;
+-- then this action throws an exception and aborts the installation --
+-- the face pack will not be installed.
+installCutoutIcons :: (MonadThrow m, MonadIO m) => UserDirFilePath -> ArchiveFilePath -> m ()
+installCutoutIcons userDir archive = installFaces userDir archive ("sortitoutsi" </> "iconfaces") iconFacePath
+
+installFaces :: (MonadThrow m, MonadIO m) => UserDirFilePath -> ArchiveFilePath -> FilePath -> (UserDirFilePath -> FilePath) -> m ()
+installFaces userDir archive@(ArchiveFilePath fn) facesSubdir installPath = liftIO $
   -- We should create the face pack directory if it doesn't exist (and
   -- it doesn't by default), but we should not create the user
   -- directory if that doesn't exist, as that probably means it's
@@ -68,11 +95,11 @@ installCutoutMegapack userDir archive@(ArchiveFilePath fn) = liftIO $
        do (rkey, tmpDir) <- createTempDirectory (takeBaseName fn)
           catch (unpack archive tmpDir)
                 (\(e :: UnpackException) -> throwM $ UnpackingError archive e)
-          let facesDir = tmpDir </> "sortitoutsi" </> "faces"
+          let facesDir = tmpDir </> facesSubdir
           facesExists <- liftIO $ doesDirectoryExist facesDir
           unless facesExists $
             throwM $ MissingFacesDir archive
-          let installedLocation = facePath userDir
+          let installedLocation = installPath userDir
           targetExists <- liftIO $ doesDirectoryExist installedLocation
           if targetExists
             then liftIO $ removeDirectoryRecursive installedLocation

@@ -77,7 +77,7 @@ Executable fm-assistant
                       , Game.FMAssistant.Types
                       , Game.FMAssistant.Unpack
                       , Game.FMAssistant.Util
-                      , CutoutMegapack
+                      , CutoutFaces
                       , KitPack
                       , Util
 
