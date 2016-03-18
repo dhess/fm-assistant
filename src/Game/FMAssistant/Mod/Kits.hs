@@ -24,14 +24,14 @@ module Game.FMAssistant.Mod.Kits
        ) where
 
 import Control.Exception (Exception(..))
-import Control.Monad.Catch (MonadCatch, MonadThrow, catch, throwM)
+import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow, catch, throwM)
 import qualified Control.Foldl as Fold (fold, length, head)
 import Control.Monad (forM_, unless, void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Trans.Resource (release, runResourceT)
 import Data.Data
 import System.Directory (createDirectory, createDirectoryIfMissing, doesDirectoryExist, removeDirectoryRecursive, renameDirectory, renameFile)
 import System.FilePath ((</>), takeBaseName, takeFileName)
+import System.IO.Temp (withSystemTempDirectory)
 
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirFilePath(..), archiveName,
@@ -66,12 +66,9 @@ kitPath ufp = _userDirFilePath ufp </> "graphics" </> "kits"
 -- checks as this action does. This action is provided primarily to
 -- help users weed faulty kit packs out of their collections, e.g., by
 -- using it as a filter on a directory full of kit pack archives.
-validateKitPack :: (MonadIO m) => ArchiveFilePath -> m ()
-validateKitPack ar@(ArchiveFilePath fn) = liftIO $
-  runResourceT $
-    do (rkey, tmpDir) <- createTempDirectory (takeBaseName fn)
-       void $ unpackKitPack ar tmpDir
-       release rkey
+validateKitPack :: (MonadMask m, MonadIO m) => ArchiveFilePath -> m ()
+validateKitPack ar@(ArchiveFilePath fn) =
+  withSystemTempDirectory (takeBaseName fn) (void . unpackKitPack ar)
 
 -- | Install a kit pack to the given user directory. Note that this
 -- action will overwrite an existing kit path of the same name (but
@@ -82,18 +79,17 @@ validateKitPack ar@(ArchiveFilePath fn) = liftIO $
 -- not appear to be valid; or if the user directory doesn't exist;
 -- then this action throws an exception and aborts the installation --
 -- no kits from the pack will be installed.
-installKitPack :: (MonadThrow m, MonadIO m) => UserDirFilePath -> ArchiveFilePath -> m ()
-installKitPack userDir archive@(ArchiveFilePath fn) = liftIO $
+installKitPack :: (MonadThrow m, MonadMask m, MonadIO m) => UserDirFilePath -> ArchiveFilePath -> m ()
+installKitPack userDir archive@(ArchiveFilePath fn) =
   -- We should create the top-level kit path directory if it doesn't
   -- exist (and it doesn't by default), but we should not create the
   -- user directory if that doesn't exist, as that probably means it's
   -- wrong, or that the game isn't installed.
-  do userDirExists <- doesDirectoryExist (_userDirFilePath userDir)
+  do userDirExists <- liftIO $ doesDirectoryExist (_userDirFilePath userDir)
      unless userDirExists $
        throwM $ NoSuchUserDirectory userDir
-     runResourceT $
-       do (rkey, tmpDir) <- createTempDirectory (takeBaseName fn)
-          kitDir <- unpackKitPack archive tmpDir
+     withSystemTempDirectory (takeBaseName fn) $ \tmpDir ->
+       do kitDir <- unpackKitPack archive tmpDir
           -- Remove the existing installed kit pack with the same
           -- name, if it exists.
           --
@@ -111,7 +107,6 @@ installKitPack userDir archive@(ArchiveFilePath fn) = liftIO $
              then liftIO $ removeDirectoryRecursive installedLocation
              else liftIO $ createDirectoryIfMissing True $ kitPath userDir
           liftIO $ renameDirectory kitDir installedLocation
-          release rkey
 
 -- | Unpack an archive file assumed to contain a kit pack to the given
 -- parent directory.
