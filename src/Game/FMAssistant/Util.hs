@@ -15,8 +15,8 @@ Helpful functions and combinators.
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Util
-       ( defaultUserDir
-       , createTempDirectory
+       ( createTempDirectory
+       , defaultSteamDir
        , listDirectory
        , executeQuietly
        ) where
@@ -28,14 +28,6 @@ import System.Exit (ExitCode)
 import System.FilePath ((</>), combine)
 import qualified System.IO.Temp as System (createTempDirectory)
 import System.Process.Streaming (execute, exitCode, piped, proc)
-
-import Game.FMAssistant.Types (Version(..), UserDirFilePath(..))
-
--- | Construct the default 'UserDirPath' for a given game version.
-defaultUserDir :: (MonadIO m) => Version -> m UserDirFilePath
-defaultUserDir version =
-  do steamDir <- defaultSteamDir
-     return $ UserDirFilePath (steamDir </> _version version)
 
 -- | Create a temporary directory and register it with 'ResourceT' so
 -- that it's cleaned up properly.
@@ -69,9 +61,6 @@ executeQuietly
         -> m ExitCode
         -- ^ Exit code
 executeQuietly cmd args = liftIO $ execute (piped (proc cmd args)) exitCode
-
--- Not currently exported.
---
 
 -- | The platform-specific Steam directory for the user who is running
 -- the 'MonadIO' action.

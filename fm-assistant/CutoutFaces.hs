@@ -9,9 +9,10 @@ module CutoutFaces
 import Options.Applicative
 
 import Control.Monad.Catch (Handler(..), catches)
-import qualified Game.FMAssistant.FM16 as FM16 (defaultUserDir)
+import Control.Monad.IO.Class (liftIO)
 import Game.FMAssistant.Mod.Faces (FacePackException, installCutoutMegapack, installCutoutIcons)
 import Game.FMAssistant.Types (ArchiveFilePath(..))
+import Game.FMAssistant.Version (defaultUserDir, runFM16)
 import System.Exit (ExitCode(..))
 import System.IO (hPrint, stderr)
 
@@ -42,18 +43,20 @@ parser =
      command "install-icons" (info installIconsCmd (progDesc "Install the Sortitoutsi Cutout Icon pack")))
 
 run :: Command -> IO ExitCode
-run (InstallMegapack (InstallOptions fp)) =
-  do userDir <- FM16.defaultUserDir
-     catchesMost $
-       do installCutoutMegapack userDir (ArchiveFilePath fp)
-          putStrLn $ "Installed " ++ fp
-          return ExitSuccess
-run (InstallIcons (InstallOptions fp)) =
-  do userDir <- FM16.defaultUserDir
-     catchesMost $
-       do installCutoutIcons userDir (ArchiveFilePath fp)
-          putStrLn $ "Installed " ++ fp
-          return ExitSuccess
+run (InstallMegapack (InstallOptions fp)) = runFM16 $
+  do userDir <- defaultUserDir
+     liftIO $
+       catchesMost $
+         do installCutoutMegapack userDir (ArchiveFilePath fp)
+            putStrLn $ "Installed " ++ fp
+            return ExitSuccess
+run (InstallIcons (InstallOptions fp)) = runFM16 $
+  do userDir <- defaultUserDir
+     liftIO $
+       catchesMost $
+         do installCutoutIcons userDir (ArchiveFilePath fp)
+            putStrLn $ "Installed " ++ fp
+            return ExitSuccess
 
 handleFacePack :: FacePackException -> IO ExitCode
 handleFacePack e = hPrint stderr e >> return (ExitFailure 2)

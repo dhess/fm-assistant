@@ -10,9 +10,10 @@ import Options.Applicative
 
 import Control.Monad (forM, forM_, unless, void)
 import Control.Monad.Catch (Handler(..), catches)
-import qualified Game.FMAssistant.FM16 as FM16 (defaultUserDir)
+import Control.Monad.IO.Class (liftIO)
 import Game.FMAssistant.Mod.Kits (KitPackException, installKitPack, kpeGetFileName, validateKitPack)
 import Game.FMAssistant.Types (ArchiveFilePath(..))
+import Game.FMAssistant.Version (defaultUserDir, runFM16)
 import System.Exit (ExitCode(..))
 import System.IO (hPrint, stderr)
 
@@ -59,10 +60,10 @@ parser =
      command "validate" (info validateCmd (progDesc "Validate kit packs")))
 
 run :: Command -> IO ExitCode
-run (Install (InstallOptions fns)) =
-  do userDir <- FM16.defaultUserDir
+run (Install (InstallOptions fns)) = runFM16 $
+  do userDir <- defaultUserDir
      codes <- forM fns
-                   (\fp ->
+                   (\fp -> liftIO $
                      catchesMost $
                        do installKitPack userDir (ArchiveFilePath fp)
                           putStrLn $ "Installed " ++ fp

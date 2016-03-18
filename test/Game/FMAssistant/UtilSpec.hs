@@ -11,7 +11,6 @@ import System.Directory (doesDirectoryExist, getHomeDirectory, getTemporaryDirec
 import System.FilePath ((</>))
 import Test.Hspec
 
-import Game.FMAssistant.Types (UserDirFilePath(..), Version(..))
 import Game.FMAssistant.Util
 
 spec :: Spec
@@ -19,7 +18,7 @@ spec =
   do describe "defaultUserDir" $
        it "returns the expected value" $
          do homeDir <- getHomeDirectory
-            defaultUserDir (Version "foo bar") `shouldReturn` UserDirFilePath (homeDir </> "Documents/Sports Interactive/foo bar")
+            defaultSteamDir `shouldReturn` (homeDir </> "Documents" </> "Sports Interactive")
      describe "createTempDirectory" $
        do it "creates a temporary directory in the system temporary directory" $
             do sysTmpDir <- getTemporaryDirectory

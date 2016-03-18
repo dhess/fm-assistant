@@ -5,10 +5,10 @@ let
   inherit (nixpkgs) pkgs;
 
   f = { mkDerivation, base, bytestring, containers, directory
-      , doctest, exceptions, filepath, foldl, hspec, mtl
+      , doctest, exceptions, filepath, foldl, hspec, lens, mtl
       , optparse-applicative, process-streaming, resourcet, stdenv
-      , streaming, streaming-bytestring, system-filepath, tar, temporary
-      , text, transformers
+      , streaming, streaming-bytestring, system-filepath, tar
+      , template-haskell, temporary, text, transformers
       }:
       mkDerivation {
         pname = "fm-assistant";
@@ -17,21 +17,21 @@ let
         isLibrary = true;
         isExecutable = true;
         libraryHaskellDepends = [
-          base bytestring containers directory exceptions filepath foldl mtl
-          process-streaming resourcet streaming streaming-bytestring
-          system-filepath tar temporary text transformers
+          base bytestring containers directory exceptions filepath foldl lens
+          mtl process-streaming resourcet streaming streaming-bytestring
+          system-filepath tar template-haskell temporary text transformers
         ];
         executableHaskellDepends = [
-          base bytestring containers directory exceptions filepath foldl mtl
-          optparse-applicative process-streaming resourcet streaming
-          streaming-bytestring system-filepath tar temporary text
-          transformers
+          base bytestring containers directory exceptions filepath foldl lens
+          mtl optparse-applicative process-streaming resourcet streaming
+          streaming-bytestring system-filepath tar template-haskell temporary
+          text transformers
         ];
         testHaskellDepends = [
           base bytestring containers directory doctest exceptions filepath
-          foldl hspec mtl process-streaming resourcet streaming
-          streaming-bytestring system-filepath tar temporary text
-          transformers
+          foldl hspec lens mtl process-streaming resourcet streaming
+          streaming-bytestring system-filepath tar template-haskell temporary
+          text transformers
         ];
         license = stdenv.lib.licenses.bsd3;
       };
