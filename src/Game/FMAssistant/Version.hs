@@ -22,7 +22,6 @@ module Game.FMAssistant.Version
        , runFM16
        ) where
 
-import Prelude hiding (FilePath)
 import Control.Applicative (Alternative)
 import Control.Monad (MonadPlus)
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
