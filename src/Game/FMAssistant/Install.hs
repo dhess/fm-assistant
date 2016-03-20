@@ -45,7 +45,7 @@ import Control.Monad.Trans.Maybe (MaybeT)
 import Control.Monad.Reader (MonadReader, ReaderT)
 import Control.Monad.RWS (MonadRWS)
 import Control.Monad.State (MonadState)
-import Control.Monad.Trans.Resource (MonadResource, ReleaseKey, allocate, release, runResourceT)
+import Control.Monad.Trans.Resource (release, runResourceT)
 import qualified Control.Monad.Trans.RWS.Lazy as LazyRWS (RWST)
 import qualified Control.Monad.Trans.RWS.Strict as StrictRWS (RWST)
 import qualified Control.Monad.Trans.State.Lazy as LazyState (StateT)
@@ -55,8 +55,9 @@ import qualified Control.Monad.Trans.Writer.Strict as StrictWriter (WriterT)
 import Control.Monad.Writer (MonadWriter)
 import Path ((</>), Path, Abs, Rel, Dir, dirname, parent, toFilePath)
 import Path.IO (doesDirExist, removeDirRecur, renameDir)
-import qualified Path.IO as Path (createTempDir)
 import System.IO.Error (alreadyExistsErrorType, mkIOError)
+
+import Game.FMAssistant.Util (createTempDir)
 
 -- | A monad which provides a context for installing mods.
 class (Monad m) => MonadInstall m where
@@ -237,16 +238,3 @@ replaceAtomically existingPath replacementPath =
             (moveAtomically replacementPath existingPath)
             (renameDir backupPath existingPath)
           release rkey
-
--- | Create a temporary directory and register it with 'ResourceT' so
--- that it's cleaned up properly.
-createTempDir
-  :: (MonadResource m)
-  => Path Abs Dir
-  -- ^ The parent directory
-  -> String
-  -- ^ Temp directory filename template
-  -> m (ReleaseKey, Path Abs Dir)
-  -- ^ The 'ReleaseKey' and name of the temporary directory
-createTempDir parentPath template =
-  allocate (Path.createTempDir parentPath template) removeDirRecur

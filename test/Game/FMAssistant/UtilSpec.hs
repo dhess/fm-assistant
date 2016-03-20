@@ -19,15 +19,15 @@ spec =
        it "returns the expected value" $
          do homeDir <- getHomeDirectory
             defaultSteamDir `shouldReturn` (homeDir </> "Documents" </> "Sports Interactive")
-     describe "createTempDirectory" $
+     describe "createSystemTempDirectory" $
        do it "creates a temporary directory in the system temporary directory" $
             do sysTmpDir <- getTemporaryDirectory
                runResourceT $
-                 do (_, tmpDir) <- createTempDirectory "Foo"
+                 do (_, tmpDir) <- createSystemTempDirectory "Foo"
                     liftIO $ isPrefixOf sysTmpDir tmpDir `shouldBe` True
                     liftIO $ doesDirectoryExist tmpDir `shouldReturn` True
           it "removes the temporary directory when finished" $
             do tmpDir <- runResourceT $
-                 do (_, td) <- createTempDirectory "Foo"
+                 do (_, td) <- createSystemTempDirectory "Foo"
                     return td
                doesDirectoryExist tmpDir `shouldReturn` False

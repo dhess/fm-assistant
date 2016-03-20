@@ -38,7 +38,7 @@ import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirFilePath(..),
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
 import Game.FMAssistant.Unpack (UnpackException, unpack)
-import Game.FMAssistant.Util (createTempDirectory)
+import Game.FMAssistant.Util (createSystemTempDirectory)
 
 -- | Face packs live in a pre-determined subdirectory of the game's
 -- user directory. This function constructs the path to that
@@ -92,7 +92,7 @@ installFaces userDir archive@(ArchiveFilePath fn) facesSubdir installPath = lift
      unless userDirExists $
        throwM $ NoSuchUserDirectory userDir
      runResourceT $
-       do (rkey, tmpDir) <- createTempDirectory (takeBaseName fn)
+       do (rkey, tmpDir) <- createSystemTempDirectory (takeBaseName fn)
           catch (unpack archive tmpDir)
                 (\(e :: UnpackException) -> throwM $ UnpackingError archive e)
           let facesDir = tmpDir </> facesSubdir

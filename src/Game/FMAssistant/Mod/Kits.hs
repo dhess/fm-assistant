@@ -37,7 +37,7 @@ import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirFilePath(..), archiveName,
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
 import Game.FMAssistant.Unpack (UnpackException, unpack)
-import Game.FMAssistant.Util (createTempDirectory, listDirectory)
+import Game.FMAssistant.Util (listDirectory)
 
 -- | Kits live in a pre-determined subdirectory of the game's user
 -- directory. This function constructs the path to that subdirectory,

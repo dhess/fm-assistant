@@ -15,7 +15,9 @@ Helpful functions and combinators.
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Util
-       ( createTempDirectory
+       ( createSystemTempDir
+       , createSystemTempDirectory
+       , createTempDir
        , defaultSteamDir
        , listDirectory
        , executeQuietly
@@ -23,21 +25,47 @@ module Game.FMAssistant.Util
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Resource (MonadResource, ReleaseKey, allocate)
+import Path (Path, Abs, Dir)
+import qualified Path.IO as Path (createTempDir, getTempDir, removeDirRecur)
 import System.Directory (getHomeDirectory, getDirectoryContents, getTemporaryDirectory, removeDirectoryRecursive)
 import System.Exit (ExitCode)
 import System.FilePath ((</>), combine)
 import qualified System.IO.Temp as System (createTempDirectory)
 import System.Process.Streaming (execute, exitCode, piped, proc)
 
--- | Create a temporary directory and register it with 'ResourceT' so
--- that it's cleaned up properly.
-createTempDirectory
+-- | Create a temporary directory in the system temporary directory
+-- and register it with 'ResourceT' so that it's cleaned up properly.
+createSystemTempDir
+  :: (MonadResource m)
+  => String
+  -- ^ Temp directory filename template
+  -> m (ReleaseKey, Path Abs Dir)
+  -- ^ The 'ReleaseKey' and name of the temporary directory
+createSystemTempDir template =
+  do tmpDir <- Path.getTempDir
+     createTempDir tmpDir template
+
+-- | Create a temporary directory in the given parent directory and
+-- register it with 'ResourceT' so that it's cleaned up properly.
+createTempDir
+  :: (MonadResource m)
+  => Path Abs Dir
+  -- ^ The parent directory in which to create the temporary directory
+  -> String
+  -- ^ Temp directory filename template
+  -> m (ReleaseKey, Path Abs Dir)
+  -- ^ The 'ReleaseKey' and name of the temporary directory
+createTempDir parentDir template =
+  allocate (Path.createTempDir parentDir template) Path.removeDirRecur
+
+-- | Like 'createSystemTempDir' but with standard Haskell 'FilePath's.
+createSystemTempDirectory
         :: (MonadResource m)
         => String
         -- ^ Temp directory filename template
         -> m (ReleaseKey, FilePath)
         -- ^ The 'ReleaseKey' and name of the temporary directory
-createTempDirectory template =
+createSystemTempDirectory template =
   do tmpDir <- liftIO getTemporaryDirectory
      allocate (System.createTempDirectory tmpDir template)
               removeDirectoryRecursive
