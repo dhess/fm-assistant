@@ -55,6 +55,7 @@ import qualified Control.Monad.Trans.Writer.Strict as StrictWriter (WriterT)
 import Control.Monad.Writer (MonadWriter)
 import Path ((</>), Path, Abs, Rel, Dir, dirname, parent, toFilePath)
 import Path.IO (doesDirExist, removeDirRecur, renameDir)
+import System.FilePath (dropTrailingPathSeparator)
 import System.IO.Error (alreadyExistsErrorType, mkIOError)
 
 import Game.FMAssistant.Util (createTempDir)
@@ -230,11 +231,13 @@ replaceAtomically existingPath replacementPath =
       parentDir = parent existingPath
       dirName :: Path Rel Dir
       dirName = dirname existingPath
-  in liftIO $ runResourceT $
-       do (rkey, backupDir) <- createTempDir parentDir (toFilePath dirName)
-          let backupPath = backupDir </> dirName
-          moveAtomically existingPath backupPath
-          onException
-            (moveAtomically replacementPath existingPath)
-            (renameDir backupPath existingPath)
-          release rkey
+  in liftIO $
+     runResourceT $
+     do (rkey,backupDir) <-
+          createTempDir parentDir
+                        (dropTrailingPathSeparator $ toFilePath dirName)
+        moveAtomically existingPath backupDir
+        let backupPath = backupDir </> dirName
+        onException (moveAtomically replacementPath existingPath)
+                    (renameDir backupPath existingPath)
+        release rkey
