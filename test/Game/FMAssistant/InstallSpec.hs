@@ -7,7 +7,7 @@ module Game.FMAssistant.InstallSpec
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Resource (runResourceT)
 import Path ((</>), Path, Abs, Rel, Dir, File, dirname, parent, parseAbsFile, parseRelDir, parseRelFile, toFilePath)
-import Path.IO (doesDirExist, doesFileExist, removeDirRecur, renameDir)
+import Path.IO (doesDirExist, doesFileExist, removeDir, removeDirRecur, renameDir)
 import qualified Path.IO as Path (createTempDir)
 import Test.Hspec
 import Paths_fm_assistant
@@ -52,6 +52,22 @@ spec =
                     installMod (tmpSrc10 </> modDir) (tmpDst </> modDir)
                     unpack v11 (toFilePath tmpSrc11)
                     liftIO $ installMod (tmpSrc11 </> modDir) (tmpDst </> modDir) `shouldThrow` anyIOException
+          it "should fail when the source directory doesn't exist" $
+            do _ <- dummyPackV10Zip
+               runResourceT $
+                 do (_, tmpDst) <- createSystemTempDir "InstallSpec_tmpDst"
+                    (_, tmpSrc) <- createSystemTempDir "InstallSpec_tmpSrc"
+                    modDir <- parseRelDir "Dummy kit pack"
+                    liftIO $ installMod (tmpSrc </> modDir) (tmpDst </> modDir) `shouldThrow` anyIOException
+          it "should fail when some part of the destination path doesn't exist" $
+            do v10 <- dummyPackV10Zip
+               runResourceT $
+                 do (_, tmpDst) <- createSystemTempDir "InstallSpec_tmpDst"
+                    (_, tmpSrc) <- createSystemTempDir "InstallSpec_tmpSrc"
+                    unpack v10 (toFilePath tmpSrc)
+                    removeDir tmpDst
+                    modDir <- parseRelDir "Dummy kit pack"
+                    liftIO $ installMod (tmpSrc </> modDir) (tmpDst </> modDir) `shouldThrow` anyIOException
      describe "replaceMod" $
        do it "should install a mod" $
             do v10 <- dummyPackV10Zip
@@ -87,6 +103,22 @@ spec =
                     liftIO $ doesFileExist (tmpDst </> vasco_1_png) `shouldReturn` True
                     santos_1_png  <- parseRelFile "Dummy kit pack/santos_1.png"
                     liftIO $ doesFileExist (tmpDst </> santos_1_png) `shouldReturn` False
+          it "should fail when the source directory doesn't exist" $
+            do _ <- dummyPackV10Zip
+               runResourceT $
+                 do (_, tmpDst) <- createSystemTempDir "InstallSpec_tmpDst"
+                    (_, tmpSrc) <- createSystemTempDir "InstallSpec_tmpSrc"
+                    modDir <- parseRelDir "Dummy kit pack"
+                    liftIO $ replaceMod (tmpSrc </> modDir) (tmpDst </> modDir) `shouldThrow` anyIOException
+          it "should fail when some part of the destination path doesn't exist" $
+            do v10 <- dummyPackV10Zip
+               runResourceT $
+                 do (_, tmpDst) <- createSystemTempDir "InstallSpec_tmpDst"
+                    (_, tmpSrc) <- createSystemTempDir "InstallSpec_tmpSrc"
+                    unpack v10 (toFilePath tmpSrc)
+                    removeDir tmpDst
+                    modDir <- parseRelDir "Dummy kit pack"
+                    liftIO $ replaceMod (tmpSrc </> modDir) (tmpDst </> modDir) `shouldThrow` anyIOException
      describe "runInstallModT" $
        do it "should install a mod" $
             do v10 <- dummyPackV10Zip
@@ -114,6 +146,22 @@ spec =
                     runInstallModT $ install (tmpSrc10 </> modDir) (tmpDst </> modDir)
                     unpack v11 (toFilePath tmpSrc11)
                     liftIO $ runInstallModT (install (tmpSrc11 </> modDir) (tmpDst </> modDir)) `shouldThrow` anyIOException
+          it "should fail when the source directory doesn't exist" $
+            do _ <- dummyPackV10Zip
+               runResourceT $
+                 do (_, tmpDst) <- createSystemTempDir "InstallSpec_tmpDst"
+                    (_, tmpSrc) <- createSystemTempDir "InstallSpec_tmpSrc"
+                    modDir <- parseRelDir "Dummy kit pack"
+                    liftIO $ runInstallModT (install (tmpSrc </> modDir) (tmpDst </> modDir)) `shouldThrow` anyIOException
+          it "should fail when some part of the destination path doesn't exist" $
+            do v10 <- dummyPackV10Zip
+               runResourceT $
+                 do (_, tmpDst) <- createSystemTempDir "InstallSpec_tmpDst"
+                    (_, tmpSrc) <- createSystemTempDir "InstallSpec_tmpSrc"
+                    unpack v10 (toFilePath tmpSrc)
+                    removeDir tmpDst
+                    modDir <- parseRelDir "Dummy kit pack"
+                    liftIO $ runInstallModT (install (tmpSrc </> modDir) (tmpDst </> modDir)) `shouldThrow` anyIOException
      describe "runReplaceModT" $
        do it "should install a mod" $
             do v10 <- dummyPackV10Zip
@@ -149,3 +197,19 @@ spec =
                     liftIO $ doesFileExist (tmpDst </> vasco_1_png) `shouldReturn` True
                     santos_1_png  <- parseRelFile "Dummy kit pack/santos_1.png"
                     liftIO $ doesFileExist (tmpDst </> santos_1_png) `shouldReturn` False
+          it "should fail when the source directory doesn't exist" $
+            do _ <- dummyPackV10Zip
+               runResourceT $
+                 do (_, tmpDst) <- createSystemTempDir "InstallSpec_tmpDst"
+                    (_, tmpSrc) <- createSystemTempDir "InstallSpec_tmpSrc"
+                    modDir <- parseRelDir "Dummy kit pack"
+                    liftIO $ runReplaceModT (install (tmpSrc </> modDir) (tmpDst </> modDir)) `shouldThrow` anyIOException
+          it "should fail when some part of the destination path doesn't exist" $
+            do v10 <- dummyPackV10Zip
+               runResourceT $
+                 do (_, tmpDst) <- createSystemTempDir "InstallSpec_tmpDst"
+                    (_, tmpSrc) <- createSystemTempDir "InstallSpec_tmpSrc"
+                    unpack v10 (toFilePath tmpSrc)
+                    removeDir tmpDst
+                    modDir <- parseRelDir "Dummy kit pack"
+                    liftIO $ runReplaceModT (install (tmpSrc </> modDir) (tmpDst </> modDir)) `shouldThrow` anyIOException
