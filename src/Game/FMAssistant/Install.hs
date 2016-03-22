@@ -67,7 +67,7 @@ class (Monad m) => MonadInstall m where
     :: Path Abs Dir
     -- ^ The directory containing the mod contents
     -> Path Abs Dir
-    -- ^ The (parent) directory into which the mod will be installed
+    -- ^ The directory where the mod contents will be installed
     -> m ()
 
 instance (MonadInstall m) => MonadInstall (IdentityT m) where
@@ -164,19 +164,17 @@ installMod
   => Path Abs Dir
   -- ^ The directory containing the mod contents
   -> Path Abs Dir
-  -- ^ The (parent) directory into which the mod will be installed
+  -- ^ The directory where the mod contents will be installed
   -> m ()
 installMod srcPath dstPath =
-  let targetPath :: Path Abs Dir
-      targetPath = dstPath </> dirname srcPath
-  in do targetExists <- doesDirExist targetPath
-        when targetExists $
-          throwM $
-            mkIOError alreadyExistsErrorType
-                      "installMod"
-                      Nothing
-                      (Just $ toFilePath targetPath)
-        moveAtomically srcPath targetPath
+  do targetExists <- doesDirExist dstPath
+     when targetExists $
+       throwM $
+         mkIOError alreadyExistsErrorType
+                   "installMod"
+                   Nothing
+                   (Just $ toFilePath dstPath)
+     moveAtomically srcPath dstPath
 
 -- | Install a mod, replacing an existing installation, if present.
 --
@@ -191,15 +189,13 @@ replaceMod
   => Path Abs Dir
   -- ^ The directory containing the mod contents
   -> Path Abs Dir
-  -- ^ The (parent) directory into which the mod will be installed
+  -- ^ The directory where the mod contents will be installed
   -> m ()
 replaceMod srcPath dstPath =
-  let targetPath :: Path Abs Dir
-      targetPath = dstPath </> dirname srcPath
-  in do targetExists <- doesDirExist targetPath
-        if targetExists
-           then replaceAtomically targetPath srcPath
-           else moveAtomically srcPath targetPath
+  do targetExists <- doesDirExist dstPath
+     if targetExists
+        then replaceAtomically dstPath srcPath
+        else moveAtomically srcPath dstPath
 
 -- Helper functions. These are not exported.
 --

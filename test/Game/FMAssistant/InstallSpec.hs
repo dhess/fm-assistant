@@ -33,7 +33,7 @@ spec =
                     (_, tmpSrc) <- createSystemTempDir "InstallSpec_tmpSrc"
                     unpack v10 (toFilePath tmpSrc)
                     modDir <- parseRelDir "Dummy kit pack"
-                    installMod (tmpSrc </> modDir) tmpDst
+                    installMod (tmpSrc </> modDir) (tmpDst </> modDir)
                     config_xml <- parseRelFile "Dummy kit pack/config.xml"
                     liftIO $ doesFileExist (tmpDst </> config_xml) `shouldReturn` True
                     flamengo_1_png  <- parseRelFile "Dummy kit pack/flamengo_1.png"
@@ -49,9 +49,9 @@ spec =
                     unpack v10 (toFilePath tmpSrc10)
                     (_, tmpSrc11) <- createSystemTempDir "InstallSpec_tmpSrc11"
                     modDir <- parseRelDir "Dummy kit pack"
-                    installMod (tmpSrc10 </> modDir) tmpDst
+                    installMod (tmpSrc10 </> modDir) (tmpDst </> modDir)
                     unpack v11 (toFilePath tmpSrc11)
-                    liftIO $ installMod (tmpSrc11 </> modDir) tmpDst `shouldThrow` anyIOException
+                    liftIO $ installMod (tmpSrc11 </> modDir) (tmpDst </> modDir) `shouldThrow` anyIOException
      describe "replaceMod" $
        do it "should install a mod" $
             do v10 <- dummyPackV10Zip
@@ -60,7 +60,7 @@ spec =
                     (_, tmpSrc) <- createSystemTempDir "InstallSpec_tmpSrc"
                     unpack v10 (toFilePath tmpSrc)
                     modDir <- parseRelDir "Dummy kit pack"
-                    replaceMod (tmpSrc </> modDir) tmpDst
+                    replaceMod (tmpSrc </> modDir) (tmpDst </> modDir)
                     config_xml <- parseRelFile "Dummy kit pack/config.xml"
                     liftIO $ doesFileExist (tmpDst </> config_xml) `shouldReturn` True
                     flamengo_1_png  <- parseRelFile "Dummy kit pack/flamengo_1.png"
@@ -76,9 +76,9 @@ spec =
                     unpack v10 (toFilePath tmpSrc10)
                     (_, tmpSrc11) <- createSystemTempDir "InstallSpec_tmpSrc11"
                     modDir <- parseRelDir "Dummy kit pack"
-                    replaceMod (tmpSrc10 </> modDir) tmpDst
+                    replaceMod (tmpSrc10 </> modDir) (tmpDst </> modDir)
                     unpack v11 (toFilePath tmpSrc11)
-                    replaceMod (tmpSrc11 </> modDir) tmpDst
+                    replaceMod (tmpSrc11 </> modDir) (tmpDst </> modDir)
                     config_xml <- parseRelFile "Dummy kit pack/config.xml"
                     liftIO $ doesFileExist (tmpDst </> config_xml) `shouldReturn` True
                     flamengo_1_png  <- parseRelFile "Dummy kit pack/flamengo_1.png"
@@ -95,7 +95,7 @@ spec =
                     (_, tmpSrc) <- createSystemTempDir "InstallSpec_tmpSrc"
                     unpack v10 (toFilePath tmpSrc)
                     modDir <- parseRelDir "Dummy kit pack"
-                    runInstallModT $ install (tmpSrc </> modDir) tmpDst
+                    runInstallModT $ install (tmpSrc </> modDir) (tmpDst </> modDir)
                     config_xml <- parseRelFile "Dummy kit pack/config.xml"
                     liftIO $ doesFileExist (tmpDst </> config_xml) `shouldReturn` True
                     flamengo_1_png  <- parseRelFile "Dummy kit pack/flamengo_1.png"
@@ -111,9 +111,9 @@ spec =
                     unpack v10 (toFilePath tmpSrc10)
                     (_, tmpSrc11) <- createSystemTempDir "InstallSpec_tmpSrc11"
                     modDir <- parseRelDir "Dummy kit pack"
-                    runInstallModT $ install (tmpSrc10 </> modDir) tmpDst
+                    runInstallModT $ install (tmpSrc10 </> modDir) (tmpDst </> modDir)
                     unpack v11 (toFilePath tmpSrc11)
-                    liftIO $ installMod (tmpSrc11 </> modDir) tmpDst `shouldThrow` anyIOException
+                    liftIO $ runInstallModT (install (tmpSrc11 </> modDir) (tmpDst </> modDir)) `shouldThrow` anyIOException
      describe "runReplaceModT" $
        do it "should install a mod" $
             do v10 <- dummyPackV10Zip
@@ -122,7 +122,7 @@ spec =
                     (_, tmpSrc) <- createSystemTempDir "InstallSpec_tmpSrc"
                     unpack v10 (toFilePath tmpSrc)
                     modDir <- parseRelDir "Dummy kit pack"
-                    runReplaceModT $ install (tmpSrc </> modDir) tmpDst
+                    runReplaceModT $ install (tmpSrc </> modDir) (tmpDst </> modDir)
                     config_xml <- parseRelFile "Dummy kit pack/config.xml"
                     liftIO $ doesFileExist (tmpDst </> config_xml) `shouldReturn` True
                     flamengo_1_png  <- parseRelFile "Dummy kit pack/flamengo_1.png"
@@ -138,9 +138,9 @@ spec =
                     unpack v10 (toFilePath tmpSrc10)
                     (_, tmpSrc11) <- createSystemTempDir "InstallSpec_tmpSrc11"
                     modDir <- parseRelDir "Dummy kit pack"
-                    runReplaceModT $ install (tmpSrc10 </> modDir) tmpDst
+                    runReplaceModT $ install (tmpSrc10 </> modDir) (tmpDst </> modDir)
                     unpack v11 (toFilePath tmpSrc11)
-                    runReplaceModT $ install (tmpSrc11 </> modDir) tmpDst
+                    runReplaceModT $ install (tmpSrc11 </> modDir) (tmpDst </> modDir)
                     config_xml <- parseRelFile "Dummy kit pack/config.xml"
                     liftIO $ doesFileExist (tmpDst </> config_xml) `shouldReturn` True
                     flamengo_1_png  <- parseRelFile "Dummy kit pack/flamengo_1.png"
