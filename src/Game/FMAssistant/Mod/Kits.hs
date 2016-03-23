@@ -29,7 +29,7 @@ import qualified Control.Foldl as Fold (fold, length, head)
 import Control.Monad (forM_, unless, void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Data
-import Path (dirname, parent, parseAbsDir)
+import Path (dirname, parseAbsDir)
 import qualified Path ((</>))
 import Path.IO (ensureDir)
 import System.Directory (createDirectory, doesDirectoryExist, removeDirectoryRecursive, renameDirectory, renameFile)

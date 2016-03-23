@@ -13,7 +13,7 @@ Portability : non-portable
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Mod.Faces
        ( facePath
@@ -26,19 +26,21 @@ module Game.FMAssistant.Mod.Faces
        ) where
 
 import Control.Exception (Exception(..))
-import Control.Monad.Catch (MonadThrow, catch, throwM)
+import Control.Monad.Catch (MonadMask, MonadThrow, catch, throwM)
 import Control.Monad (unless)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Trans.Resource (release, runResourceT)
 import Data.Data
-import System.Directory (createDirectoryIfMissing, doesDirectoryExist, removeDirectoryRecursive, renameDirectory)
-import System.FilePath ((</>), takeBaseName, takeDirectory)
+import Path (parseAbsDir)
+import Path.IO (ensureDir)
+import System.Directory (doesDirectoryExist)
+import System.FilePath ((</>), takeBaseName)
+import System.IO.Temp (withSystemTempDirectory)
 
+import Game.FMAssistant.Install (MonadInstall(..))
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirFilePath(..),
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
 import Game.FMAssistant.Unpack (UnpackException, unpack)
-import Game.FMAssistant.Util (createSystemTempDirectory)
 
 -- | Face packs live in a pre-determined subdirectory of the game's
 -- user directory. This function constructs the path to that
@@ -68,7 +70,7 @@ iconFacePath ufp = _userDirFilePath ufp </> "graphics" </> "iconfaces"
 -- not appear to be valid; or if the user directory doesn't exist;
 -- then this action throws an exception and aborts the installation --
 -- the face pack will not be installed.
-installCutoutMegapack :: (MonadThrow m, MonadIO m) => UserDirFilePath -> ArchiveFilePath -> m ()
+installCutoutMegapack :: (MonadThrow m, MonadMask m, MonadIO m, MonadInstall m) => UserDirFilePath -> ArchiveFilePath -> m ()
 installCutoutMegapack userDir archive = installFaces userDir archive ("sortitoutsi" </> "faces") facePath
 
 -- | Install the Sortitoutsi "Cutout Megapack" face pack to the given
@@ -79,33 +81,29 @@ installCutoutMegapack userDir archive = installFaces userDir archive ("sortitout
 -- not appear to be valid; or if the user directory doesn't exist;
 -- then this action throws an exception and aborts the installation --
 -- the face pack will not be installed.
-installCutoutIcons :: (MonadThrow m, MonadIO m) => UserDirFilePath -> ArchiveFilePath -> m ()
+installCutoutIcons :: (MonadThrow m, MonadMask m, MonadIO m, MonadInstall m) => UserDirFilePath -> ArchiveFilePath -> m ()
 installCutoutIcons userDir archive = installFaces userDir archive ("sortitoutsi" </> "iconfaces") iconFacePath
 
-installFaces :: (MonadThrow m, MonadIO m) => UserDirFilePath -> ArchiveFilePath -> FilePath -> (UserDirFilePath -> FilePath) -> m ()
-installFaces userDir archive@(ArchiveFilePath fn) facesSubdir installPath = liftIO $
+installFaces :: (MonadThrow m, MonadMask m, MonadIO m, MonadInstall m) => UserDirFilePath -> ArchiveFilePath -> FilePath -> (UserDirFilePath -> FilePath) -> m ()
+installFaces userDir archive@(ArchiveFilePath fn) facesSubdir installPath =
   -- We should create the face pack directory if it doesn't exist (and
   -- it doesn't by default), but we should not create the user
   -- directory if that doesn't exist, as that probably means it's
   -- wrong, or that the game isn't installed.
-  do userDirExists <- doesDirectoryExist (_userDirFilePath userDir)
+  do userDirExists <- liftIO $ doesDirectoryExist (_userDirFilePath userDir)
      unless userDirExists $
        throwM $ NoSuchUserDirectory userDir
-     runResourceT $
-       do (rkey, tmpDir) <- createSystemTempDirectory (takeBaseName fn)
-          catch (unpack archive tmpDir)
+     withSystemTempDirectory (takeBaseName fn) $ \tmpDir ->
+       do catch (unpack archive tmpDir)
                 (\(e :: UnpackException) -> throwM $ UnpackingError archive e)
           let facesDir = tmpDir </> facesSubdir
           facesExists <- liftIO $ doesDirectoryExist facesDir
           unless facesExists $
             throwM $ MissingFacesDir archive
-          let installedLocation = installPath userDir
-          targetExists <- liftIO $ doesDirectoryExist installedLocation
-          if targetExists
-            then liftIO $ removeDirectoryRecursive installedLocation
-            else liftIO $ createDirectoryIfMissing True $ takeDirectory installedLocation
-          liftIO $ renameDirectory facesDir installedLocation
-          release rkey
+          facesDir' <- parseAbsDir facesDir
+          installDir <- parseAbsDir $ installPath userDir
+          ensureDir installDir
+          install facesDir' installDir
 
 data FacePackException
   = NoSuchUserDirectory UserDirFilePath

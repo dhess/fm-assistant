@@ -10,6 +10,7 @@ import Options.Applicative
 
 import Control.Monad.Catch (Handler(..), catches)
 import Control.Monad.IO.Class (liftIO)
+import Game.FMAssistant.Install (runReplaceMod)
 import Game.FMAssistant.Mod.Faces (FacePackException, installCutoutMegapack, installCutoutIcons)
 import Game.FMAssistant.Types (ArchiveFilePath(..))
 import Game.FMAssistant.Version (defaultUserDir, runFM16)
@@ -47,14 +48,14 @@ run (InstallMegapack (InstallOptions fp)) = runFM16 $
   do userDir <- defaultUserDir
      liftIO $
        catchesMost $
-         do installCutoutMegapack userDir (ArchiveFilePath fp)
+         do runReplaceMod $ installCutoutMegapack userDir (ArchiveFilePath fp)
             putStrLn $ "Installed " ++ fp
             return ExitSuccess
 run (InstallIcons (InstallOptions fp)) = runFM16 $
   do userDir <- defaultUserDir
      liftIO $
        catchesMost $
-         do installCutoutIcons userDir (ArchiveFilePath fp)
+         do runReplaceMod $ installCutoutIcons userDir (ArchiveFilePath fp)
             putStrLn $ "Installed " ++ fp
             return ExitSuccess
 
