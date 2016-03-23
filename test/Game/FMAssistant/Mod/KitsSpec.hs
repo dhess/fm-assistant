@@ -10,8 +10,9 @@ import System.IO.Temp (withSystemTempDirectory)
 import Test.Hspec
 import Paths_fm_assistant
 
-import Game.FMAssistant.Types (ArchiveFilePath(..), UserDirFilePath(..))
+import Game.FMAssistant.Install (runInstallMod, runReplaceMod)
 import Game.FMAssistant.Mod.Kits
+import Game.FMAssistant.Types (ArchiveFilePath(..), UserDirFilePath(..))
 
 withTmpUserDir :: (UserDirFilePath -> IO a) -> IO a
 withTmpUserDir action = withSystemTempDirectory "KitSpec" $ \dir ->
@@ -66,29 +67,33 @@ spec =
             withTmpUserDir $ \dir ->
               let kitDir = _userDirFilePath dir </> "graphics" </> "kits"
               in
-                do dummyPackV10Zip >>= installKitPack dir
-                   sillyKitsZip >>= installKitPack dir
+                do dummyPackV10Zip >>= runInstallMod . installKitPack dir
+                   sillyKitsZip >>= runInstallMod . installKitPack dir
                    doesFileExist (kitDir </> "Dummy kit pack" </> "config.xml") `shouldReturn` True
                    doesFileExist (kitDir </> "Dummy kit pack" </> "flamengo_1.png") `shouldReturn` True
                    doesFileExist (kitDir </> "Dummy kit pack" </> "santos_1.png") `shouldReturn` True
                    doesFileExist (kitDir </> "Silly kits" </> "config.xml") `shouldReturn` True
                    doesFileExist (kitDir </> "Silly kits" </> "flam_1.png") `shouldReturn` True
                    doesFileExist (kitDir </> "Silly kits" </> "foo_3.png") `shouldReturn` True
-          it "is (effectively) idempotent" $
+          it "won't overwrite an existing install when run with runInstallMod" $
+            withTmpUserDir $ \dir ->
+              do dummyPackV10Zip >>= runInstallMod . installKitPack dir
+                 (dummyPackV11Zip >>= runInstallMod . installKitPack dir) `shouldThrow` anyIOException
+          it "is (effectively) idempotent when run with runReplaceMod" $
             withTmpUserDir $ \dir ->
               let kitDir = _userDirFilePath dir </> "graphics" </> "kits"
               in
-                do dummyPackV10Zip >>= installKitPack dir
-                   dummyPackV10Rar >>= installKitPack dir
+                do dummyPackV10Zip >>= runInstallMod . installKitPack dir
+                   dummyPackV10Rar >>= runReplaceMod . installKitPack dir
                    doesFileExist (kitDir </> "Dummy kit pack" </> "config.xml") `shouldReturn` True
                    doesFileExist (kitDir </> "Dummy kit pack" </> "flamengo_1.png") `shouldReturn` True
                    doesFileExist (kitDir </> "Dummy kit pack" </> "santos_1.png") `shouldReturn` True
-          it "removes any existing version when installing a new version" $
+          it "when run with runReplaceMod, removes any existing version when installing a new version" $
             withTmpUserDir $ \dir ->
               let kitDir = _userDirFilePath dir </> "graphics" </> "kits"
               in
-                do dummyPackV10Zip >>= installKitPack dir
-                   dummyPackV11Zip >>= installKitPack dir
+                do dummyPackV10Zip >>= runInstallMod . installKitPack dir
+                   dummyPackV11Zip >>= runReplaceMod . installKitPack dir
                    doesFileExist (kitDir </> "Dummy kit pack" </> "config.xml") `shouldReturn` True
                    doesFileExist (kitDir </> "Dummy kit pack" </> "flamengo_1.png") `shouldReturn` True
                    doesFileExist (kitDir </> "Dummy kit pack" </> "santos_1.png") `shouldReturn` False
@@ -97,9 +102,9 @@ spec =
             withTmpUserDir $ \dir ->
               let kitDir = _userDirFilePath dir </> "graphics" </> "kits"
               in
-                do dummyPackV10Zip >>= installKitPack dir
-                   sillyKitsZip >>= installKitPack dir
-                   dummyPackV11Zip >>= installKitPack dir
+                do dummyPackV10Zip >>= runInstallMod . installKitPack dir
+                   sillyKitsZip >>= runInstallMod . installKitPack dir
+                   dummyPackV11Zip >>= runReplaceMod . installKitPack dir
                    doesFileExist (kitDir </> "Silly kits" </> "config.xml") `shouldReturn` True
                    doesFileExist (kitDir </> "Silly kits" </> "flam_1.png") `shouldReturn` True
                    doesFileExist (kitDir </> "Silly kits" </> "foo_3.png") `shouldReturn` True
@@ -107,7 +112,7 @@ spec =
             withTmpUserDir $ \dir ->
               let kitDir = _userDirFilePath dir </> "graphics" </> "kits"
               in
-                do malformedPackZip >>= installKitPack dir
+                do malformedPackZip >>= runInstallMod . installKitPack dir
                    doesFileExist (kitDir </> "Malformed dummy kit pack v1.0" </> "config.xml") `shouldReturn` True
                    doesFileExist (kitDir </> "Malformed dummy kit pack v1.0" </> "flamengo_1.png") `shouldReturn` True
                    doesFileExist (kitDir </> "Malformed dummy kit pack v1.0" </> "santos_1.png") `shouldReturn` True
@@ -115,22 +120,22 @@ spec =
             withTmpUserDir $ \dir ->
               let kitDir = _userDirFilePath dir </> "graphics" </> "kits"
               in
-                do malformedPackRar >>= installKitPack dir
+                do malformedPackRar >>= runInstallMod . installKitPack dir
                    doesFileExist (kitDir </> "Malformed dummy kit pack v1.0" </> "config.xml") `shouldReturn` True
                    doesFileExist (kitDir </> "Malformed dummy kit pack v1.0" </> "flamengo_1.png") `shouldReturn` True
                    doesFileExist (kitDir </> "Malformed dummy kit pack v1.0" </> "santos_1.png") `shouldReturn` True
           it "won't install a damaged archive file" $
             withTmpUserDir $ \dir ->
-              do (damagedZipFile >>= installKitPack dir) `shouldThrow` anyKitPackException
-                 (damagedRarFile >>= installKitPack dir) `shouldThrow` anyKitPackException
+              do (damagedZipFile >>= runInstallMod . installKitPack dir) `shouldThrow` anyKitPackException
+                 (damagedRarFile >>= runInstallMod . installKitPack dir) `shouldThrow` anyKitPackException
           it "fails if the archive format is unsupported" $
             withTmpUserDir $ \dir ->
-              (unsupportedFile >>= installKitPack dir) `shouldThrow` anyKitPackException
+              (unsupportedFile >>= runInstallMod . installKitPack dir) `shouldThrow` anyKitPackException
           it "fails if the specified archive doesn't exist" $
             withTmpUserDir $ \dir ->
-              installKitPack dir (ArchiveFilePath "/this/doesn't/exist.zip") `shouldThrow` anyIOException
+              runInstallMod (installKitPack dir (ArchiveFilePath "/this/doesn't/exist.zip")) `shouldThrow` anyIOException
           it "fails if the user directory doesn't exist" $
             withTmpUserDir $ \dir ->
               let missingUserDir = UserDirFilePath $ _userDirFilePath dir </> "missing"
               in
-                (dummyPackV10Zip >>= installKitPack missingUserDir) `shouldThrow` anyKitPackException
+                (dummyPackV10Zip >>= runInstallMod . installKitPack missingUserDir) `shouldThrow` anyKitPackException

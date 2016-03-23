@@ -13,7 +13,7 @@ Portability : non-portable
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Mod.Kits
        ( installKitPack
@@ -29,10 +29,14 @@ import qualified Control.Foldl as Fold (fold, length, head)
 import Control.Monad (forM_, unless, void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Data
-import System.Directory (createDirectory, createDirectoryIfMissing, doesDirectoryExist, removeDirectoryRecursive, renameDirectory, renameFile)
+import Path (dirname, parent, parseAbsDir)
+import qualified Path ((</>))
+import Path.IO (ensureDir)
+import System.Directory (createDirectory, doesDirectoryExist, removeDirectoryRecursive, renameDirectory, renameFile)
 import System.FilePath ((</>), takeBaseName, takeFileName)
 import System.IO.Temp (withSystemTempDirectory)
 
+import Game.FMAssistant.Install (MonadInstall(..))
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirFilePath(..), archiveName,
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
@@ -79,7 +83,7 @@ validateKitPack ar@(ArchiveFilePath fn) =
 -- not appear to be valid; or if the user directory doesn't exist;
 -- then this action throws an exception and aborts the installation --
 -- no kits from the pack will be installed.
-installKitPack :: (MonadThrow m, MonadMask m, MonadIO m) => UserDirFilePath -> ArchiveFilePath -> m ()
+installKitPack :: (MonadThrow m, MonadMask m, MonadIO m, MonadInstall m) => UserDirFilePath -> ArchiveFilePath -> m ()
 installKitPack userDir archive@(ArchiveFilePath fn) =
   -- We should create the top-level kit path directory if it doesn't
   -- exist (and it doesn't by default), but we should not create the
@@ -90,23 +94,10 @@ installKitPack userDir archive@(ArchiveFilePath fn) =
        throwM $ NoSuchUserDirectory userDir
      withSystemTempDirectory (takeBaseName fn) $ \tmpDir ->
        do kitDir <- unpackKitPack archive tmpDir
-          -- Remove the existing installed kit pack with the same
-          -- name, if it exists.
-          --
-          -- Note that we use 'takeFileName' to extract the directory
-          -- name under which the kit pack files live (i.e., the
-          -- parent directory). Technically this is a directory name,
-          -- not a filename, as 'findKitPack' only returns a path to a
-          -- directory; but the @filepath@ package makes no semantic
-          -- distinction between filenames and directory names at the
-          -- end of paths.
-          let parentDirName = takeFileName kitDir
-          let installedLocation = kitPath userDir </> parentDirName
-          exists <- liftIO $ doesDirectoryExist installedLocation
-          if exists
-             then liftIO $ removeDirectoryRecursive installedLocation
-             else liftIO $ createDirectoryIfMissing True $ kitPath userDir
-          liftIO $ renameDirectory kitDir installedLocation
+          kitDir' <- parseAbsDir kitDir
+          installDir <- parseAbsDir (kitPath userDir)
+          ensureDir installDir
+          install kitDir' (installDir Path.</> dirname kitDir')
 
 -- | Unpack an archive file assumed to contain a kit pack to the given
 -- parent directory.
