@@ -1,42 +1,50 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Game.FMAssistant.MagicSpec
        ( spec
        ) where
 
+import Path (mkAbsFile, parseAbsFile)
 import Test.Hspec
 import Paths_fm_assistant
 
 import Game.FMAssistant.Types (ArchiveFilePath(..))
 import Game.FMAssistant.Magic
 
+getArchiveFilePath :: FilePath -> IO ArchiveFilePath
+getArchiveFilePath fp =
+  do fn <- getDataFileName fp
+     absfn <- parseAbsFile fn
+     return $ ArchiveFilePath absfn
+
 unsupportedFile :: IO ArchiveFilePath
-unsupportedFile = ArchiveFilePath <$> getDataFileName "data/test/test.tar"
+unsupportedFile = getArchiveFilePath "data/test/test.tar"
 
 zipFile :: IO ArchiveFilePath
-zipFile = ArchiveFilePath <$> getDataFileName "data/test/test.zip"
+zipFile = getArchiveFilePath "data/test/test.zip"
 
 damagedZipFile :: IO ArchiveFilePath
-damagedZipFile = ArchiveFilePath <$> getDataFileName "data/test/damaged-test.zip"
+damagedZipFile = getArchiveFilePath "data/test/damaged-test.zip"
 
 zipFileWithRarExtension :: IO ArchiveFilePath
-zipFileWithRarExtension = ArchiveFilePath <$> getDataFileName "data/test/test_is_actually_zip.rar"
+zipFileWithRarExtension = getArchiveFilePath "data/test/test_is_actually_zip.rar"
 
 zipFileWithNoExtension :: IO ArchiveFilePath
-zipFileWithNoExtension = ArchiveFilePath <$> getDataFileName "data/test/test_zip"
+zipFileWithNoExtension = getArchiveFilePath "data/test/test_zip"
 
 rarFile :: IO ArchiveFilePath
-rarFile = ArchiveFilePath <$> getDataFileName "data/test/test.rar"
+rarFile = getArchiveFilePath "data/test/test.rar"
 
 damagedRarFile :: IO ArchiveFilePath
-damagedRarFile = ArchiveFilePath <$> getDataFileName "data/test/damaged-test.rar"
+damagedRarFile = getArchiveFilePath "data/test/damaged-test.rar"
 
 rarFileWithZipExtension :: IO ArchiveFilePath
-rarFileWithZipExtension = ArchiveFilePath <$> getDataFileName "data/test/test_is_actually_rar.zip"
+rarFileWithZipExtension = getArchiveFilePath "data/test/test_is_actually_rar.zip"
 
 rarFileWithNoExtension :: IO ArchiveFilePath
-rarFileWithNoExtension = ArchiveFilePath <$> getDataFileName "data/test/test_rar"
+rarFileWithNoExtension = getArchiveFilePath "data/test/test_rar"
 
 spec :: Spec
 spec =
@@ -119,4 +127,4 @@ spec =
             do tf <- unsupportedFile
                identifyArchive tf `shouldReturn` Nothing
           it "should fail when the file doesn't exist" $
-            identifyArchive (ArchiveFilePath "/this/does/not/exist.zip") `shouldThrow` anyIOException
+            identifyArchive (ArchiveFilePath $(mkAbsFile "/this/does/not/exist.zip")) `shouldThrow` anyIOException

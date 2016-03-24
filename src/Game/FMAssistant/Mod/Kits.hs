@@ -13,6 +13,7 @@ Portability : non-portable
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Mod.Kits
@@ -20,38 +21,37 @@ module Game.FMAssistant.Mod.Kits
        , validateKitPack
          -- * Kit pack-related exceptions
        , KitPackException(..)
-       , kpeGetFileName
+       , kpeGetFilePath
        ) where
 
 import Control.Exception (Exception(..))
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow, catch, throwM)
-import qualified Control.Foldl as Fold (fold, length, head)
 import Control.Monad (forM_, unless, void, when)
-import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Data
-import Path (dirname, parseAbsDir)
-import qualified Path ((</>))
-import Path.IO (ensureDir)
-import System.Directory (createDirectory, doesDirectoryExist, removeDirectoryRecursive, renameDirectory, renameFile)
-import System.FilePath ((</>), takeBaseName, takeFileName)
-import System.IO.Temp (withSystemTempDirectory)
+import Path ((</>), Path, Abs, Dir, dirname, filename, mkRelDir, parseAbsDir, parseRelDir, toFilePath)
+import Path.IO
+       (createDir, doesDirExist, ensureDir, listDir, removeDirRecur,
+        renameDir, renameFile, withSystemTempDir)
 
 import Game.FMAssistant.Install (MonadInstall(..))
 import Game.FMAssistant.Types
-       (ArchiveFilePath(..), UserDirFilePath(..), archiveName,
-        fmAssistantExceptionToException, fmAssistantExceptionFromException)
+       (ArchiveFilePath(..), UserDirPath(..), UnpackDirPath(..),
+        archiveName, fmAssistantExceptionToException,
+        fmAssistantExceptionFromException)
 import Game.FMAssistant.Unpack (UnpackException, unpack)
-import Game.FMAssistant.Util (listDirectory)
+import Game.FMAssistant.Util (basename)
 
 -- | Kits live in a pre-determined subdirectory of the game's user
 -- directory. This function constructs the path to that subdirectory,
--- given a particular 'UserDirFilePath'.
+-- given a particular 'UserDirPath'.
 --
 -- >>> :set -XOverloadedStrings
--- >>> kitPath $ UserDirFilePath "/home/dhess/Football Manager 2016"
--- "/home/dhess/Football Manager 2016/graphics/kits"
-kitPath :: UserDirFilePath -> FilePath
-kitPath ufp = _userDirFilePath ufp </> "graphics" </> "kits"
+-- >>> userDir <- parseAbsDir "/home/dhess/Football Manager 2016"
+-- >>> kitPath $ UserDirPath userDir
+-- "/home/dhess/Football Manager 2016/graphics/kits/"
+kitPath :: UserDirPath -> Path Abs Dir
+kitPath ufp = _userDirPath ufp </> $(mkRelDir "graphics/kits")
 
 -- | Verify that a kit pack archive file is valid, or can be
 -- automatically fixed up so that it's valid.
@@ -70,9 +70,10 @@ kitPath ufp = _userDirFilePath ufp </> "graphics" </> "kits"
 -- checks as this action does. This action is provided primarily to
 -- help users weed faulty kit packs out of their collections, e.g., by
 -- using it as a filter on a directory full of kit pack archives.
-validateKitPack :: (MonadMask m, MonadIO m) => ArchiveFilePath -> m ()
+validateKitPack :: (MonadThrow m, MonadMask m, MonadIO m) => ArchiveFilePath -> m ()
 validateKitPack ar@(ArchiveFilePath fn) =
-  withSystemTempDirectory (takeBaseName fn) (void . unpackKitPack ar)
+  withSystemTempDir (basename fn) $ \tmpDir ->
+    void $ unpackKitPack ar (UnpackDirPath tmpDir)
 
 -- | Install a kit pack to the given user directory. Note that this
 -- action will overwrite an existing kit path of the same name (but
@@ -83,21 +84,20 @@ validateKitPack ar@(ArchiveFilePath fn) =
 -- not appear to be valid; or if the user directory doesn't exist;
 -- then this action throws an exception and aborts the installation --
 -- no kits from the pack will be installed.
-installKitPack :: (MonadThrow m, MonadMask m, MonadIO m, MonadInstall m) => UserDirFilePath -> ArchiveFilePath -> m ()
+installKitPack :: (MonadThrow m, MonadMask m, MonadIO m, MonadInstall m) => UserDirPath -> ArchiveFilePath -> m ()
 installKitPack userDir archive@(ArchiveFilePath fn) =
   -- We should create the top-level kit path directory if it doesn't
   -- exist (and it doesn't by default), but we should not create the
   -- user directory if that doesn't exist, as that probably means it's
   -- wrong, or that the game isn't installed.
-  do userDirExists <- liftIO $ doesDirectoryExist (_userDirFilePath userDir)
+  do userDirExists <- doesDirExist (_userDirPath userDir)
      unless userDirExists $
-       throwM $ NoSuchUserDirectory userDir
-     withSystemTempDirectory (takeBaseName fn) $ \tmpDir ->
-       do kitDir <- unpackKitPack archive tmpDir
-          kitDir' <- parseAbsDir kitDir
-          installDir <- parseAbsDir (kitPath userDir)
+       throwM $ NoSuchUserDirPathectory userDir
+     withSystemTempDir (basename fn) $ \tmpDir ->
+       do kitDir <- unpackKitPack archive (UnpackDirPath tmpDir)
+          let installDir = kitPath userDir
           ensureDir installDir
-          install kitDir' (installDir Path.</> dirname kitDir')
+          install kitDir (installDir </> dirname (_unpackDirPath kitDir))
 
 -- | Unpack an archive file assumed to contain a kit pack to the given
 -- parent directory.
@@ -107,7 +107,7 @@ installKitPack userDir archive@(ArchiveFilePath fn) =
 -- exception. See the 'KitPackException' type for exceptions specific
 -- to kit packs (although other exceptions are possible, of course, as
 -- this action runs in 'MonadIO'.).
-unpackKitPack :: (MonadCatch m, MonadThrow m, MonadIO m) => ArchiveFilePath -> FilePath -> m FilePath
+unpackKitPack :: (MonadCatch m, MonadThrow m, MonadIO m) => ArchiveFilePath -> UnpackDirPath -> m UnpackDirPath
 unpackKitPack archive unpackDir =
   do catch (unpack archive unpackDir)
            (\(e :: UnpackException) -> throwM $ UnpackingError archive e)
@@ -115,14 +115,14 @@ unpackKitPack archive unpackDir =
      osxFixUp unpackDir >>= singleDirFixUp archive
 
 -- | Remove any top-level "__MACOSX" subdirectory.
-osxFixUp :: (MonadIO m) => FilePath -> m FilePath
+osxFixUp :: (MonadIO m) => UnpackDirPath -> m UnpackDirPath
 osxFixUp unpackDir =
-  let osxdir :: FilePath
-      osxdir = unpackDir </> "__MACOSX"
+  let osxdir :: Path Abs Dir
+      osxdir = _unpackDirPath unpackDir </> $(mkRelDir "__MACOSX")
   in
-    do exists <- liftIO $ doesDirectoryExist osxdir
+    do exists <- doesDirExist osxdir
        when exists $
-         liftIO $ removeDirectoryRecursive osxdir
+         removeDirRecur osxdir
        return unpackDir
 
 -- | The kit pack contents should live under a single top-level
@@ -130,32 +130,24 @@ osxFixUp unpackDir =
 -- fix it up, if needed. It also checks for empty or single file
 -- archives, which are not valid kit pack formats. (In either of these
 -- cases, the action will throw a 'KitPackException'.
-singleDirFixUp :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> FilePath -> m FilePath
-singleDirFixUp archive unpackDir =
-  do ls <- listDirectory unpackDir
-     case Fold.fold ((,) <$> Fold.length <*> Fold.head) ls of
-       (0, _) -> throwM $ EmptyArchive archive
-       (1, Just fp) ->
-        do isDir <- liftIO $ doesDirectoryExist fp
-           if isDir
-              then return fp
-              else throwM $ SingleFileArchive archive
-       _ ->
-         let fixupDir = unpackDir </> archiveName archive
-         in
-           do liftIO $
-                do createDirectory fixupDir
-                   forM_ ls $ \fn ->
-                     let newFn = fixupDir </> takeFileName fn
-                     in
-                       do isDir <- doesDirectoryExist fn
-                          if isDir
-                             then renameDirectory fn newFn
-                             else renameFile fn newFn
-              return fixupDir
+singleDirFixUp :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> UnpackDirPath -> m UnpackDirPath
+singleDirFixUp archive (UnpackDirPath unpackDir) =
+  listDir unpackDir >>= \case
+    ([], []) -> throwM $ EmptyArchive archive
+    ([], [_]) -> throwM $ SingleFileArchive archive
+    ([dir], []) -> return $ UnpackDirPath dir
+    (dirs, files) ->
+      do fixdir <- parseRelDir $ archiveName archive
+         let fixpath = unpackDir </> fixdir
+         createDir fixpath
+         forM_ dirs $ \dn ->
+           renameDir dn (fixpath </> dirname dn)
+         forM_ files $ \fn ->
+           renameFile fn (fixpath </> filename fn)
+         return $ UnpackDirPath fixpath
 
 data KitPackException
-  = NoSuchUserDirectory UserDirFilePath
+  = NoSuchUserDirPathectory UserDirPath
     -- ^ The specified user directory doesn't exist
   | UnpackingError ArchiveFilePath UnpackException
     -- ^ An error occurred during the unpacking process
@@ -166,7 +158,7 @@ data KitPackException
   deriving (Eq,Typeable)
 
 instance Show KitPackException where
-  show (NoSuchUserDirectory fp) = show fp ++ ": The game user directory doesn't exist"
+  show (NoSuchUserDirPathectory fp) = show fp ++ ": The game user directory doesn't exist"
   show (UnpackingError fp ue) = show fp ++ ": " ++ show ue
   show (EmptyArchive fp) = show fp ++ ": Malformed (kit pack is empty)"
   show (SingleFileArchive fp) = show fp ++ ": Malformed (kit pack contains just a single file)"
@@ -176,8 +168,8 @@ instance Exception KitPackException where
   fromException = fmAssistantExceptionFromException
 
 -- | The 'FilePath' associated with the given exception.
-kpeGetFileName :: KitPackException -> FilePath
-kpeGetFileName (NoSuchUserDirectory (UserDirFilePath fp)) = fp
-kpeGetFileName (UnpackingError (ArchiveFilePath fp) _) = fp
-kpeGetFileName (EmptyArchive (ArchiveFilePath fp)) = fp
-kpeGetFileName (SingleFileArchive (ArchiveFilePath fp)) = fp
+kpeGetFilePath :: KitPackException -> FilePath
+kpeGetFilePath (NoSuchUserDirPathectory (UserDirPath fp)) = toFilePath fp
+kpeGetFilePath (UnpackingError (ArchiveFilePath fp) _) = toFilePath fp
+kpeGetFilePath (EmptyArchive (ArchiveFilePath fp)) = toFilePath fp
+kpeGetFilePath (SingleFileArchive (ArchiveFilePath fp)) = toFilePath fp

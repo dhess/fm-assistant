@@ -59,12 +59,13 @@ import System.FilePath (dropTrailingPathSeparator)
 import System.IO.Error (alreadyExistsErrorType, mkIOError)
 
 import Game.FMAssistant.Util (createTempDir)
+import Game.FMAssistant.Types (UnpackDirPath(..))
 
 -- | A monad which provides a context for installing mods.
 class (Monad m) => MonadInstall m where
   -- | Install a mod.
   install
-    :: Path Abs Dir
+    :: UnpackDirPath
     -- ^ The directory containing the mod contents
     -> Path Abs Dir
     -- ^ The directory where the mod contents will be installed
@@ -161,12 +162,12 @@ runReplaceMod = runReplaceModT
 -- error is reported.
 installMod
   :: (MonadIO m, MonadThrow m, MonadCatch m)
-  => Path Abs Dir
+  => UnpackDirPath
   -- ^ The directory containing the mod contents
   -> Path Abs Dir
   -- ^ The directory where the mod contents will be installed
   -> m ()
-installMod srcPath dstPath =
+installMod (UnpackDirPath srcPath) dstPath =
   do targetExists <- doesDirExist dstPath
      when targetExists $
        throwM $
@@ -186,12 +187,12 @@ installMod srcPath dstPath =
 -- installation will be restored.
 replaceMod
   :: (MonadIO m, MonadThrow m, MonadCatch m)
-  => Path Abs Dir
+  => UnpackDirPath
   -- ^ The directory containing the mod contents
   -> Path Abs Dir
   -- ^ The directory where the mod contents will be installed
   -> m ()
-replaceMod srcPath dstPath =
+replaceMod (UnpackDirPath srcPath) dstPath =
   do targetExists <- doesDirExist dstPath
      if targetExists
         then replaceAtomically dstPath srcPath

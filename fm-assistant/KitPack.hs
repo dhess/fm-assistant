@@ -12,9 +12,10 @@ import Control.Monad (forM, forM_, unless, void)
 import Control.Monad.Catch (Handler(..), catches)
 import Control.Monad.IO.Class (liftIO)
 import Game.FMAssistant.Install (runReplaceMod)
-import Game.FMAssistant.Mod.Kits (KitPackException, installKitPack, kpeGetFileName, validateKitPack)
+import Game.FMAssistant.Mod.Kits (KitPackException, installKitPack, kpeGetFilePath, validateKitPack)
 import Game.FMAssistant.Types (ArchiveFilePath(..))
-import Game.FMAssistant.Version (defaultUserDir, runFM16)
+import Game.FMAssistant.Version (defaultUserDirPath, runFM16)
+import Path.IO (resolveFile')
 import System.Exit (ExitCode(..))
 import System.IO (hPrint, stderr)
 
@@ -62,11 +63,12 @@ parser =
 
 run :: Command -> IO ExitCode
 run (Install (InstallOptions fns)) = runFM16 $
-  do userDir <- defaultUserDir
+  do userDir <- defaultUserDirPath
      codes <- forM fns
                    (\fp -> liftIO $
                      catchesMost $
-                       do runReplaceMod $ installKitPack userDir (ArchiveFilePath fp)
+                       do file <- resolveFile' fp
+                          runReplaceMod $ installKitPack userDir (ArchiveFilePath file)
                           putStrLn $ "Installed " ++ fp
                           return ExitSuccess)
      return $ anyFailure (ExitFailure 1) codes
@@ -74,7 +76,8 @@ run (Validate (ValidateOptions onlyInvalid False fns)) =
   do codes <- forM fns
                    (\fp ->
                      catchesMost $
-                       do validateKitPack (ArchiveFilePath fp)
+                       do file <- resolveFile' fp
+                          validateKitPack (ArchiveFilePath file)
                           unless onlyInvalid $
                             putStrLn $ fp ++ ": valid kit pack"
                           return ExitSuccess)
@@ -83,7 +86,8 @@ run (Validate (ValidateOptions onlyInvalid True fns)) =
   do forM_ fns
            (\fp ->
              catchesMostQuietly $
-               do void $ validateKitPack (ArchiveFilePath fp)
+               do file <- resolveFile' fp
+                  void $ validateKitPack (ArchiveFilePath file)
                   unless onlyInvalid $
                     putStrLn fp)
      return ExitSuccess
@@ -98,7 +102,7 @@ catchesMost act =
     most = [Handler handleIO, Handler handleKitPack]
 
 handleKitPackQuietly :: KitPackException -> IO ()
-handleKitPackQuietly = putStrLn . kpeGetFileName
+handleKitPackQuietly = putStrLn . kpeGetFilePath
 
 catchesMostQuietly :: IO () -> IO ()
 catchesMostQuietly act =

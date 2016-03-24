@@ -11,13 +11,14 @@ Portability : non-portable
 
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE Safe #-}
+{-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Types
        ( -- * Types
-         Version(..)
-       , UserDirFilePath(..)
+         VersionDirPath(..)
+       , UserDirPath(..)
        , ArchiveFilePath(..)
+       , UnpackDirPath(..)
        , archiveName
          -- * Exceptions
        , SomeFMAssistantException
@@ -27,44 +28,43 @@ module Game.FMAssistant.Types
 
 import Control.Exception (Exception, SomeException, fromException, toException)
 import Data.Data
-import System.FilePath (takeBaseName)
+import Path (Path, Abs, Rel, Dir, File, parseAbsFile)
+
+import Game.FMAssistant.Util (basename)
 
 -- | Game's name and version, e.g., "Football Manager 2016". This is
 -- often used as the component of a pathname.
-newtype Version =
-  Version {_version :: FilePath}
-  deriving (Eq,Ord,Data,Typeable)
-
-instance Show Version where
-  show = _version
+newtype VersionDirPath =
+  VersionDirPath {_versionDirPath :: Path Rel Dir}
+  deriving (Eq,Show,Ord,Typeable)
 
 -- | The type for paths which point to a user directory, where game
 -- saves, kits, and most other mods, are stored.
-newtype UserDirFilePath =
-  UserDirFilePath {_userDirFilePath :: FilePath}
-  deriving (Eq,Ord,Data,Typeable)
-
-instance Show UserDirFilePath where
-  show = _userDirFilePath
+newtype UserDirPath =
+  UserDirPath {_userDirPath :: Path Abs Dir}
+  deriving (Eq,Show,Ord,Typeable)
 
 -- | The type for paths which point to an archive file (ZIP, RAR,
 -- etc.).
 newtype ArchiveFilePath =
-  ArchiveFilePath {_archiveFilePath :: FilePath}
-  deriving (Eq,Ord,Data,Typeable)
+  ArchiveFilePath {_archiveFilePath :: Path Abs File}
+  deriving (Eq,Show,Ord,Typeable)
 
-instance Show ArchiveFilePath where
-  show = _archiveFilePath
+-- | The type for paths which point to an unpacked archive directory.
+newtype UnpackDirPath =
+  UnpackDirPath {_unpackDirPath :: Path Abs Dir}
+  deriving (Eq,Show,Ord,Typeable)
 
--- | Return the name of an archive file; that is, given an
--- 'ArchiveFilePath', strip off the pathname portion and the trailing
--- file suffix, and return what remains.
+-- | Return (as a 'String') the name of an archive file; that is,
+-- given an 'ArchiveFilePath', strip off the pathname portion and the
+-- trailing file suffix, and return what remains.
 --
 -- >>> :set -XOverloadedStrings
--- >>> archiveName $ ArchiveFilePath "/foo/bar/baz.rar"
+-- >>> bazPath <- parseAbsFile "/foo/bar/baz.rar"
+-- >>> archiveName $ ArchiveFilePath bazPath
 -- "baz"
-archiveName :: ArchiveFilePath -> FilePath
-archiveName = takeBaseName . _archiveFilePath
+archiveName :: ArchiveFilePath -> String
+archiveName = basename . _archiveFilePath
 
 -- | The root exception type for @fm-assistant@.
 data SomeFMAssistantException =

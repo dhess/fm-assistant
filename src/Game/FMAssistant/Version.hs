@@ -11,12 +11,13 @@ Portability : non-portable
 
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Version
        ( -- * MonadVersion class
          MonadVersion(..)
-       , defaultUserDir
+       , defaultUserDirPath
        , FM16T(..)
        , FM16
        , runFM16
@@ -43,23 +44,24 @@ import qualified Control.Monad.Trans.State.Strict as StrictState (StateT)
 import qualified Control.Monad.Trans.Writer.Lazy as LazyWriter (WriterT)
 import qualified Control.Monad.Trans.Writer.Strict as StrictWriter (WriterT)
 import Control.Monad.Writer (MonadWriter)
-import System.FilePath (combine)
+import Path ((</>), mkRelDir)
 
-import Game.FMAssistant.Types (Version(..), UserDirFilePath(..))
+import Game.FMAssistant.Types (VersionDirPath(..), UserDirPath(..))
 import Game.FMAssistant.Util (defaultSteamDir)
 
 -- | A monad which provides a context for a particular version of the
 -- game.
 class (Monad m) => MonadVersion m where
   -- | The game version.
-  version :: m Version
+  version :: m VersionDirPath
 
 -- | The default user directory, where save games and most mod types
 -- live.
-defaultUserDir :: (MonadIO m, MonadVersion m) => m UserDirFilePath
-defaultUserDir =
-  do userDir <- combine <$> defaultSteamDir <*> (_version <$> version)
-     return $ UserDirFilePath userDir
+defaultUserDirPath :: (MonadThrow m, MonadIO m, MonadVersion m) => m UserDirPath
+defaultUserDirPath =
+  do steamDir <- defaultSteamDir
+     versionDir <- _versionDirPath <$> version
+     return $ UserDirPath (steamDir </> versionDir)
 
 instance (MonadVersion m) => MonadVersion (IdentityT m) where
   version = lift version
@@ -105,11 +107,12 @@ newtype FM16T m a =
 instance MonadTrans FM16T where
   lift = FM16T
 
+
 instance MonadIO m => MonadVersion (FM16T m) where
   -- |
   -- >>> runFM16 version
   -- Football Manager 2016
-  version = return $ Version "Football Manager 2016"
+  version = return $ VersionDirPath $ $(mkRelDir "Football Manager 2016")
 
 -- | An 'FM16T' transformer specialized to 'IO'.
 type FM16 = FM16T IO
