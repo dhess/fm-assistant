@@ -108,8 +108,6 @@ data FacePackException
     -- ^ The specified user directory doesn't exist
   | UnpackingError ArchiveFilePath UnpackException
     -- ^ An error occurred during the unpacking process
-  | EmptyArchive ArchiveFilePath
-    -- ^ The archive is empty
   | MissingFacesDir ArchiveFilePath
     -- ^ The archive is missing a "faces" directory
   deriving (Eq,Typeable)
@@ -117,7 +115,6 @@ data FacePackException
 instance Show FacePackException where
   show (NoSuchUserDirectory fp) = show fp ++ ": The game user directory doesn't exist"
   show (UnpackingError fp ue) = show fp ++ ": " ++ show ue
-  show (EmptyArchive fp) = show fp ++ ": Malformed (face pack is empty)"
   show (MissingFacesDir fp) = show fp ++ ": Malformed (face pack doesn't have a \"faces\" directory)"
 
 instance Exception FacePackException where
@@ -128,5 +125,4 @@ instance Exception FacePackException where
 fpeGetFilePath :: FacePackException -> FilePath
 fpeGetFilePath (NoSuchUserDirectory (UserDirPath fp)) = toFilePath fp
 fpeGetFilePath (UnpackingError (ArchiveFilePath fp) _) = toFilePath fp
-fpeGetFilePath (EmptyArchive (ArchiveFilePath fp)) = toFilePath fp
 fpeGetFilePath (MissingFacesDir (ArchiveFilePath fp)) = toFilePath fp
