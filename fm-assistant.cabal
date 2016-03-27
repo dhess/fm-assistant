@@ -26,7 +26,6 @@ Library
                       , Game.FMAssistant.Types
                       , Game.FMAssistant.Unpack
                       , Game.FMAssistant.Util
-                      , Game.FMAssistant.Version
   Build-Depends:        base >= 4 && < 5
                       , bytestring
                       , containers
@@ -86,7 +85,6 @@ Executable fm-assistant
                       , Game.FMAssistant.Types
                       , Game.FMAssistant.Unpack
                       , Game.FMAssistant.Util
-                      , Game.FMAssistant.Version
                       , CutoutFaces
                       , KitPack
                       , Util
@@ -139,7 +137,6 @@ Test-Suite spec
                       , Game.FMAssistant.Types
                       , Game.FMAssistant.Unpack
                       , Game.FMAssistant.Util
-                      , Game.FMAssistant.Version
                       , Paths_fm_assistant
 
 Source-Repository head

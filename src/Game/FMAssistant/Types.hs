@@ -11,12 +11,17 @@ Portability : non-portable
 
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Types
-       ( -- * Types
-         VersionDirPath(..)
+       ( -- * Game versions
+         Version(..)
+       , versionDir
+         -- * Path types
        , UserDirPath(..)
+       , defaultUserDir
        , ArchiveFilePath(..)
        , UnpackDirPath(..)
        , archiveName
@@ -27,16 +32,24 @@ module Game.FMAssistant.Types
        ) where
 
 import Control.Exception (Exception, SomeException, fromException, toException)
+import Control.Monad.Catch (MonadThrow)
+import Control.Monad.IO.Class (MonadIO)
 import Data.Data
-import Path (Path, Abs, Rel, Dir, File, parseAbsFile)
+import Path ((</>), Path, Abs, Rel, Dir, File, mkRelDir, parseAbsFile)
 
-import Game.FMAssistant.Util (basename)
+import Game.FMAssistant.Util (basename, defaultSteamDir)
 
--- | Game's name and version, e.g., "Football Manager 2016". This is
--- often used as the component of a pathname.
-newtype VersionDirPath =
-  VersionDirPath {_versionDirPath :: Path Rel Dir}
+-- | The game version.
+data Version =
+  FM16
   deriving (Eq,Show,Ord,Typeable)
+
+-- | The game version subdirectory.
+--
+-- >>> versionDir FM16
+-- "Football Manager 2016/"
+versionDir :: Version -> Path Rel Dir
+versionDir FM16 = $(mkRelDir "Football Manager 2016")
 
 -- | The type for paths which point to a user directory, where game
 -- saves, kits, and most other mods, are stored.
@@ -44,15 +57,17 @@ newtype UserDirPath =
   UserDirPath {_userDirPath :: Path Abs Dir}
   deriving (Eq,Show,Ord,Typeable)
 
+--- | The default user directory, where save games and most mod types
+--- live.
+defaultUserDir :: (MonadThrow m, MonadIO m) => Version -> m UserDirPath
+defaultUserDir version =
+  do steamDir <- defaultSteamDir
+     return $ UserDirPath (steamDir </> versionDir version)
+
 -- | The type for paths which point to an archive file (ZIP, RAR,
 -- etc.).
 newtype ArchiveFilePath =
   ArchiveFilePath {_archiveFilePath :: Path Abs File}
-  deriving (Eq,Show,Ord,Typeable)
-
--- | The type for paths which point to an unpacked archive directory.
-newtype UnpackDirPath =
-  UnpackDirPath {_unpackDirPath :: Path Abs Dir}
   deriving (Eq,Show,Ord,Typeable)
 
 -- | Return (as a 'String') the name of an archive file; that is,
@@ -65,6 +80,11 @@ newtype UnpackDirPath =
 -- "baz"
 archiveName :: ArchiveFilePath -> String
 archiveName = basename . _archiveFilePath
+
+-- | The type for paths which point to an unpacked archive directory.
+newtype UnpackDirPath =
+  UnpackDirPath {_unpackDirPath :: Path Abs Dir}
+  deriving (Eq,Show,Ord,Typeable)
 
 -- | The root exception type for @fm-assistant@.
 data SomeFMAssistantException =
