@@ -17,8 +17,8 @@ Portability : non-portable
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Mod.Faces
-       ( facePath
-       , iconFacePath
+       ( facesPath
+       , iconFacesPath
        , installCutoutMegapack
        , installCutoutIcons
          -- * Facepack-related exceptions
@@ -27,14 +27,16 @@ module Game.FMAssistant.Mod.Faces
        ) where
 
 import Control.Exception (Exception(..))
+import Control.Lens
 import Control.Monad.Catch (MonadMask, MonadThrow, catch, throwM)
 import Control.Monad (unless)
 import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.Reader (MonadReader(..))
 import Data.Data
-import Path ((</>), Path, Abs, Rel, Dir, mkRelDir, toFilePath)
+import Path ((</>), Path, Abs, Rel, Dir, mkRelDir, parent, toFilePath)
 import Path.IO (doesDirExist, ensureDir, withSystemTempDir)
 
-import Game.FMAssistant.Install (MonadInstall(..))
+import Game.FMAssistant.Install (HasInstallConfig, install, userDir)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirPath(..), UnpackDirPath(..),
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
@@ -46,20 +48,26 @@ import Game.FMAssistant.Util (basename)
 -- subdirectory, given a particular 'UserDirPath'.
 --
 -- >>> :set -XOverloadedStrings
--- >>> facePath $ UserDirPath "/home/dhess/Football Manager 2016"
+-- >>> facesPath $ UserDirPath "/home/dhess/Football Manager 2016"
 -- "/home/dhess/Football Manager 2016/graphics/faces"
-facePath :: UserDirPath -> Path Abs Dir
-facePath ufp = _userDirPath ufp </> $(mkRelDir "graphics/faces")
+facesPath :: UserDirPath -> Path Abs Dir
+facesPath ufp = _userDirPath ufp </> facesSubDir
+
+facesSubDir :: Path Rel Dir
+facesSubDir = $(mkRelDir "graphics/faces")
 
 -- | Icon face packs live in a pre-determined subdirectory of the
 -- game's user directory. This function constructs the path to that
 -- subdirectory, given a particular 'UserDirPath'.
 --
 -- >>> :set -XOverloadedStrings
--- >>> iconFacePath $ UserDirPath "/home/dhess/Football Manager 2016"
+-- >>> iconFacesPath $ UserDirPath "/home/dhess/Football Manager 2016"
 -- "/home/dhess/Football Manager 2016/graphics/iconfaces"
-iconFacePath :: UserDirPath -> Path Abs Dir
-iconFacePath ufp = _userDirPath ufp </> $(mkRelDir "graphics/iconfaces")
+iconFacesPath :: UserDirPath -> Path Abs Dir
+iconFacesPath ufp = _userDirPath ufp </> iconFacesSubDir
+
+iconFacesSubDir :: Path Rel Dir
+iconFacesSubDir = $(mkRelDir "graphics/iconfaces")
 
 -- | Install the Sortitoutsi "Cutout Megapack" face pack to the given
 -- user directory. Note that this action will overwrite any face pack
@@ -69,8 +77,8 @@ iconFacePath ufp = _userDirPath ufp </> $(mkRelDir "graphics/iconfaces")
 -- not appear to be valid; or if the user directory doesn't exist;
 -- then this action throws an exception and aborts the installation --
 -- the face pack will not be installed.
-installCutoutMegapack :: (MonadThrow m, MonadMask m, MonadIO m, MonadInstall m) => UserDirPath -> ArchiveFilePath -> m ()
-installCutoutMegapack userDir archive = installFaces userDir archive $(mkRelDir "sortitoutsi/faces") facePath
+installCutoutMegapack :: (MonadThrow m, MonadMask m, MonadIO m, MonadReader r m, HasInstallConfig r) => ArchiveFilePath -> m ()
+installCutoutMegapack = installFaces $(mkRelDir "sortitoutsi/faces") facesSubDir
 
 -- | Install the Sortitoutsi "Cutout Megapack" face pack to the given
 -- user directory. Note that this action will overwrite any face pack
@@ -80,28 +88,38 @@ installCutoutMegapack userDir archive = installFaces userDir archive $(mkRelDir 
 -- not appear to be valid; or if the user directory doesn't exist;
 -- then this action throws an exception and aborts the installation --
 -- the face pack will not be installed.
-installCutoutIcons :: (MonadThrow m, MonadMask m, MonadIO m, MonadInstall m) => UserDirPath -> ArchiveFilePath -> m ()
-installCutoutIcons userDir archive = installFaces userDir archive $(mkRelDir "sortitoutsi/iconfaces") iconFacePath
+installCutoutIcons :: (MonadThrow m, MonadMask m, MonadIO m, MonadReader r m, HasInstallConfig r) => ArchiveFilePath -> m ()
+installCutoutIcons = installFaces $(mkRelDir "sortitoutsi/iconfaces") iconFacesSubDir
 
-installFaces :: (MonadThrow m, MonadMask m, MonadIO m, MonadInstall m) => UserDirPath -> ArchiveFilePath -> Path Rel Dir -> (UserDirPath -> Path Abs Dir) -> m ()
-installFaces userDir archive@(ArchiveFilePath fn) facesSubdir installPath =
+installFaces
+  :: (MonadThrow m, MonadMask m, MonadIO m, MonadReader r m, HasInstallConfig r)
+  => Path Rel Dir
+  -- ^ The unpacked face source subdirectory
+  -> Path Rel Dir
+  -- ^ The face destination subdirectory
+  -> ArchiveFilePath
+  -- ^ The archive file
+  -> m ()
+installFaces srcSubDir destSubDir archive@(ArchiveFilePath fn) =
   -- We should create the face pack directory if it doesn't exist (and
   -- it doesn't by default), but we should not create the user
   -- directory if that doesn't exist, as that probably means it's
   -- wrong, or that the game isn't installed.
-  do userDirExists <- doesDirExist (_userDirPath userDir)
+  do rdr <- ask
+     let udir = rdr ^. userDir
+     userDirExists <- doesDirExist $ _userDirPath udir
      unless userDirExists $
-       throwM $ NoSuchUserDirectory userDir
+       throwM $ NoSuchUserDirectory udir
      withSystemTempDir (basename fn) $ \tmpDir ->
        do catch (unpack archive (UnpackDirPath tmpDir))
                 (\(e :: UnpackException) -> throwM $ UnpackingError archive e)
-          let facesDir = tmpDir </> facesSubdir
+          let facesDir = tmpDir </> srcSubDir
           facesExists <- doesDirExist facesDir
           unless facesExists $
             throwM $ MissingFacesDir archive
-          let installDir = installPath userDir
-          ensureDir installDir
-          install (UnpackDirPath facesDir) installDir
+          -- Create the top-level faces installation directory
+          ensureDir $ parent (_userDirPath udir </> destSubDir)
+          install (UnpackDirPath facesDir) destSubDir
 
 data FacePackException
   = NoSuchUserDirectory UserDirPath

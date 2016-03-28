@@ -10,8 +10,8 @@ import Options.Applicative
 
 import Control.Monad (forM, forM_, unless, void)
 import Control.Monad.Catch (Handler(..), catches)
-import Control.Monad.IO.Class (liftIO)
-import Game.FMAssistant.Install (runReplaceMod)
+import Control.Monad.Reader (runReaderT)
+import Game.FMAssistant.Install (InstallConfig(..), replaceMod)
 import Game.FMAssistant.Mod.Kits (KitPackException, installKitPack, kpeGetFilePath, validateKitPack)
 import Game.FMAssistant.Types (ArchiveFilePath(..), Version(..), defaultUserDir)
 import Path.IO (resolveFile')
@@ -64,10 +64,12 @@ run :: Command -> IO ExitCode
 run (Install (InstallOptions fns)) =
   do userDir <- defaultUserDir FM16
      codes <- forM fns
-                   (\fp -> liftIO $
+                   (\fp ->
                      catchesMost $
                        do file <- resolveFile' fp
-                          runReplaceMod $ installKitPack userDir (ArchiveFilePath file)
+                          runReaderT
+                            (installKitPack (ArchiveFilePath file))
+                            (InstallConfig userDir replaceMod)
                           putStrLn $ "Installed " ++ fp
                           return ExitSuccess)
      return $ anyFailure (ExitFailure 1) codes

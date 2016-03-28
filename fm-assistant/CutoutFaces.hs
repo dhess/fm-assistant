@@ -9,8 +9,8 @@ module CutoutFaces
 import Options.Applicative
 
 import Control.Monad.Catch (Handler(..), catches)
-import Control.Monad.IO.Class (liftIO)
-import Game.FMAssistant.Install (runReplaceMod)
+import Control.Monad.Reader (runReaderT)
+import Game.FMAssistant.Install (InstallConfig(..), replaceMod)
 import Game.FMAssistant.Mod.Faces (FacePackException, installCutoutMegapack, installCutoutIcons)
 import Game.FMAssistant.Types (ArchiveFilePath(..), Version(..), defaultUserDir)
 import Path.IO (resolveFile')
@@ -46,20 +46,22 @@ parser =
 run :: Command -> IO ExitCode
 run (InstallMegapack (InstallOptions fp)) =
   do userDir <- defaultUserDir FM16
-     liftIO $
-       catchesMost $
-         do file <- resolveFile' fp
-            runReplaceMod $ installCutoutMegapack userDir (ArchiveFilePath file)
-            putStrLn $ "Installed " ++ fp
-            return ExitSuccess
+     catchesMost $
+       do file <- resolveFile' fp
+          runReaderT
+            (installCutoutMegapack (ArchiveFilePath file))
+            (InstallConfig userDir replaceMod)
+          putStrLn $ "Installed " ++ fp
+          return ExitSuccess
 run (InstallIcons (InstallOptions fp)) =
   do userDir <- defaultUserDir FM16
-     liftIO $
-       catchesMost $
-         do file <- resolveFile' fp
-            runReplaceMod $ installCutoutIcons userDir (ArchiveFilePath file)
-            putStrLn $ "Installed " ++ fp
-            return ExitSuccess
+     catchesMost $
+       do file <- resolveFile' fp
+          runReaderT
+            (installCutoutIcons (ArchiveFilePath file))
+            (InstallConfig userDir replaceMod)
+          putStrLn $ "Installed " ++ fp
+          return ExitSuccess
 
 handleFacePack :: FacePackException -> IO ExitCode
 handleFacePack e = hPrint stderr e >> return (ExitFailure 2)

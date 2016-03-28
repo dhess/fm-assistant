@@ -25,16 +25,18 @@ module Game.FMAssistant.Mod.Kits
        ) where
 
 import Control.Exception (Exception(..))
-import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow, catch, throwM)
+import Control.Lens
 import Control.Monad (forM_, unless, void, when)
+import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow, catch, throwM)
 import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.Reader (MonadReader(..))
 import Data.Data
-import Path ((</>), Path, Abs, Dir, dirname, filename, mkRelDir, parseAbsDir, parseRelDir, toFilePath)
+import Path ((</>), Path, Abs, Dir, Rel, dirname, filename, mkRelDir, parseAbsDir, parseRelDir, toFilePath)
 import Path.IO
        (createDir, doesDirExist, ensureDir, listDir, removeDirRecur,
         renameDir, renameFile, withSystemTempDir)
 
-import Game.FMAssistant.Install (MonadInstall(..))
+import Game.FMAssistant.Install (HasInstallConfig, install, userDir)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirPath(..), UnpackDirPath(..),
         archiveName, fmAssistantExceptionToException,
@@ -51,7 +53,10 @@ import Game.FMAssistant.Util (basename)
 -- >>> kitPath $ UserDirPath userDir
 -- "/home/dhess/Football Manager 2016/graphics/kits/"
 kitPath :: UserDirPath -> Path Abs Dir
-kitPath ufp = _userDirPath ufp </> $(mkRelDir "graphics/kits")
+kitPath ufp = _userDirPath ufp </> kitSubDir
+
+kitSubDir :: Path Rel Dir
+kitSubDir = $(mkRelDir "graphics/kits")
 
 -- | Verify that a kit pack archive file is valid, or can be
 -- automatically fixed up so that it's valid.
@@ -84,20 +89,21 @@ validateKitPack ar@(ArchiveFilePath fn) =
 -- not appear to be valid; or if the user directory doesn't exist;
 -- then this action throws an exception and aborts the installation --
 -- no kits from the pack will be installed.
-installKitPack :: (MonadThrow m, MonadMask m, MonadIO m, MonadInstall m) => UserDirPath -> ArchiveFilePath -> m ()
-installKitPack userDir archive@(ArchiveFilePath fn) =
+installKitPack :: (MonadThrow m, MonadMask m, MonadIO m, MonadReader r m, HasInstallConfig r) => ArchiveFilePath -> m ()
+installKitPack archive@(ArchiveFilePath fn) =
   -- We should create the top-level kit path directory if it doesn't
   -- exist (and it doesn't by default), but we should not create the
   -- user directory if that doesn't exist, as that probably means it's
   -- wrong, or that the game isn't installed.
-  do userDirExists <- doesDirExist (_userDirPath userDir)
+  do rdr <- ask
+     let udir = rdr ^. userDir
+     userDirExists <- doesDirExist $ _userDirPath udir
      unless userDirExists $
-       throwM $ NoSuchUserDirPathectory userDir
+       throwM $ NoSuchUserDirPathectory udir
      withSystemTempDir (basename fn) $ \tmpDir ->
-       do kitDir <- unpackKitPack archive (UnpackDirPath tmpDir)
-          let installDir = kitPath userDir
-          ensureDir installDir
-          install kitDir (installDir </> dirname (_unpackDirPath kitDir))
+       do unpackedKitDir <- unpackKitPack archive (UnpackDirPath tmpDir)
+          ensureDir $ kitPath udir
+          install unpackedKitDir (kitSubDir </> dirname (_unpackDirPath unpackedKitDir))
 
 -- | Unpack an archive file assumed to contain a kit pack to the given
 -- parent directory.
