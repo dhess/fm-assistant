@@ -43,7 +43,7 @@ type InstallAction = UnpackDirPath -> Path Abs Dir -> IO ()
 
 -- | An installer config.
 data InstallConfig =
-  InstallConfig {_userDir :: UserDirPath
+  InstallConfig {_userDir :: !UserDirPath
                 ,_installer :: InstallAction}
 
 makeClassy ''InstallConfig
