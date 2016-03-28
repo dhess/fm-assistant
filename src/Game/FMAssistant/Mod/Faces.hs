@@ -28,17 +28,17 @@ module Game.FMAssistant.Mod.Faces
        , fpeGetFilePath
        ) where
 
+import Control.Conditional (unlessM)
 import Control.Exception (Exception(..))
 import Control.Lens
 import Control.Monad.Catch (MonadMask, MonadThrow, catch, throwM)
-import Control.Monad (unless)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader (MonadReader(..))
 import Data.Data
 import Path ((</>), Path, Abs, Rel, Dir, mkRelDir, parent, toFilePath)
 import Path.IO (doesDirExist, ensureDir, withSystemTempDir)
 
-import Game.FMAssistant.Install (HasInstallConfig, install, userDir)
+import Game.FMAssistant.Install (HasInstallConfig, install, userDir, userDirExists)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirPath(..), UnpackDirPath(..),
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
@@ -105,15 +105,13 @@ installFaces srcSubDir destSubDir archive@(ArchiveFilePath fn) =
   -- directory if that doesn't exist, as that probably means it's
   -- wrong, or that the game isn't installed.
   do udir <- view userDir
-     userDirExists <- doesDirExist $ userDirPath udir
-     unless userDirExists $
-       throwM $ NoSuchUserDirectory udir
+     unlessM userDirExists $
+      throwM $ NoSuchUserDirectory udir
      withSystemTempDir (basename fn) $ \tmpDir ->
        do catch (unpack archive (UnpackDirPath tmpDir))
                 (\(e :: UnpackException) -> throwM $ UnpackingError archive e)
           let facesDir = tmpDir </> srcSubDir
-          facesExists <- doesDirExist facesDir
-          unless facesExists $
+          unlessM (doesDirExist facesDir) $
             throwM $ MissingFacesDir archive
           -- Create the top-level faces installation directory
           ensureDir $ parent (userDirPath udir </> destSubDir)

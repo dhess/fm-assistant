@@ -23,6 +23,8 @@ module Game.FMAssistant.Install
        , install
        , installMod
        , replaceMod
+         -- * Installation utility functions
+       , userDirExists
        ) where
 
 import Control.Lens
@@ -104,6 +106,12 @@ replaceMod (UnpackDirPath srcPath) dstPath =
      if targetExists
         then replaceAtomically dstPath srcPath
         else moveAtomically srcPath dstPath
+
+-- | Does the user directory specified by the config exist?
+userDirExists :: (MonadIO m, MonadReader r m, HasInstallConfig r) => m Bool
+userDirExists =
+  do udir <- userDirPath <$> view userDir
+     doesDirExist udir
 
 -- Helper functions. These are not exported.
 --

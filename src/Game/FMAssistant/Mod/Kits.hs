@@ -27,9 +27,10 @@ module Game.FMAssistant.Mod.Kits
        , kpeGetFilePath
        ) where
 
+import Control.Conditional (unlessM, whenM)
 import Control.Exception (Exception(..))
 import Control.Lens
-import Control.Monad (forM_, unless, void, when)
+import Control.Monad (forM_, void)
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow, catch, throwM)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader (MonadReader(..))
@@ -39,7 +40,7 @@ import Path.IO
        (createDir, doesDirExist, ensureDir, listDir, removeDirRecur,
         renameDir, renameFile, withSystemTempDir)
 
-import Game.FMAssistant.Install (HasInstallConfig, install, userDir)
+import Game.FMAssistant.Install (HasInstallConfig, install, userDir, userDirExists)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirPath(..), UnpackDirPath(..),
         archiveName, fmAssistantExceptionToException,
@@ -96,8 +97,7 @@ installKitPack archive@(ArchiveFilePath fn) =
   -- user directory if that doesn't exist, as that probably means it's
   -- wrong, or that the game isn't installed.
   do udir <- view userDir
-     userDirExists <- doesDirExist $ userDirPath udir
-     unless userDirExists $
+     unlessM userDirExists $
        throwM $ NoSuchUserDirPathectory udir
      withSystemTempDir (basename fn) $ \tmpDir ->
        do unpackedKitDir <- unpackKitPack archive (UnpackDirPath tmpDir)
@@ -125,8 +125,7 @@ osxFixUp unpackDir =
   let osxdir :: Path Abs Dir
       osxdir = unpackDirPath unpackDir </> $(mkRelDir "__MACOSX")
   in
-    do exists <- doesDirExist osxdir
-       when exists $
+    do whenM (doesDirExist osxdir) $
          removeDirRecur osxdir
        return unpackDir
 
