@@ -15,9 +15,7 @@ Portability : non-portable
 module Game.FMAssistant.Install
        ( -- * Installation config
          InstallConfig(..)
-       , HasInstallConfig
-       , userDir
-       , installer
+       , HasInstallConfig(..)
          -- * Installation actions
        , InstallAction
        , install

@@ -38,7 +38,7 @@ import Data.Data
 import Path ((</>), Path, Abs, Rel, Dir, mkRelDir, parent, toFilePath)
 import Path.IO (doesDirExist, ensureDir, withSystemTempDir)
 
-import Game.FMAssistant.Install (HasInstallConfig, install, userDir, userDirExists)
+import Game.FMAssistant.Install (HasInstallConfig(..), install, userDirExists)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirPath(..), UnpackDirPath(..),
         fmAssistantExceptionToException, fmAssistantExceptionFromException)

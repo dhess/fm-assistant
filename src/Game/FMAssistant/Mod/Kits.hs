@@ -40,7 +40,7 @@ import Path.IO
        (createDir, doesDirExist, ensureDir, listDir, removeDirRecur,
         renameDir, renameFile, withSystemTempDir)
 
-import Game.FMAssistant.Install (HasInstallConfig, install, userDir, userDirExists)
+import Game.FMAssistant.Install (HasInstallConfig(..), install, userDirExists)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirPath(..), UnpackDirPath(..),
         archiveName, fmAssistantExceptionToException,
