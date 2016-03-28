@@ -55,10 +55,9 @@ makeClassy ''InstallConfig
 -- error is reported.
 install :: (MonadIO m, MonadThrow m, MonadCatch m, MonadReader r m, HasInstallConfig r) => UnpackDirPath -> Path Rel Dir -> m ()
 install srcPath dstPath =
-  do rdr <- ask
-     let f = rdr ^. installer
-         udir = rdr ^. userDir
-     liftIO $ f srcPath (userDirPath udir </> dstPath)
+  do f <- view installer
+     udir <- userDirPath <$> view userDir
+     liftIO $ f srcPath (udir </> dstPath)
 
 -- | Install a mod, but do not overwrite an existing installation, if
 -- present.

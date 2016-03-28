@@ -104,8 +104,7 @@ installFaces srcSubDir destSubDir archive@(ArchiveFilePath fn) =
   -- it doesn't by default), but we should not create the user
   -- directory if that doesn't exist, as that probably means it's
   -- wrong, or that the game isn't installed.
-  do rdr <- ask
-     let udir = rdr ^. userDir
+  do udir <- view userDir
      userDirExists <- doesDirExist $ userDirPath udir
      unless userDirExists $
        throwM $ NoSuchUserDirectory udir
