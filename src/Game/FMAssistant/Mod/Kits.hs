@@ -56,7 +56,7 @@ import Game.FMAssistant.Util (basename)
 -- >>> kitPath $ UserDirPath userDir
 -- "/home/dhess/Football Manager 2016/graphics/kits/"
 kitPath :: UserDirPath -> Path Abs Dir
-kitPath ufp = _userDirPath ufp </> kitSubDir
+kitPath ufp = userDirPath ufp </> kitSubDir
 
 kitSubDir :: Path Rel Dir
 kitSubDir = $(mkRelDir "graphics/kits")
@@ -97,13 +97,13 @@ installKitPack archive@(ArchiveFilePath fn) =
   -- wrong, or that the game isn't installed.
   do rdr <- ask
      let udir = rdr ^. userDir
-     userDirExists <- doesDirExist $ _userDirPath udir
+     userDirExists <- doesDirExist $ userDirPath udir
      unless userDirExists $
        throwM $ NoSuchUserDirPathectory udir
      withSystemTempDir (basename fn) $ \tmpDir ->
        do unpackedKitDir <- unpackKitPack archive (UnpackDirPath tmpDir)
           ensureDir $ kitPath udir
-          install unpackedKitDir (kitSubDir </> dirname (_unpackDirPath unpackedKitDir))
+          install unpackedKitDir (kitSubDir </> dirname (unpackDirPath unpackedKitDir))
 
 -- | Unpack an archive file assumed to contain a kit pack to the given
 -- parent directory.
@@ -124,7 +124,7 @@ unpackKitPack archive unpackDir =
 osxFixUp :: (MonadIO m) => UnpackDirPath -> m UnpackDirPath
 osxFixUp unpackDir =
   let osxdir :: Path Abs Dir
-      osxdir = _unpackDirPath unpackDir </> $(mkRelDir "__MACOSX")
+      osxdir = unpackDirPath unpackDir </> $(mkRelDir "__MACOSX")
   in
     do exists <- doesDirExist osxdir
        when exists $

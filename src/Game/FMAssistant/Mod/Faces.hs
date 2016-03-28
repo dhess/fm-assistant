@@ -53,7 +53,7 @@ import Game.FMAssistant.Util (basename)
 -- >>> facesPath $ UserDirPath "/home/dhess/Football Manager 2016"
 -- "/home/dhess/Football Manager 2016/graphics/faces"
 facesPath :: UserDirPath -> Path Abs Dir
-facesPath ufp = _userDirPath ufp </> facesSubDir
+facesPath ufp = userDirPath ufp </> facesSubDir
 
 facesSubDir :: Path Rel Dir
 facesSubDir = $(mkRelDir "graphics/faces")
@@ -66,7 +66,7 @@ facesSubDir = $(mkRelDir "graphics/faces")
 -- >>> iconFacesPath $ UserDirPath "/home/dhess/Football Manager 2016"
 -- "/home/dhess/Football Manager 2016/graphics/iconfaces"
 iconFacesPath :: UserDirPath -> Path Abs Dir
-iconFacesPath ufp = _userDirPath ufp </> iconFacesSubDir
+iconFacesPath ufp = userDirPath ufp </> iconFacesSubDir
 
 iconFacesSubDir :: Path Rel Dir
 iconFacesSubDir = $(mkRelDir "graphics/iconfaces")
@@ -106,7 +106,7 @@ installFaces srcSubDir destSubDir archive@(ArchiveFilePath fn) =
   -- wrong, or that the game isn't installed.
   do rdr <- ask
      let udir = rdr ^. userDir
-     userDirExists <- doesDirExist $ _userDirPath udir
+     userDirExists <- doesDirExist $ userDirPath udir
      unless userDirExists $
        throwM $ NoSuchUserDirectory udir
      withSystemTempDir (basename fn) $ \tmpDir ->
@@ -117,7 +117,7 @@ installFaces srcSubDir destSubDir archive@(ArchiveFilePath fn) =
           unless facesExists $
             throwM $ MissingFacesDir archive
           -- Create the top-level faces installation directory
-          ensureDir $ parent (_userDirPath udir </> destSubDir)
+          ensureDir $ parent (userDirPath udir </> destSubDir)
           install (UnpackDirPath facesDir) destSubDir
 
 data FacePackException

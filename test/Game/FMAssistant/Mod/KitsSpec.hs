@@ -73,7 +73,7 @@ spec =
      describe "installKitPack" $
        do it "installs kit packs in the user directory's kit path" $
             withTmpUserDir $ \dir ->
-              let kitDir = _userDirPath dir </> $(mkRelDir "graphics/kits")
+              let kitDir = userDirPath dir </> $(mkRelDir "graphics/kits")
               in
                 do runReaderT
                      (do dummyPackV10Zip >>= installKitPack
@@ -91,7 +91,7 @@ spec =
                  runReaderT (dummyPackV11Zip >>= installKitPack) (InstallConfig dir installMod) `shouldThrow` anyIOException
           it "is (effectively) idempotent when run with replaceMod" $
             withTmpUserDir $ \dir ->
-              let kitDir = _userDirPath dir </> $(mkRelDir "graphics/kits")
+              let kitDir = userDirPath dir </> $(mkRelDir "graphics/kits")
               in
                 do runReaderT (dummyPackV10Zip >>= installKitPack) (InstallConfig dir installMod)
                    runReaderT (dummyPackV10Rar >>= installKitPack) (InstallConfig dir replaceMod)
@@ -100,7 +100,7 @@ spec =
                    doesFileExist (kitDir </> $(mkRelFile "Dummy kit pack/santos_1.png")) `shouldReturn` True
           it "when run with replaceMod, removes any existing version when installing a new version" $
             withTmpUserDir $ \dir ->
-              let kitDir = _userDirPath dir </> $(mkRelDir "graphics/kits")
+              let kitDir = userDirPath dir </> $(mkRelDir "graphics/kits")
               in
                 do runReaderT
                      (do dummyPackV10Zip >>= installKitPack
@@ -112,7 +112,7 @@ spec =
                    doesFileExist (kitDir </> $(mkRelFile "Dummy kit pack/vasco_1.png")) `shouldReturn` True
           it "doesn't remove other kits when installing a new version" $
             withTmpUserDir $ \dir ->
-              let kitDir = _userDirPath dir </> $(mkRelDir "graphics/kits")
+              let kitDir = userDirPath dir </> $(mkRelDir "graphics/kits")
               in
                 do runReaderT
                      (do dummyPackV10Zip >>= installKitPack
@@ -124,7 +124,7 @@ spec =
                    doesFileExist (kitDir </> $(mkRelFile "Silly kits/foo_3.png")) `shouldReturn` True
           it "installs a malformed ZIP'ed kit pack using the pack's name as a top-level directory" $
             withTmpUserDir $ \dir ->
-              let kitDir = _userDirPath dir </> $(mkRelDir "graphics/kits")
+              let kitDir = userDirPath dir </> $(mkRelDir "graphics/kits")
               in
                 do runReaderT (malformedPackZip >>= installKitPack) (InstallConfig dir installMod)
                    doesFileExist (kitDir </> $(mkRelFile "Malformed dummy kit pack v1.0/config.xml")) `shouldReturn` True
@@ -132,7 +132,7 @@ spec =
                    doesFileExist (kitDir </> $(mkRelFile "Malformed dummy kit pack v1.0/santos_1.png")) `shouldReturn` True
           it "installs a malformed RAR'ed kit pack using the pack's name as a top-level directory" $
             withTmpUserDir $ \dir ->
-              let kitDir = _userDirPath dir </> $(mkRelDir "graphics/kits")
+              let kitDir = userDirPath dir </> $(mkRelDir "graphics/kits")
               in
                 do runReaderT (malformedPackRar >>= installKitPack) (InstallConfig dir installMod)
                    doesFileExist (kitDir </> $(mkRelFile "Malformed dummy kit pack v1.0/config.xml")) `shouldReturn` True
@@ -150,7 +150,7 @@ spec =
               runReaderT (installKitPack (ArchiveFilePath $(mkAbsFile "/this/doesn't/exist.zip"))) (InstallConfig dir installMod) `shouldThrow` anyIOException
           it "fails if the user directory doesn't exist" $
             withTmpUserDir $ \dir ->
-              let missingUserDir = UserDirPath $ _userDirPath dir </> $(mkRelDir "missing")
+              let missingUserDir = UserDirPath $ userDirPath dir </> $(mkRelDir "missing")
               in
                 runReaderT (dummyPackV10Zip >>= installKitPack) (InstallConfig missingUserDir installMod) `shouldThrow` anyKitPackException
 

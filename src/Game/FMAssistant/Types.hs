@@ -54,7 +54,7 @@ versionDir FM16 = $(mkRelDir "Football Manager 2016")
 -- | The type for paths which point to a user directory, where game
 -- saves, kits, and most other mods, are stored.
 newtype UserDirPath =
-  UserDirPath {_userDirPath :: Path Abs Dir}
+  UserDirPath {userDirPath :: Path Abs Dir}
   deriving (Eq,Show,Ord,Typeable)
 
 --- | The default user directory, where save games and most mod types
@@ -67,7 +67,7 @@ defaultUserDir version =
 -- | The type for paths which point to an archive file (ZIP, RAR,
 -- etc.).
 newtype ArchiveFilePath =
-  ArchiveFilePath {_archiveFilePath :: Path Abs File}
+  ArchiveFilePath {archiveFilePath :: Path Abs File}
   deriving (Eq,Show,Ord,Typeable)
 
 -- | Return (as a 'String') the name of an archive file; that is,
@@ -79,11 +79,11 @@ newtype ArchiveFilePath =
 -- >>> archiveName $ ArchiveFilePath bazPath
 -- "baz"
 archiveName :: ArchiveFilePath -> String
-archiveName = basename . _archiveFilePath
+archiveName = basename . archiveFilePath
 
 -- | The type for paths which point to an unpacked archive directory.
 newtype UnpackDirPath =
-  UnpackDirPath {_unpackDirPath :: Path Abs Dir}
+  UnpackDirPath {unpackDirPath :: Path Abs Dir}
   deriving (Eq,Show,Ord,Typeable)
 
 -- | The root exception type for @fm-assistant@.

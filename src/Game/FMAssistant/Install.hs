@@ -58,7 +58,7 @@ install srcPath dstPath =
   do rdr <- ask
      let f = rdr ^. installer
          udir = rdr ^. userDir
-     liftIO $ f srcPath (_userDirPath udir </> dstPath)
+     liftIO $ f srcPath (userDirPath udir </> dstPath)
 
 -- | Install a mod, but do not overwrite an existing installation, if
 -- present.
