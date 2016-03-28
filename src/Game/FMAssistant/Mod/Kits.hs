@@ -17,7 +17,10 @@ Portability : non-portable
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Mod.Kits
-       ( installKitPack
+       ( -- * Kit pack paths
+         kitPath
+         -- * Install actions
+       , installKitPack
        , validateKitPack
          -- * Kit pack-related exceptions
        , KitPackException(..)
@@ -80,15 +83,12 @@ validateKitPack ar@(ArchiveFilePath fn) =
   withSystemTempDir (basename fn) $ \tmpDir ->
     void $ unpackKitPack ar (UnpackDirPath tmpDir)
 
--- | Install a kit pack to the given user directory. Note that this
--- action will overwrite an existing kit path of the same name (but
--- not necessarily the kits from a different version of the same pack:
--- this depends on how the kit pack was packaged).
+-- | Install a kit pack.
 --
 -- If there's a problem unpacking the kit pack; if the kit pack does
--- not appear to be valid; or if the user directory doesn't exist;
--- then this action throws an exception and aborts the installation --
--- no kits from the pack will be installed.
+-- not appear to be valid; or if the user directory specified in the
+-- config doesn't exist; then this action throws an exception and
+-- aborts the installation -- no kits from the pack will be installed.
 installKitPack :: (MonadThrow m, MonadMask m, MonadIO m, MonadReader r m, HasInstallConfig r) => ArchiveFilePath -> m ()
 installKitPack archive@(ArchiveFilePath fn) =
   -- We should create the top-level kit path directory if it doesn't

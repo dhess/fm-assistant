@@ -19,10 +19,6 @@ module Game.FMAssistant.Install
        , userDir
        , installer
          -- * Installation actions
-         --
-         -- In addition to "running" one of the 'MonadInstall'
-         -- instances, you can also run several installation actions
-         -- in a 'MonadIO' context.
        , InstallAction
        , install
        , installMod
@@ -52,6 +48,11 @@ data InstallConfig =
 
 makeClassy ''InstallConfig
 
+-- | Install a mod using an 'InstallConfig'.
+--
+-- If, during installation, an error occurs, the partially-installed
+-- mod will be removed from the installation directory before the
+-- error is reported.
 install :: (MonadIO m, MonadThrow m, MonadCatch m, MonadReader r m, HasInstallConfig r) => UnpackDirPath -> Path Rel Dir -> m ()
 install srcPath dstPath =
   do rdr <- ask

@@ -17,8 +17,10 @@ Portability : non-portable
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Mod.Faces
-       ( facesPath
+       ( -- * Face kit paths
+         facesPath
        , iconFacesPath
+         -- * Install actions
        , installCutoutMegapack
        , installCutoutIcons
          -- * Facepack-related exceptions
@@ -69,25 +71,22 @@ iconFacesPath ufp = _userDirPath ufp </> iconFacesSubDir
 iconFacesSubDir :: Path Rel Dir
 iconFacesSubDir = $(mkRelDir "graphics/iconfaces")
 
--- | Install the Sortitoutsi "Cutout Megapack" face pack to the given
--- user directory. Note that this action will overwrite any face pack
--- which has already been installed.
+-- | Install the Sortitoutsi "Cutout Megapack" face pack.
 --
 -- If there's a problem unpacking the face pack; if the kit pack does
--- not appear to be valid; or if the user directory doesn't exist;
--- then this action throws an exception and aborts the installation --
--- the face pack will not be installed.
+-- not appear to be valid; or if the user directory specified in the
+-- config doesn't exist; then this action throws an exception and
+-- aborts the installation -- the face pack will not be installed.
 installCutoutMegapack :: (MonadThrow m, MonadMask m, MonadIO m, MonadReader r m, HasInstallConfig r) => ArchiveFilePath -> m ()
 installCutoutMegapack = installFaces $(mkRelDir "sortitoutsi/faces") facesSubDir
 
 -- | Install the Sortitoutsi "Cutout Megapack" face pack to the given
--- user directory. Note that this action will overwrite any face pack
--- which has already been installed.
+-- user directory.
 --
 -- If there's a problem unpacking the face pack; if the kit pack does
--- not appear to be valid; or if the user directory doesn't exist;
--- then this action throws an exception and aborts the installation --
--- the face pack will not be installed.
+-- not appear to be valid; or if the user directory specified in the
+-- config doesn't exist; then this action throws an exception and
+-- aborts the installation -- the face pack will not be installed.
 installCutoutIcons :: (MonadThrow m, MonadMask m, MonadIO m, MonadReader r m, HasInstallConfig r) => ArchiveFilePath -> m ()
 installCutoutIcons = installFaces $(mkRelDir "sortitoutsi/iconfaces") iconFacesSubDir
 
