@@ -7,7 +7,7 @@ Maintainer  : Drew Hess <src@drewhess.com>
 Stability   : experimental
 Portability : non-portable
 
-Functions for unpacking the various archive types (RAR, ZIP, etc.).
+Actions for unpacking the various archive types (RAR, ZIP, etc.).
 
 -}
 
@@ -22,8 +22,6 @@ module Game.FMAssistant.Unpack
          unpackZip
        , unpackRar
        , unpack
-         -- * Selecting an unpacking action
-       , unpackerFor
          -- * Unpacking-related exceptions
        , UnpackException(..)
        ) where
@@ -45,19 +43,6 @@ import Game.FMAssistant.Types
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
 import Game.FMAssistant.Util (executeQuietly)
 
--- | Given the filename of an archive file, use the filename's
--- extension to guess which unpack action to use, and return that
--- action.
---
--- If, based on the filename's extension, the archive format is
--- unsupported, this function returns 'Nothing'.
-unpackerFor :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> m (Maybe (ArchiveFilePath -> UnpackDirPath -> m ()))
-unpackerFor ar =
-  identifyArchive ar >>= \case
-    Just Zip -> return $ Just unpackZip
-    Just Rar -> return $ Just unpackRar
-    Nothing -> return Nothing
-
 -- | Attempt to guess the format of the specified archive file and
 -- unpack it to the given directory.
 --
@@ -69,9 +54,10 @@ unpackerFor ar =
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpack :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> UnpackDirPath -> m ()
 unpack archive unpackDir =
-  unpackerFor archive >>= \case
+  identifyArchive archive >>= \case
+    Just Zip -> unpackZip archive unpackDir
+    Just Rar -> unpackRar archive unpackDir
     Nothing -> throwM $ UnsupportedArchive archive
-    Just unpacker -> unpacker archive unpackDir
 
 data Cmd
   = Unrar
