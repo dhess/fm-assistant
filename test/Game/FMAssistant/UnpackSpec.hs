@@ -8,9 +8,8 @@ module Game.FMAssistant.UnpackSpec
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Resource (runResourceT)
-import Data.Maybe (isNothing)
-import Path ((</>), isParentOf, mkAbsFile, mkRelFile, parseAbsFile)
-import Path.IO (doesFileExist, getTempDir)
+import Path ((</>), mkAbsFile, mkRelFile, parseAbsFile)
+import Path.IO (doesFileExist)
 import Test.Hspec
 import Paths_fm_assistant
 
@@ -23,9 +22,6 @@ getArchiveFilePath fp =
   do fn <- getDataFileName fp
      absfn <- parseAbsFile fn
      return $ ArchiveFilePath absfn
-
-unsupportedFile :: IO ArchiveFilePath
-unsupportedFile = getArchiveFilePath "data/test/test.tar"
 
 zipFile :: IO ArchiveFilePath
 zipFile = getArchiveFilePath "data/test/test.zip"
