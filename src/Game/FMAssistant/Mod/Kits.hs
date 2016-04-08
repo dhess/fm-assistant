@@ -26,7 +26,6 @@ module Game.FMAssistant.Mod.Kits
        , KitPackException(..)
        ) where
 
-import Control.Conditional (whenM)
 import Control.Exception (Exception(..))
 import Control.Lens
 import Control.Monad (forM_, void)
@@ -36,8 +35,8 @@ import Control.Monad.Reader (MonadReader(..))
 import Data.Data
 import Path ((</>), Path, Abs, Dir, Rel, dirname, filename, mkRelDir, parseAbsDir, parseRelDir)
 import Path.IO
-       (createDir, doesDirExist, ensureDir, listDir, removeDirRecur,
-        renameDir, renameFile, withSystemTempDir)
+       (createDir, ensureDir, listDir, renameDir, renameFile,
+        withSystemTempDir)
 
 import Game.FMAssistant.Install (HasInstallConfig(..), install, checkUserDir)
 import Game.FMAssistant.Types
@@ -113,39 +112,21 @@ installKitPack archive@(ArchiveFilePath fn) =
 unpackKitPack :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> UnpackDirPath -> m UnpackDirPath
 unpackKitPack archive unpackDir =
   do unpack archive unpackDir
-     -- Note: the pathname we return may be dependent on fix-ups.
-     osxFixUp unpackDir >>= singleDirFixUp archive
-
--- | Remove any top-level "__MACOSX" subdirectory.
-osxFixUp :: (MonadIO m) => UnpackDirPath -> m UnpackDirPath
-osxFixUp unpackDir =
-  let osxdir :: Path Abs Dir
-      osxdir = unpackDirPath unpackDir </> $(mkRelDir "__MACOSX")
-  in
-    do whenM (doesDirExist osxdir) $
-         removeDirRecur osxdir
-       return unpackDir
-
--- | The kit pack contents should live under a single top-level
--- directory. This action checks for that condition and attempts to
--- fix it up, if needed. It also checks for empty or single file
--- archives, which are not valid kit pack formats. (In either of these
--- cases, the action will throw a 'KitPackException'.
-singleDirFixUp :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> UnpackDirPath -> m UnpackDirPath
-singleDirFixUp archive (UnpackDirPath unpackDir) =
-  listDir unpackDir >>= \case
-    ([], []) -> throwM $ EmptyArchive archive
-    ([], [_]) -> throwM $ SingleFileArchive archive
-    ([dir], []) -> return $ UnpackDirPath dir
-    (dirs, files) ->
-      do fixdir <- parseRelDir $ archiveName archive
-         let fixpath = unpackDir </> fixdir
-         createDir fixpath
-         forM_ dirs $ \dn ->
-           renameDir dn (fixpath </> dirname dn)
-         forM_ files $ \fn ->
-           renameFile fn (fixpath </> filename fn)
-         return $ UnpackDirPath fixpath
+     -- Detect malformed packs; put everything under one top-level
+     -- directory, if necessary.
+     listDir (unpackDirPath unpackDir) >>= \case
+       ([], []) -> throwM $ EmptyArchive archive
+       ([], [_]) -> throwM $ SingleFileArchive archive
+       ([dir], []) -> return $ UnpackDirPath dir
+       (dirs, files) ->
+         do fixdir <- parseRelDir $ archiveName archive
+            let fixpath = unpackDirPath unpackDir </> fixdir
+            createDir fixpath
+            forM_ dirs $ \dn ->
+              renameDir dn (fixpath </> dirname dn)
+            forM_ files $ \fn ->
+              renameFile fn (fixpath </> filename fn)
+            return $ UnpackDirPath fixpath
 
 data KitPackException
   = EmptyArchive ArchiveFilePath

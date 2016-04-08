@@ -14,6 +14,7 @@ Functions for unpacking the various archive types (RAR, ZIP, etc.).
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Unpack
@@ -27,13 +28,15 @@ module Game.FMAssistant.Unpack
        , UnpackException(..)
        ) where
 
+import Control.Conditional (whenM)
 import Control.Exception (Exception(..))
 import Control.Monad (unless)
 import Control.Monad.Catch (MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Data
 import Data.Monoid ((<>))
-import Path (toFilePath)
+import Path ((</>), Path, Abs, Dir, mkRelDir, toFilePath)
+import Path.IO (doesDirExist, removeDirRecur)
 import System.Exit (ExitCode(..))
 
 import Game.FMAssistant.Magic (Magic(..), identifyArchive)
@@ -80,20 +83,22 @@ data Cmd
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpackZip :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> UnpackDirPath -> m ()
-unpackZip (ArchiveFilePath zipFile) (UnpackDirPath unpackDir) =
+unpackZip zipFile unpackDir =
   let args :: [String]
-      args = [toFilePath zipFile, "-d", toFilePath unpackDir]
-  in unzipAction Unzip args
+      args = [toFilePath (archiveFilePath zipFile), "-d", toFilePath (unpackDirPath unpackDir)]
+  in do unzipAction Unzip args
+        osxFixUp unpackDir
 
 -- | Unpack a RAR archive to the given directory.
 --
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpackRar :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> UnpackDirPath -> m ()
-unpackRar (ArchiveFilePath rarFile) (UnpackDirPath unpackDir) =
+unpackRar rarFile unpackDir =
   let args :: [String]
-      args = ["x", "-v", "-y", "-r", toFilePath rarFile, toFilePath unpackDir]
-  in unzipAction Unrar args
+      args = ["x", "-v", "-y", "-r", toFilePath (archiveFilePath rarFile), toFilePath (unpackDirPath unpackDir)]
+  in do unzipAction Unrar args
+        osxFixUp unpackDir
 
 unzipAction :: (MonadThrow m, MonadIO m) => Cmd -> [String] -> m ()
 unzipAction cmd args =
@@ -107,6 +112,14 @@ unzipAction cmd args =
     failure :: Cmd -> String -> ExitCode -> UnpackException
     failure Unrar = UnrarError
     failure Unzip = UnzipError
+
+-- | Remove any top-level "__MACOSX" subdirectory.
+osxFixUp :: (MonadIO m) => UnpackDirPath -> m ()
+osxFixUp unpackDir =
+  let osxdir :: Path Abs Dir
+      osxdir = unpackDirPath unpackDir </> $(mkRelDir "__MACOSX")
+  in whenM (doesDirExist osxdir) $
+       removeDirRecur osxdir
 
 data UnpackException
   = UnsupportedArchive ArchiveFilePath
