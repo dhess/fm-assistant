@@ -2,7 +2,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Game.FMAssistant.UnpackSpec
+module Game.FMAssistant.Repack.UnpackSpec
        ( spec
        ) where
 
@@ -14,7 +14,7 @@ import Test.Hspec
 import Paths_fm_assistant
 
 import Game.FMAssistant.Types (ArchiveFilePath(..), UnpackDirPath(..))
-import Game.FMAssistant.Unpack
+import Game.FMAssistant.Repack.Unpack
 import Game.FMAssistant.Util (createSystemTempDir)
 
 getArchiveFilePath :: FilePath -> IO ArchiveFilePath

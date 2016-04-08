@@ -41,7 +41,7 @@ import Game.FMAssistant.Install (HasInstallConfig(..), install, checkUserDir)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirPath(..), UnpackDirPath(..),
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
-import Game.FMAssistant.Unpack (unpack)
+import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Util (basename)
 
 -- | Face packs live in a pre-determined subdirectory of the game's

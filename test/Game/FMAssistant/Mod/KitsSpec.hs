@@ -15,7 +15,7 @@ import Paths_fm_assistant
 import Game.FMAssistant.Install (InstallConfig(..), InstallException, installMod, replaceMod)
 import Game.FMAssistant.Mod.Kits
 import Game.FMAssistant.Types (ArchiveFilePath(..), UserDirPath(..))
-import Game.FMAssistant.Unpack (UnpackException)
+import Game.FMAssistant.Repack.Unpack (UnpackException)
 
 withTmpUserDir :: (UserDirPath -> IO a) -> IO a
 withTmpUserDir action = withSystemTempDir "KitSpec" $ \dir ->

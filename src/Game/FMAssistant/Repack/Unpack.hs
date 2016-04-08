@@ -1,5 +1,5 @@
 {-|
-Module      : Game.FMAssistant.Unpack
+Module      : Game.FMAssistant.Repack.Unpack
 Description : Utilities for unpacking archives
 Copyright   : (c) 2016, Drew Hess
 License     : BSD3
@@ -17,7 +17,7 @@ Actions for unpacking the various archive types (RAR, ZIP, etc.).
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
 
-module Game.FMAssistant.Unpack
+module Game.FMAssistant.Repack.Unpack
        ( -- * Unpacking actions
          unpackZip
        , unpackRar

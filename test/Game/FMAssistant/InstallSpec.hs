@@ -13,7 +13,7 @@ import Test.Hspec
 import Paths_fm_assistant
 
 import Game.FMAssistant.Install
-import Game.FMAssistant.Unpack
+import Game.FMAssistant.Repack.Unpack
 import Game.FMAssistant.Util (createSystemTempDir)
 import Game.FMAssistant.Types (ArchiveFilePath(..), UnpackDirPath(..), UserDirPath(..))
 

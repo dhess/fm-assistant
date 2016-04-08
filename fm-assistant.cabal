@@ -24,7 +24,7 @@ Library
                       , Game.FMAssistant.Mod.Faces
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
-                      , Game.FMAssistant.Unpack
+                      , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Util
   Build-Depends:        base >= 4 && < 5
                       , bytestring
@@ -85,7 +85,7 @@ Executable fm-assistant
                       , Game.FMAssistant.Mod.Faces
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
-                      , Game.FMAssistant.Unpack
+                      , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Util
                       , CutoutFaces
                       , KitPack
@@ -138,7 +138,7 @@ Test-Suite spec
                       , Game.FMAssistant.Mod.Faces
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
-                      , Game.FMAssistant.Unpack
+                      , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Util
                       , Paths_fm_assistant
 
