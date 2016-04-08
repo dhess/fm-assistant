@@ -11,13 +11,12 @@ import Options.Applicative
 import Control.Monad.Catch (Handler(..), catches)
 import Control.Monad.Reader (runReaderT)
 import Game.FMAssistant.Install (InstallConfig(..), replaceMod)
-import Game.FMAssistant.Mod.Faces (FacePackException, installCutoutMegapack, installCutoutIcons)
+import Game.FMAssistant.Mod.Faces (installCutoutMegapack, installCutoutIcons)
 import Game.FMAssistant.Types (ArchiveFilePath(..), Version(..), defaultUserDir)
 import Path.IO (resolveFile')
 import System.Exit (ExitCode(..))
-import System.IO (hPrint, stderr)
 
-import Util (handleIO)
+import Util (handleFME, handleIO)
 
 data Command
   = InstallMegapack InstallOptions
@@ -63,11 +62,8 @@ run (InstallIcons (InstallOptions fp)) =
           putStrLn $ "Installed " ++ fp
           return ExitSuccess
 
-handleFacePack :: FacePackException -> IO ExitCode
-handleFacePack e = hPrint stderr e >> return (ExitFailure 2)
-
 catchesMost :: IO ExitCode -> IO ExitCode
 catchesMost act =
   catches act most
   where
-    most = [Handler handleIO, Handler handleFacePack]
+    most = [Handler handleIO, Handler handleFME]

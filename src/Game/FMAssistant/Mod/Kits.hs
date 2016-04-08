@@ -24,28 +24,27 @@ module Game.FMAssistant.Mod.Kits
        , validateKitPack
          -- * Kit pack-related exceptions
        , KitPackException(..)
-       , kpeGetFilePath
        ) where
 
-import Control.Conditional (unlessM, whenM)
+import Control.Conditional (whenM)
 import Control.Exception (Exception(..))
 import Control.Lens
 import Control.Monad (forM_, void)
-import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow, catch, throwM)
+import Control.Monad.Catch (MonadMask, MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader (MonadReader(..))
 import Data.Data
-import Path ((</>), Path, Abs, Dir, Rel, dirname, filename, mkRelDir, parseAbsDir, parseRelDir, toFilePath)
+import Path ((</>), Path, Abs, Dir, Rel, dirname, filename, mkRelDir, parseAbsDir, parseRelDir)
 import Path.IO
        (createDir, doesDirExist, ensureDir, listDir, removeDirRecur,
         renameDir, renameFile, withSystemTempDir)
 
-import Game.FMAssistant.Install (HasInstallConfig(..), install, userDirExists)
+import Game.FMAssistant.Install (HasInstallConfig(..), install, checkUserDir)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirPath(..), UnpackDirPath(..),
         archiveName, fmAssistantExceptionToException,
         fmAssistantExceptionFromException)
-import Game.FMAssistant.Unpack (UnpackException, unpack)
+import Game.FMAssistant.Unpack (unpack)
 import Game.FMAssistant.Util (basename)
 
 -- | Kits live in a pre-determined subdirectory of the game's user
@@ -96,11 +95,10 @@ installKitPack archive@(ArchiveFilePath fn) =
   -- exist (and it doesn't by default), but we should not create the
   -- user directory if that doesn't exist, as that probably means it's
   -- wrong, or that the game isn't installed.
-  do udir <- view userDir
-     unlessM userDirExists $
-       throwM $ NoSuchUserDirPathectory udir
+  do checkUserDir
      withSystemTempDir (basename fn) $ \tmpDir ->
        do unpackedKitDir <- unpackKitPack archive (UnpackDirPath tmpDir)
+          udir <- view userDir
           ensureDir $ kitPath udir
           install unpackedKitDir (kitSubDir </> dirname (unpackDirPath unpackedKitDir))
 
@@ -112,10 +110,9 @@ installKitPack archive@(ArchiveFilePath fn) =
 -- exception. See the 'KitPackException' type for exceptions specific
 -- to kit packs (although other exceptions are possible, of course, as
 -- this action runs in 'MonadIO'.).
-unpackKitPack :: (MonadCatch m, MonadThrow m, MonadIO m) => ArchiveFilePath -> UnpackDirPath -> m UnpackDirPath
+unpackKitPack :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> UnpackDirPath -> m UnpackDirPath
 unpackKitPack archive unpackDir =
-  do catch (unpack archive unpackDir)
-           (\(e :: UnpackException) -> throwM $ UnpackingError archive e)
+  do unpack archive unpackDir
      -- Note: the pathname we return may be dependent on fix-ups.
      osxFixUp unpackDir >>= singleDirFixUp archive
 
@@ -151,29 +148,17 @@ singleDirFixUp archive (UnpackDirPath unpackDir) =
          return $ UnpackDirPath fixpath
 
 data KitPackException
-  = NoSuchUserDirPathectory UserDirPath
-    -- ^ The specified user directory doesn't exist
-  | UnpackingError ArchiveFilePath UnpackException
-    -- ^ An error occurred during the unpacking process
-  | EmptyArchive ArchiveFilePath
+  = EmptyArchive ArchiveFilePath
     -- ^ The archive is empty
   | SingleFileArchive ArchiveFilePath
-    -- ^ The archive contains just a single file
+    -- ^ The archive contains just a single file and can't be a valid
+    -- kit pack
   deriving (Eq,Typeable)
 
 instance Show KitPackException where
-  show (NoSuchUserDirPathectory fp) = show fp ++ ": The game user directory doesn't exist"
-  show (UnpackingError fp ue) = show fp ++ ": " ++ show ue
-  show (EmptyArchive fp) = show fp ++ ": Malformed (kit pack is empty)"
-  show (SingleFileArchive fp) = show fp ++ ": Malformed (kit pack contains just a single file)"
+  show (EmptyArchive fp) = show fp ++ ": Malformed kit pack (archive file is empty)"
+  show (SingleFileArchive fp) = show fp ++ ": Malformed kit pack (archive file contains just a single file)"
 
 instance Exception KitPackException where
   toException = fmAssistantExceptionToException
   fromException = fmAssistantExceptionFromException
-
--- | The 'FilePath' associated with the given exception.
-kpeGetFilePath :: KitPackException -> FilePath
-kpeGetFilePath (NoSuchUserDirPathectory (UserDirPath fp)) = toFilePath fp
-kpeGetFilePath (UnpackingError (ArchiveFilePath fp) _) = toFilePath fp
-kpeGetFilePath (EmptyArchive (ArchiveFilePath fp)) = toFilePath fp
-kpeGetFilePath (SingleFileArchive (ArchiveFilePath fp)) = toFilePath fp

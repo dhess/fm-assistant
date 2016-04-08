@@ -25,24 +25,23 @@ module Game.FMAssistant.Mod.Faces
        , installCutoutIcons
          -- * Facepack-related exceptions
        , FacePackException(..)
-       , fpeGetFilePath
        ) where
 
 import Control.Conditional (unlessM)
 import Control.Exception (Exception(..))
 import Control.Lens
-import Control.Monad.Catch (MonadMask, MonadThrow, catch, throwM)
+import Control.Monad.Catch (MonadMask, MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader (MonadReader(..))
 import Data.Data
-import Path ((</>), Path, Abs, Rel, Dir, mkRelDir, parent, toFilePath)
+import Path ((</>), Path, Abs, Rel, Dir, mkRelDir, parent)
 import Path.IO (doesDirExist, ensureDir, withSystemTempDir)
 
-import Game.FMAssistant.Install (HasInstallConfig(..), install, userDirExists)
+import Game.FMAssistant.Install (HasInstallConfig(..), install, checkUserDir)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UserDirPath(..), UnpackDirPath(..),
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
-import Game.FMAssistant.Unpack (UnpackException, unpack)
+import Game.FMAssistant.Unpack (unpack)
 import Game.FMAssistant.Util (basename)
 
 -- | Face packs live in a pre-determined subdirectory of the game's
@@ -104,39 +103,25 @@ installFaces srcSubDir destSubDir archive@(ArchiveFilePath fn) =
   -- it doesn't by default), but we should not create the user
   -- directory if that doesn't exist, as that probably means it's
   -- wrong, or that the game isn't installed.
-  do udir <- view userDir
-     unlessM userDirExists $
-      throwM $ NoSuchUserDirectory udir
+  do checkUserDir
      withSystemTempDir (basename fn) $ \tmpDir ->
-       do catch (unpack archive (UnpackDirPath tmpDir))
-                (\(e :: UnpackException) -> throwM $ UnpackingError archive e)
+       do unpack archive (UnpackDirPath tmpDir)
           let facesDir = tmpDir </> srcSubDir
           unlessM (doesDirExist facesDir) $
             throwM $ MissingFacesDir archive
           -- Create the top-level faces installation directory
+          udir <- view userDir
           ensureDir $ parent (userDirPath udir </> destSubDir)
           install (UnpackDirPath facesDir) destSubDir
 
 data FacePackException
-  = NoSuchUserDirectory UserDirPath
-    -- ^ The specified user directory doesn't exist
-  | UnpackingError ArchiveFilePath UnpackException
-    -- ^ An error occurred during the unpacking process
-  | MissingFacesDir ArchiveFilePath
+  = MissingFacesDir ArchiveFilePath
     -- ^ The archive is missing a "faces" directory
   deriving (Eq,Typeable)
 
 instance Show FacePackException where
-  show (NoSuchUserDirectory fp) = show fp ++ ": The game user directory doesn't exist"
-  show (UnpackingError fp ue) = show fp ++ ": " ++ show ue
-  show (MissingFacesDir fp) = show fp ++ ": Malformed (face pack doesn't have a \"faces\" directory)"
+  show (MissingFacesDir fp) = show fp ++ ": Malformed face pack (no \"faces\" directory)"
 
 instance Exception FacePackException where
   toException = fmAssistantExceptionToException
   fromException = fmAssistantExceptionFromException
-
--- | The 'FilePath' associated with the given exception.
-fpeGetFilePath :: FacePackException -> FilePath
-fpeGetFilePath (NoSuchUserDirectory (UserDirPath fp)) = toFilePath fp
-fpeGetFilePath (UnpackingError (ArchiveFilePath fp) _) = toFilePath fp
-fpeGetFilePath (MissingFacesDir (ArchiveFilePath fp)) = toFilePath fp

@@ -12,9 +12,10 @@ import Path.IO (doesFileExist, withSystemTempDir)
 import Test.Hspec
 import Paths_fm_assistant
 
-import Game.FMAssistant.Install (InstallConfig(..), installMod, replaceMod)
+import Game.FMAssistant.Install (InstallConfig(..), InstallException, installMod, replaceMod)
 import Game.FMAssistant.Mod.Kits
 import Game.FMAssistant.Types (ArchiveFilePath(..), UserDirPath(..))
+import Game.FMAssistant.Unpack (UnpackException)
 
 withTmpUserDir :: (UserDirPath -> IO a) -> IO a
 withTmpUserDir action = withSystemTempDir "KitSpec" $ \dir ->
@@ -53,8 +54,11 @@ damagedZipFile = getArchiveFilePath "data/test/damaged-test.zip"
 damagedRarFile :: (MonadIO m) => m ArchiveFilePath
 damagedRarFile = getArchiveFilePath "data/test/damaged-test.rar"
 
-anyKitPackException :: Selector KitPackException
-anyKitPackException = const True
+anyUnpackException :: Selector UnpackException
+anyUnpackException = const True
+
+anyInstallException :: Selector InstallException
+anyInstallException = const True
 
 spec :: Spec
 spec =
@@ -66,10 +70,10 @@ spec =
             do (malformedPackZip >>= validateKitPack) `shouldReturn` ()
                (malformedPackRar >>= validateKitPack) `shouldReturn` ()
           it "reports invalid archives" $
-            do (damagedZipFile >>= validateKitPack) `shouldThrow` anyKitPackException
-               (damagedRarFile >>= validateKitPack) `shouldThrow` anyKitPackException
+            do (damagedZipFile >>= validateKitPack) `shouldThrow` anyUnpackException
+               (damagedRarFile >>= validateKitPack) `shouldThrow` anyUnpackException
           it "reports unsupported archive types" $
-            (unsupportedFile >>= validateKitPack) `shouldThrow` anyKitPackException
+            (unsupportedFile >>= validateKitPack) `shouldThrow` anyUnpackException
      describe "installKitPack" $
        do it "installs kit packs in the user directory's kit path" $
             withTmpUserDir $ \dir ->
@@ -140,11 +144,11 @@ spec =
                    doesFileExist (kitDir </> $(mkRelFile "Malformed dummy kit pack v1.0/santos_1.png")) `shouldReturn` True
           it "won't install a damaged archive file" $
             withTmpUserDir $ \dir ->
-              do runReaderT (damagedZipFile >>= installKitPack) (InstallConfig dir installMod) `shouldThrow` anyKitPackException
-                 runReaderT (damagedRarFile >>= installKitPack) (InstallConfig dir installMod) `shouldThrow` anyKitPackException
+              do runReaderT (damagedZipFile >>= installKitPack) (InstallConfig dir installMod) `shouldThrow` anyUnpackException
+                 runReaderT (damagedRarFile >>= installKitPack) (InstallConfig dir installMod) `shouldThrow` anyUnpackException
           it "fails if the archive format is unsupported" $
             withTmpUserDir $ \dir ->
-              runReaderT (unsupportedFile >>= installKitPack) (InstallConfig dir installMod) `shouldThrow` anyKitPackException
+              runReaderT (unsupportedFile >>= installKitPack) (InstallConfig dir installMod) `shouldThrow` anyUnpackException
           it "fails if the specified archive doesn't exist" $
             withTmpUserDir $ \dir ->
               runReaderT (installKitPack (ArchiveFilePath $(mkAbsFile "/this/doesn't/exist.zip"))) (InstallConfig dir installMod) `shouldThrow` anyIOException
@@ -152,5 +156,4 @@ spec =
             withTmpUserDir $ \dir ->
               let missingUserDir = UserDirPath $ userDirPath dir </> $(mkRelDir "missing")
               in
-                runReaderT (dummyPackV10Zip >>= installKitPack) (InstallConfig missingUserDir installMod) `shouldThrow` anyKitPackException
-
+                runReaderT (dummyPackV10Zip >>= installKitPack) (InstallConfig missingUserDir installMod) `shouldThrow` anyInstallException

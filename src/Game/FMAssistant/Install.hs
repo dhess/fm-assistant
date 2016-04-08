@@ -9,6 +9,7 @@ Portability : non-portable
 
 -}
 
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
 
@@ -23,21 +24,28 @@ module Game.FMAssistant.Install
        , replaceMod
          -- * Installation utility functions
        , userDirExists
+       , checkUserDir
+         -- * Exceptions
+       , InstallException(..)
        ) where
 
+import Control.Exception (Exception(..))
 import Control.Lens
-import Control.Monad (when)
-import Control.Monad.Catch (MonadCatch, MonadThrow, onException, throwM)
+import Control.Monad (unless, when)
+import Control.Monad.Catch (MonadThrow, onException, throwM)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Reader (MonadReader(..))
 import Control.Monad.Trans.Resource (release, runResourceT)
+import Data.Data
 import Path ((</>), Path, Abs, Rel, Dir, dirname, parent, toFilePath)
 import Path.IO (doesDirExist, removeDirRecur, renameDir)
 import System.FilePath (dropTrailingPathSeparator)
 import System.IO.Error (alreadyExistsErrorType, mkIOError)
 
 import Game.FMAssistant.Util (createTempDir)
-import Game.FMAssistant.Types (UnpackDirPath(..), UserDirPath(..))
+import Game.FMAssistant.Types
+       (UnpackDirPath(..), UserDirPath(..),
+        fmAssistantExceptionToException, fmAssistantExceptionFromException)
 
 type InstallAction = UnpackDirPath -> Path Abs Dir -> IO ()
 
@@ -53,7 +61,7 @@ makeClassy ''InstallConfig
 -- If, during installation, an error occurs, the partially-installed
 -- mod will be removed from the installation directory before the
 -- error is reported.
-install :: (MonadIO m, MonadThrow m, MonadCatch m, MonadReader r m, HasInstallConfig r) => UnpackDirPath -> Path Rel Dir -> m ()
+install :: (MonadIO m, MonadThrow m, MonadReader r m, HasInstallConfig r) => UnpackDirPath -> Path Rel Dir -> m ()
 install srcPath dstPath =
   do f <- view installer
      udir <- userDirPath <$> view userDir
@@ -110,6 +118,27 @@ userDirExists :: (MonadIO m, MonadReader r m, HasInstallConfig r) => m Bool
 userDirExists =
   do udir <- userDirPath <$> view userDir
      doesDirExist udir
+
+-- | Check that the user directory exists by throwing
+-- 'NoSuchUserDirectory' if it does not.
+checkUserDir :: (MonadThrow m, MonadIO m, MonadReader r m, HasInstallConfig r) => m ()
+checkUserDir =
+  do exists <- userDirExists
+     unless exists $
+       do udir <- view userDir
+          throwM $ NoSuchUserDirectory udir
+
+data InstallException
+  = NoSuchUserDirectory UserDirPath
+    -- ^ The specified user directory doesn't exist
+  deriving (Eq,Typeable)
+
+instance Show InstallException where
+  show (NoSuchUserDirectory fp) = show fp ++ ": The game user directory doesn't exist"
+
+instance Exception InstallException where
+  toException = fmAssistantExceptionToException
+  fromException = fmAssistantExceptionFromException
 
 -- Helper functions. These are not exported.
 --

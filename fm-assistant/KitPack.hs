@@ -12,13 +12,12 @@ import Control.Monad (forM, forM_, unless, void)
 import Control.Monad.Catch (Handler(..), catches)
 import Control.Monad.Reader (runReaderT)
 import Game.FMAssistant.Install (InstallConfig(..), replaceMod)
-import Game.FMAssistant.Mod.Kits (KitPackException, installKitPack, kpeGetFilePath, validateKitPack)
+import Game.FMAssistant.Mod.Kits (installKitPack, validateKitPack)
 import Game.FMAssistant.Types (ArchiveFilePath(..), Version(..), defaultUserDir)
 import Path.IO (resolveFile')
 import System.Exit (ExitCode(..))
-import System.IO (hPrint, stderr)
 
-import Util (anyFailure, handleIO, handleIOQuietly)
+import Util (anyFailure, handleFME, handleIO, handleFMEQuietly, handleIOQuietly)
 
 data Command
   = Install InstallOptions
@@ -86,27 +85,21 @@ run (Validate (ValidateOptions onlyInvalid False fns)) =
 run (Validate (ValidateOptions onlyInvalid True fns)) =
   do forM_ fns
            (\fp ->
-             catchesMostQuietly $
+             catchesMostQuietly fp $
                do file <- resolveFile' fp
                   void $ validateKitPack (ArchiveFilePath file)
                   unless onlyInvalid $
                     putStrLn fp)
      return ExitSuccess
 
-handleKitPack :: KitPackException -> IO ExitCode
-handleKitPack e = hPrint stderr e >> return (ExitFailure 2)
-
 catchesMost :: IO ExitCode -> IO ExitCode
 catchesMost act =
   catches act most
   where
-    most = [Handler handleIO, Handler handleKitPack]
+    most = [Handler handleIO, Handler handleFME]
 
-handleKitPackQuietly :: KitPackException -> IO ()
-handleKitPackQuietly = putStrLn . kpeGetFilePath
-
-catchesMostQuietly :: IO () -> IO ()
-catchesMostQuietly act =
+catchesMostQuietly :: FilePath -> IO () -> IO ()
+catchesMostQuietly fp act =
   catches act most
   where
-    most = [Handler handleIOQuietly, Handler handleKitPackQuietly]
+    most = [Handler (handleIOQuietly fp), Handler (handleIOQuietly fp)]
