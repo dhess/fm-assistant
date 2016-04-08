@@ -70,20 +70,20 @@ unpack archive unpackDir =
     Nothing -> throwM $ UnsupportedArchive archive
     Just unpacker -> unpacker archive unpackDir
 
+data Cmd
+  = Unrar
+  | Unzip
+  deriving (Eq)
+
 -- | Unpack a ZIP archive to the given directory.
 --
 -- If there's a problem unpacking the archive file, this action throws
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpackZip :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> UnpackDirPath -> m ()
 unpackZip (ArchiveFilePath zipFile) (UnpackDirPath unpackDir) =
-  let unzipCmd :: FilePath
-      unzipCmd = "unzip"
-      args :: [String]
+  let args :: [String]
       args = [toFilePath zipFile, "-d", toFilePath unpackDir]
-  in
-    do exitCode <- executeQuietly unzipCmd args
-       unless (exitCode == ExitSuccess) $
-         throwM $ UnzipError (unzipCmd <> unwords args) exitCode
+  in unzipAction Unzip args
 
 -- | Unpack a RAR archive to the given directory.
 --
@@ -91,14 +91,22 @@ unpackZip (ArchiveFilePath zipFile) (UnpackDirPath unpackDir) =
 -- an 'UnpackException' with a value of 'UnpackingError'.
 unpackRar :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> UnpackDirPath -> m ()
 unpackRar (ArchiveFilePath rarFile) (UnpackDirPath unpackDir) =
-  let unrarCmd :: FilePath
-      unrarCmd = "unrar"
-      args :: [String]
+  let args :: [String]
       args = ["x", "-v", "-y", "-r", toFilePath rarFile, toFilePath unpackDir]
-  in
-    do exitCode <- executeQuietly unrarCmd args
-       unless (exitCode == ExitSuccess) $
-         throwM $ UnrarError (unrarCmd <> unwords args) exitCode
+  in unzipAction Unrar args
+
+unzipAction :: (MonadThrow m, MonadIO m) => Cmd -> [String] -> m ()
+unzipAction cmd args =
+  do exitCode <- executeQuietly (bin cmd) args
+     unless (exitCode == ExitSuccess) $
+       throwM $ failure cmd (bin cmd <> unwords args) exitCode
+  where
+    bin :: Cmd -> FilePath
+    bin Unrar = "unrar"
+    bin Unzip = "unzip"
+    failure :: Cmd -> String -> ExitCode -> UnpackException
+    failure Unrar = UnrarError
+    failure Unzip = UnzipError
 
 data UnpackException
   = UnsupportedArchive ArchiveFilePath
