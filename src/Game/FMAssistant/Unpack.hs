@@ -67,7 +67,7 @@ unpackerFor ar =
 unpack :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> UnpackDirPath -> m ()
 unpack archive unpackDir =
   unpackerFor archive >>= \case
-    Nothing -> throwM UnsupportedArchive
+    Nothing -> throwM $ UnsupportedArchive archive
     Just unpacker -> unpacker archive unpackDir
 
 -- | Unpack a ZIP archive to the given directory.
@@ -101,19 +101,18 @@ unpackRar (ArchiveFilePath rarFile) (UnpackDirPath unpackDir) =
          throwM $ UnrarError (unrarCmd <> unwords args) exitCode
 
 data UnpackException
-  = UnsupportedArchive -- ^ The archive format is unsupported
-  | UnzipError String ExitCode -- ^ The unzip command
-                               -- failed; failed command
-                               -- line and process exit
-                               -- code are provided
-  | UnrarError String ExitCode -- ^ The unrar command
-                               -- failed; failed command
-                               -- line and process exit
-                               -- code are provided
+  = UnsupportedArchive ArchiveFilePath
+    -- ^ The archive format is unsupported
+  | UnzipError String ExitCode
+    -- ^ The unzip command failed; failed command line and process
+    -- exit code are provided
+  | UnrarError String ExitCode
+    -- ^ The unrar command failed; failed command line and process
+    -- exit code are provided
   deriving (Eq,Typeable)
 
 instance Show UnpackException where
-  show UnsupportedArchive = "Unsupported archive type"
+  show (UnsupportedArchive ar) = "Unsupported archive type " ++ show ar
   show (UnzipError _ exitCode) = "unzip command failed, make sure it's in your path and check the archive (exit code " ++ show exitCode ++ ")"
   show (UnrarError _ exitCode) = "unrar command failed, make sure it's in your path and check the archive (exit code " ++ show exitCode ++ ")"
 
