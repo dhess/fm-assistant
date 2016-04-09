@@ -45,17 +45,17 @@ validateOptions =
   ValidateOptions <$>
   switch (long "only-invalid" <>
           short 'i' <>
-          help "Only show invalid mods") <*>
+          help "Only show invalid mod packs") <*>
   switch (long "quiet" <>
           short 'q' <>
-          help "Only show filenames of valid mods (or invalid mods, if --only-invalid is specified). In this mode the program always returns a 0 exit code.") <*>
+          help "Only show filenames of valid mod packs (or invalid mod packs, if --only-invalid is specified). In this mode the program always returns a 0 exit code.") <*>
   some (argument str (metavar "FILE [FILE] ..."))
 
 parser :: Parser Command
 parser =
   hsubparser
-    (command "install" (info installCmd (progDesc "Install mods")) <>
-     command "validate" (info validateCmd (progDesc "Validate mods")))
+    (command "install" (info installCmd (progDesc "Install mod packs")) <>
+     command "validate" (info validateCmd (progDesc "Validate mod packs")))
 
 run :: Command -> IO ExitCode
 run (Install (InstallOptions fns)) =
