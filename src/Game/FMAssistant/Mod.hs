@@ -24,10 +24,11 @@ module Game.FMAssistant.Mod
        , PackException
        ) where
 
-import qualified Codec.Archive.Tar as Tar (create)
+import qualified Codec.Archive.Tar as Tar (pack, write)
 import Control.Exception (Exception(..))
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Catch (MonadThrow, throwM)
+import qualified Data.ByteString.Lazy as BL (writeFile)
 import Data.Data
 import Data.Set (Set)
 import qualified Data.Set as Set (fromList, member)
@@ -83,11 +84,14 @@ packMod srcDir destDir modName =
            _ ->
              do tarFileName <- parseRelFile (modName ++ ".tar")
                 let tarPath = destDir </> tarFileName
-                liftIO $ Tar.create (toFilePath tarPath)
-                                    (toFilePath srcDir)
-                                    (map toFilePath dirs)
+                createTar tarPath dirs
                 return $ PackFilePath tarPath
     (_, _) -> throwM TopLevelFiles
+  where
+    createTar :: (MonadIO m) => Path Abs File -> [Path Rel Dir] -> m ()
+    createTar tarFile dirs = liftIO $
+      do entries <- Tar.pack (toFilePath srcDir) (map toFilePath dirs)
+         BL.writeFile (toFilePath tarFile) $ Tar.write entries
 
 -- | Exceptions which can occur while packing a mod.
 data PackException
