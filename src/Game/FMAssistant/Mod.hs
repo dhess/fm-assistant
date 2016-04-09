@@ -83,7 +83,7 @@ packMod srcDir destDir modName =
       in case invalid of
            (x:_) -> throwM $ InvalidTopLevelDirectory x
            _ ->
-             do tarFileName <- parseRelFile (modName ++ ".tar.xz")
+             do tarFileName <- parseRelFile (modName ++ ".fmax")
                 let tarPath = destDir </> tarFileName
                 createTar tarPath dirs
                 return $ PackFilePath tarPath
