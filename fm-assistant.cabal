@@ -99,6 +99,7 @@ Executable fm-assistant
                       , Game.FMAssistant.Util
                       , CutoutFaces
                       , KitPack
+                      , Mod
                       , Util
 
 Test-Suite doctest
