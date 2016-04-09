@@ -1,5 +1,5 @@
 { mkDerivation, base, bytestring, cond, containers, directory
-, doctest, exceptions, filepath, foldl, hspec, lens, mtl
+, doctest, exceptions, filepath, foldl, hspec, lens, lzma, mtl
 , optparse-applicative, path, path-io, process-streaming, resourcet
 , stdenv, streaming, streaming-bytestring, system-filepath, tar
 , template-haskell, temporary, text, time, transformers
@@ -12,19 +12,19 @@ mkDerivation {
   isExecutable = true;
   libraryHaskellDepends = [
     base bytestring cond containers directory exceptions filepath foldl
-    lens mtl path path-io process-streaming resourcet streaming
+    lens lzma mtl path path-io process-streaming resourcet streaming
     streaming-bytestring system-filepath tar template-haskell temporary
     text time transformers
   ];
   executableHaskellDepends = [
     base bytestring cond containers directory exceptions filepath foldl
-    lens mtl optparse-applicative path path-io process-streaming
+    lens lzma mtl optparse-applicative path path-io process-streaming
     resourcet streaming streaming-bytestring system-filepath tar
     template-haskell temporary text time transformers
   ];
   testHaskellDepends = [
     base bytestring cond containers directory doctest exceptions
-    filepath foldl hspec lens mtl path path-io process-streaming
+    filepath foldl hspec lens lzma mtl path path-io process-streaming
     resourcet streaming streaming-bytestring system-filepath tar
     template-haskell temporary text time transformers
   ];

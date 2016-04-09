@@ -38,6 +38,7 @@ Library
                       , filepath
                       , foldl
                       , lens
+                      , lzma
                       , mtl
                       , path
                       , path-io
@@ -68,6 +69,7 @@ Executable fm-assistant
                       , filepath
                       , foldl
                       , lens
+                      , lzma
                       , mtl
                       , optparse-applicative >= 0.11.0
                       , path
@@ -126,6 +128,7 @@ Test-Suite spec
                       , foldl
                       , hspec
                       , lens
+                      , lzma
                       , mtl
                       , path
                       , path-io

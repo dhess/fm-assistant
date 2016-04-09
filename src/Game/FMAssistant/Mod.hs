@@ -25,6 +25,7 @@ module Game.FMAssistant.Mod
        ) where
 
 import qualified Codec.Archive.Tar as Tar (pack, write)
+import qualified Codec.Compression.Lzma as Lzma (compress)
 import Control.Exception (Exception(..))
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Catch (MonadThrow, throwM)
@@ -82,7 +83,7 @@ packMod srcDir destDir modName =
       in case invalid of
            (x:_) -> throwM $ InvalidTopLevelDirectory x
            _ ->
-             do tarFileName <- parseRelFile (modName ++ ".tar")
+             do tarFileName <- parseRelFile (modName ++ ".tar.xz")
                 let tarPath = destDir </> tarFileName
                 createTar tarPath dirs
                 return $ PackFilePath tarPath
@@ -91,7 +92,7 @@ packMod srcDir destDir modName =
     createTar :: (MonadIO m) => Path Abs File -> [Path Rel Dir] -> m ()
     createTar tarFile dirs = liftIO $
       do entries <- Tar.pack (toFilePath srcDir) (map toFilePath dirs)
-         BL.writeFile (toFilePath tarFile) $ Tar.write entries
+         BL.writeFile (toFilePath tarFile) $ Lzma.compress $ Tar.write entries
 
 -- | Exceptions which can occur while packing a mod.
 data PackException
