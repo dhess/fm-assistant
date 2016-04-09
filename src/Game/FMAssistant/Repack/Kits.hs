@@ -10,7 +10,6 @@ Portability : non-portable
 -}
 
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Repack.Kits
