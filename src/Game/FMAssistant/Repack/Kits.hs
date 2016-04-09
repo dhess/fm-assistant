@@ -10,6 +10,7 @@ Portability : non-portable
 -}
 
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Repack.Kits
@@ -28,7 +29,7 @@ import Path.IO
 
 import Game.FMAssistant.Mod (PackFilePath, modReplaceUserDir, packMod)
 import Game.FMAssistant.Mod.Kits (kitSubDir)
-import Game.FMAssistant.Repack.Internal (generateModName)
+import Game.FMAssistant.Repack.Internal (generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UnpackDirPath(..), archiveName,
@@ -39,13 +40,13 @@ repackKitPack :: (MonadMask m, MonadIO m) => ArchiveFilePath -> Path Abs Dir -> 
 repackKitPack archive@(ArchiveFilePath fn) destDir =
   withSystemTempDir (basename fn) $ \tmpDir ->
     do unpackedKitDir <- unpackKitPack archive (UnpackDirPath tmpDir)
-       modName <- generateModName archive
-       modDir <- parseRelDir modName
-       let tarDir = tmpDir </> modDir
-       let modParentDir = tarDir </> modReplaceUserDir </> kitSubDir
-       ensureDir modParentDir
-       renameDir (unpackDirPath unpackedKitDir) (modParentDir </> modDir)
-       packMod tarDir destDir modName
+       withSystemTempDir "repackKitPack" $ \tarDir ->
+         let modParentDir = tarDir </> modReplaceUserDir </> kitSubDir
+         in do ensureDir modParentDir
+               modDir <- parseRelDir $ archiveName archive
+               renameDir (unpackDirPath unpackedKitDir) (modParentDir </> modDir)
+               modId <- generateModId archive
+               packMod tarDir destDir modId
 
 -- | Unpack an archive file assumed to contain a kit pack to the given
 -- parent directory.

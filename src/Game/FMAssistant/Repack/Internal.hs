@@ -12,7 +12,7 @@ Portability : non-portable
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Repack.Internal
-       ( generateModName
+       ( generateModId
        ) where
 
 import Control.Monad.Catch (MonadThrow)
@@ -24,8 +24,8 @@ import Path.IO (getModificationTime)
 import Game.FMAssistant.Types (ArchiveFilePath(..))
 import Game.FMAssistant.Util (basename)
 
-generateModName :: (MonadIO m, MonadThrow m) => ArchiveFilePath -> m String
-generateModName (ArchiveFilePath archive) =
+generateModId :: (MonadIO m, MonadThrow m) => ArchiveFilePath -> m String
+generateModId (ArchiveFilePath archive) =
   let base = basename archive
   in do modifiedTime <- getModificationTime archive
         return $ base ++ "." ++ showGregorian (utctDay modifiedTime)
