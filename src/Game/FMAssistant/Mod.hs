@@ -17,7 +17,7 @@ Portability : non-portable
 
 module Game.FMAssistant.Mod
        ( PackFilePath(..)
-       , packName
+       , packId
        , modReplaceUserDir
        , packMod
          -- * Exceptions
@@ -46,16 +46,16 @@ newtype PackFilePath =
   PackFilePath {packFilePath :: Path Abs File}
   deriving (Eq,Show,Ord,Typeable)
 
--- | Return (as a 'String') the name of an pack file; that is, given a
--- 'PackFilePath', strip off the pathname portion and the trailing
--- file suffix, and return what remains.
+-- | Return (as a 'String') the ID (name and version number) of an
+-- pack file; that is, given a 'PackFilePath', strip off the pathname
+-- portion and the trailing file suffix, and return what remains.
 --
 -- >>> :set -XOverloadedStrings
--- >>> bazPath <- parseAbsFile "/foo/bar/baz.tar"
--- >>> packName $ PackFilePath bazPath
--- "baz"
-packName :: PackFilePath -> String
-packName = basename . packFilePath
+-- >>> bazPath <- parseAbsFile "/foo/bar/baz.20160401.fmax"
+-- >>> packId $ PackFilePath bazPath
+-- "baz.20160401"
+packId :: PackFilePath -> String
+packId = basename . packFilePath
 
 modReplaceUserDir :: Path Rel Dir
 modReplaceUserDir = $(mkRelDir "replace_user")
