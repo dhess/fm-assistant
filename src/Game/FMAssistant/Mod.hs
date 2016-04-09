@@ -18,18 +18,20 @@ Portability : non-portable
 module Game.FMAssistant.Mod
        ( PackFilePath(..)
        , packId
-       , modReplaceUserDir
+       , modCreateUserDir
        , packMod
+       , unpackMod
          -- * Exceptions
        , PackException
        ) where
 
-import qualified Codec.Archive.Tar as Tar (pack, write)
-import qualified Codec.Compression.Lzma as Lzma (compress)
+import qualified Codec.Archive.Tar as Tar (pack, read, unpack, write)
+import qualified Codec.Compression.Lzma as Lzma (compress, decompress)
 import Control.Exception (Exception(..))
+import Control.Monad (liftM)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Catch (MonadThrow, throwM)
-import qualified Data.ByteString.Lazy as BL (writeFile)
+import qualified Data.ByteString.Lazy as BL (readFile, writeFile)
 import Data.Data
 import Data.Set (Set)
 import qualified Data.Set as Set (fromList, member)
@@ -37,7 +39,7 @@ import Path ((</>), Path, Abs, Rel, Dir, File, dirname, mkRelDir, parseRelFile, 
 import Path.IO (listDir)
 
 import Game.FMAssistant.Types
-       (fmAssistantExceptionToException,
+       (UnpackDirPath(..), fmAssistantExceptionToException,
         fmAssistantExceptionFromException)
 import Game.FMAssistant.Util (basename)
 
@@ -57,12 +59,12 @@ newtype PackFilePath =
 packId :: PackFilePath -> String
 packId = basename . packFilePath
 
-modReplaceUserDir :: Path Rel Dir
-modReplaceUserDir = $(mkRelDir "replace_user")
+modCreateUserDir :: Path Rel Dir
+modCreateUserDir = $(mkRelDir "create_user")
 
 -- | The set of valid top-level directories in a mod pack.
 validTLDs :: Set (Path Rel Dir)
-validTLDs = Set.fromList [modReplaceUserDir]
+validTLDs = Set.fromList [modCreateUserDir]
 
 packMod
   :: (MonadIO m, MonadThrow m)
@@ -94,7 +96,18 @@ packMod srcDir destDir modName =
       do entries <- Tar.pack (toFilePath srcDir) (map toFilePath dirs)
          BL.writeFile (toFilePath tarFile) $ Lzma.compress $ Tar.write entries
 
--- | Exceptions which can occur while packing a mod.
+unpackMod
+  :: (MonadIO m, MonadThrow m)
+  => PackFilePath
+  -- ^ The mod pack file
+  -> UnpackDirPath
+  -- ^ Where to unpack the mod pack file
+  -> m ()
+unpackMod (PackFilePath pf) (UnpackDirPath unpackDir) = liftIO $
+  do entries <- liftM (Tar.read . Lzma.decompress) $ BL.readFile (toFilePath pf)
+     Tar.unpack (toFilePath unpackDir) entries
+
+-- | Exceptions which can occur while packing or installing a mod.
 data PackException
   = NoContents
     -- ^ The mod directory is empty
