@@ -2,7 +2,7 @@
 , doctest, exceptions, filepath, foldl, hspec, lens, mtl
 , optparse-applicative, path, path-io, process-streaming, resourcet
 , stdenv, streaming, streaming-bytestring, system-filepath, tar
-, template-haskell, temporary, text, transformers
+, template-haskell, temporary, text, time, transformers
 }:
 mkDerivation {
   pname = "fm-assistant";
@@ -14,19 +14,19 @@ mkDerivation {
     base bytestring cond containers directory exceptions filepath foldl
     lens mtl path path-io process-streaming resourcet streaming
     streaming-bytestring system-filepath tar template-haskell temporary
-    text transformers
+    text time transformers
   ];
   executableHaskellDepends = [
     base bytestring cond containers directory exceptions filepath foldl
     lens mtl optparse-applicative path path-io process-streaming
     resourcet streaming streaming-bytestring system-filepath tar
-    template-haskell temporary text transformers
+    template-haskell temporary text time transformers
   ];
   testHaskellDepends = [
     base bytestring cond containers directory doctest exceptions
     filepath foldl hspec lens mtl path path-io process-streaming
     resourcet streaming streaming-bytestring system-filepath tar
-    template-haskell temporary text transformers
+    template-haskell temporary text time transformers
   ];
   license = stdenv.lib.licenses.bsd3;
 }

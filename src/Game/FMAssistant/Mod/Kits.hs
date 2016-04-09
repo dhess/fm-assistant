@@ -19,6 +19,7 @@ Portability : non-portable
 module Game.FMAssistant.Mod.Kits
        ( -- * Kit pack paths
          kitPath
+       , kitSubDir
          -- * Install actions
        , installKitPack
        , validateKitPack

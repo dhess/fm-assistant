@@ -20,11 +20,14 @@ Library
   Exposed-Modules:      Game.FMAssistant
                       , Game.FMAssistant.Install
                       , Game.FMAssistant.Magic
+                      , Game.FMAssistant.Mod
                       , Game.FMAssistant.Mod.Kits
                       , Game.FMAssistant.Mod.Faces
+                      , Game.FMAssistant.Repack.Internal
+                      , Game.FMAssistant.Repack.Kits
+                      , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
-                      , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Util
   Build-Depends:        base >= 4 && < 5
                       , bytestring
@@ -47,6 +50,7 @@ Library
                       , template-haskell
                       , temporary
                       , text
+                      , time
                       , transformers
 
 Executable fm-assistant
@@ -77,15 +81,19 @@ Executable fm-assistant
                       , template-haskell
                       , temporary
                       , text
+                      , time
                       , transformers
   Other-Modules:        Game.FMAssistant
                       , Game.FMAssistant.Install
                       , Game.FMAssistant.Magic
+                      , Game.FMAssistant.Mod
                       , Game.FMAssistant.Mod.Kits
                       , Game.FMAssistant.Mod.Faces
+                      , Game.FMAssistant.Repack.Internal
+                      , Game.FMAssistant.Repack.Kits
+                      , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
-                      , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Util
                       , CutoutFaces
                       , KitPack
@@ -130,15 +138,19 @@ Test-Suite spec
                       , template-haskell
                       , temporary
                       , text
+                      , time
                       , transformers
   Other-Modules:        Game.FMAssistant
                       , Game.FMAssistant.Install
                       , Game.FMAssistant.Magic
+                      , Game.FMAssistant.Mod
                       , Game.FMAssistant.Mod.Kits
                       , Game.FMAssistant.Mod.Faces
+                      , Game.FMAssistant.Repack.Internal
+                      , Game.FMAssistant.Repack.Kits
+                      , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
-                      , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Util
                       , Paths_fm_assistant
 
