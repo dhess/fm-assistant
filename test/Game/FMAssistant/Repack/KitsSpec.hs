@@ -6,15 +6,18 @@ module Game.FMAssistant.Repack.KitsSpec
        ) where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Path ((</>), mkAbsFile, mkRelFile, parseAbsFile)
-import Path.IO (doesFileExist, withSystemTempDir)
+import Data.Time.Calendar (showGregorian)
+import Data.Time.Clock (utctDay)
+import Path ((</>), filename, mkAbsFile, mkRelFile, parseAbsFile, parseRelFile)
+import Path.IO (doesFileExist, getModificationTime, withSystemTempDir)
 import Test.Hspec
 import Paths_fm_assistant
 
-import Game.FMAssistant.Mod (unpackMod)
-import Game.FMAssistant.Types (ArchiveFilePath(..))
+import Game.FMAssistant.Mod (PackFilePath(..), unpackMod)
 import Game.FMAssistant.Repack.Unpack (UnpackException)
 import Game.FMAssistant.Repack.Kits
+import Game.FMAssistant.Types (ArchiveFilePath(..))
+import Game.FMAssistant.Util (basename)
 
 getArchiveFilePath :: (MonadIO m) => FilePath -> m ArchiveFilePath
 getArchiveFilePath fp = liftIO $
@@ -39,6 +42,12 @@ damagedZipFile = getArchiveFilePath "data/test/damaged-test.zip"
 
 anyUnpackException :: Selector UnpackException
 anyUnpackException = const True
+
+generateModId :: (MonadIO m) => ArchiveFilePath -> m String
+generateModId (ArchiveFilePath archive) =
+  let base = basename archive
+  in do modifiedTime <- getModificationTime archive
+        return $ base ++ "." ++ showGregorian (utctDay modifiedTime)
 
 spec :: Spec
 spec =
@@ -65,6 +74,12 @@ spec =
                  doesFileExist (tmpDir </> $(mkRelFile "create_user/graphics/kits/Malformed dummy kit pack v1.0/config.xml")) `shouldReturn` True
                  doesFileExist (tmpDir </> $(mkRelFile "create_user/graphics/kits/Malformed dummy kit pack v1.0/flamengo_1.png")) `shouldReturn` True
                  doesFileExist (tmpDir </> $(mkRelFile "create_user/graphics/kits/Malformed dummy kit pack v1.0/santos_1.png")) `shouldReturn` True
+          it "names the repack properly" $
+            withSystemTempDir "KitsSpec" $ \tmpDir ->
+              do kitPack <- dummyPackV10Zip
+                 (PackFilePath modPack) <- repackKitPack kitPack tmpDir
+                 modId <- generateModId kitPack
+                 parseRelFile (modId ++ ".fmax") `shouldReturn` filename modPack
           it "won't repack a damaged archive file" $
             withSystemTempDir "KitsSpec" $ \tmpDir ->
               do kitPack1 <- damagedZipFile
