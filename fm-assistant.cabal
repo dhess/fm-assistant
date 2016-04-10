@@ -21,7 +21,6 @@ Library
                       , Game.FMAssistant.Install
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod
-                      , Game.FMAssistant.Mod.Kits
                       , Game.FMAssistant.Mod.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
@@ -89,7 +88,6 @@ Executable fm-assistant
                       , Game.FMAssistant.Install
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod
-                      , Game.FMAssistant.Mod.Kits
                       , Game.FMAssistant.Mod.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
@@ -148,7 +146,6 @@ Test-Suite spec
                       , Game.FMAssistant.Install
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod
-                      , Game.FMAssistant.Mod.Kits
                       , Game.FMAssistant.Mod.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits

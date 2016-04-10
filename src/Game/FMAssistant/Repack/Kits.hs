@@ -10,6 +10,7 @@ Portability : non-portable
 -}
 
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Repack.Kits
@@ -21,20 +22,22 @@ import Control.Monad (forM_)
 import Control.Monad.Catch (MonadMask, MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Data
-import Path ((</>), Path, Abs, Dir, dirname, filename, parseRelDir)
+import Path ((</>), Path, Abs, Rel, Dir, dirname, filename, mkRelDir, parseRelDir)
 import Path.IO
        (createDir, ensureDir, listDir, renameDir, renameFile,
         withSystemTempDir)
 
 import Game.FMAssistant.Mod
        (PackFilePath, PackAction(CreateUserDir), packDir, packMod)
-import Game.FMAssistant.Mod.Kits (kitSubDir)
 import Game.FMAssistant.Repack.Internal (generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Types
        (ArchiveFilePath(..), UnpackDirPath(..), archiveName,
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
 import Game.FMAssistant.Util (basename)
+
+kitSubDir :: Path Rel Dir
+kitSubDir = $(mkRelDir "graphics/kits")
 
 repackKitPack :: (MonadMask m, MonadIO m) => ArchiveFilePath -> Path Abs Dir -> m PackFilePath
 repackKitPack archive@(ArchiveFilePath fn) destDir =

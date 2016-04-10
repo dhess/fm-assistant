@@ -21,6 +21,7 @@ module Game.FMAssistant.Mod
        , PackAction(..)
        , packDir
        , packMod
+       , unpackMod
        , validateMod
        , installMod
          -- * Exceptions
