@@ -27,7 +27,7 @@ import Control.Exception (Exception(..))
 import Control.Monad.Catch (MonadMask, MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Data
-import Path ((</>), Path, Abs, Rel, Dir, mkRelDir, parseRelDir)
+import Path ((</>), Path, Abs, Rel, Dir, mkRelDir, parent, parseRelDir)
 import Path.IO
        (doesDirExist, ensureDir, renameDir, withSystemTempDir)
 
@@ -36,7 +36,7 @@ import Game.FMAssistant.Mod
 import Game.FMAssistant.Repack.Internal (generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Types
-       (ArchiveFilePath(..), UnpackDirPath(..), archiveName,
+       (ArchiveFilePath(..), UnpackDirPath(..),
         fmAssistantExceptionToException, fmAssistantExceptionFromException)
 import Game.FMAssistant.Util (basename)
 
@@ -72,10 +72,9 @@ repackFaces modSubDir packSubDir archive@(ArchiveFilePath fn) destDir =
        unlessM (doesDirExist facesDir) $
          throwM $ MissingFacesDir archive
        withSystemTempDir "repackFacePack" $ \tarDir ->
-         let modParentDir = tarDir </> packDir CreateUserDir </> packSubDir
-         in do ensureDir modParentDir
-               modDir <- parseRelDir $ archiveName archive
-               renameDir unpackDir (modParentDir </> modDir)
+         let modDir = tarDir </> packDir CreateUserDir </> packSubDir
+         in do ensureDir (parent modDir)
+               renameDir unpackDir modDir
                modId <- generateModId archive
                packMod tarDir destDir modId
 
