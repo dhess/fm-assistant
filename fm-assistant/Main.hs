@@ -5,28 +5,30 @@ module Main where
 import Options.Applicative
 import System.Exit (ExitCode(..), exitWith)
 
-import qualified CutoutFacesMegapack (Command, run, parser)
-import qualified CutoutFacesIcons (Command, run, parser)
-import qualified KitPack (Command, run, parser)
+import qualified CutoutFacesMegapack (run)
+import qualified CutoutFacesIcons (run)
+import qualified KitPack (run)
 import qualified Mod (Command, run, parser)
+import qualified Repack (Command, parser)
+import qualified RepackMultiple (Command, parser)
 
 data GlobalOptions =
   GlobalOptions {_cmd :: Command}
 
 data Command
-  = KitPack KitPack.Command
-  | CutoutFacesMegapack CutoutFacesMegapack.Command
-  | CutoutFacesIcons CutoutFacesIcons.Command
+  = KitPack RepackMultiple.Command
+  | CutoutFacesMegapack Repack.Command
+  | CutoutFacesIcons Repack.Command
   | Mod Mod.Command
 
 kitPackCmd :: Parser Command
-kitPackCmd = KitPack <$> KitPack.parser
+kitPackCmd = KitPack <$> RepackMultiple.parser
 
 cutoutFacesMegapackCmd :: Parser Command
-cutoutFacesMegapackCmd = CutoutFacesMegapack <$> CutoutFacesMegapack.parser
+cutoutFacesMegapackCmd = CutoutFacesMegapack <$> Repack.parser
 
 cutoutFacesIconsCmd :: Parser Command
-cutoutFacesIconsCmd = CutoutFacesIcons <$> CutoutFacesIcons.parser
+cutoutFacesIconsCmd = CutoutFacesIcons <$> Repack.parser
 
 modCmd :: Parser Command
 modCmd = Mod <$> Mod.parser

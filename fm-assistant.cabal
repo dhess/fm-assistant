@@ -99,6 +99,8 @@ Executable fm-assistant
                       , CutoutFacesIcons
                       , KitPack
                       , Mod
+                      , Repack
+                      , RepackMultiple
                       , Util
 
 Test-Suite doctest
