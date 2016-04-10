@@ -17,11 +17,9 @@ module Game.FMAssistant.Repack.Kits
        ( repackKitPack
        ) where
 
-import Control.Exception (Exception(..))
 import Control.Monad (forM_)
 import Control.Monad.Catch (MonadMask, MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
-import Data.Data
 import Path ((</>), Path, Abs, Rel, Dir, dirname, filename, mkRelDir, parseRelDir)
 import Path.IO
        (createDir, ensureDir, listDir, renameDir, renameFile,
@@ -29,11 +27,9 @@ import Path.IO
 
 import Game.FMAssistant.Mod
        (PackFilePath, PackAction(CreateUserDir), packDir, packMod)
-import Game.FMAssistant.Repack.Internal (generateModId)
+import Game.FMAssistant.Repack.Internal (RepackException(..), generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
-import Game.FMAssistant.Types
-       (ArchiveFilePath(..), UnpackDirPath(..), archiveName,
-        fmAssistantExceptionToException, fmAssistantExceptionFromException)
+import Game.FMAssistant.Types (ArchiveFilePath(..), UnpackDirPath(..), archiveName)
 import Game.FMAssistant.Util (basename)
 
 kitSubDir :: Path Rel Dir
@@ -77,19 +73,3 @@ unpackKitPack archive unpackDir =
             forM_ files $ \fn ->
               renameFile fn (fixpath </> filename fn)
             return $ UnpackDirPath fixpath
-
-data KitPackException
-  = EmptyArchive ArchiveFilePath
-    -- ^ The archive is empty
-  | SingleFileArchive ArchiveFilePath
-    -- ^ The archive contains just a single file and can't be a valid
-    -- kit pack
-  deriving (Eq,Typeable)
-
-instance Show KitPackException where
-  show (EmptyArchive fp) = show fp ++ ": Malformed kit pack (archive file is empty)"
-  show (SingleFileArchive fp) = show fp ++ ": Malformed kit pack (archive file contains just a single file)"
-
-instance Exception KitPackException where
-  toException = fmAssistantExceptionToException
-  fromException = fmAssistantExceptionFromException

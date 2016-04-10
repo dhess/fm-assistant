@@ -21,7 +21,7 @@ Library
                       , Game.FMAssistant.Install
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod
-                      , Game.FMAssistant.Mod.Faces
+                      , Game.FMAssistant.Repack.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
                       , Game.FMAssistant.Repack.Unpack
@@ -88,14 +88,15 @@ Executable fm-assistant
                       , Game.FMAssistant.Install
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod
-                      , Game.FMAssistant.Mod.Faces
+                      , Game.FMAssistant.Repack.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
                       , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
                       , Game.FMAssistant.Util
-                      , CutoutFaces
+                      , CutoutFacesMegapack
+                      , CutoutFacesIcons
                       , KitPack
                       , Mod
                       , Util
@@ -146,7 +147,7 @@ Test-Suite spec
                       , Game.FMAssistant.Install
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod
-                      , Game.FMAssistant.Mod.Faces
+                      , Game.FMAssistant.Repack.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
                       , Game.FMAssistant.Repack.Unpack
