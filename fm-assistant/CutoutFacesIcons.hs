@@ -10,8 +10,7 @@ import Options.Applicative
 
 import Control.Monad.Catch (Handler(..), catches)
 import Game.FMAssistant.Mod (PackFilePath(..))
-import Game.FMAssistant.Repack.Faces (repackCutoutIcons)
-import Game.FMAssistant.Types (ArchiveFilePath(..))
+import Game.FMAssistant.Repack (ArchiveFilePath(..), repackCutoutIcons)
 import Path (parent)
 import Path.IO (resolveFile')
 import System.Exit (ExitCode(..))

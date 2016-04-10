@@ -13,7 +13,11 @@ Portability : non-portable
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Repack.Internal
-       ( generateModId
+       ( -- * File paths
+         ArchiveFilePath(..)
+       , archiveName
+         -- * Utilities
+       , generateModId
          -- * Exceptions
        , RepackException(..)
        ) where
@@ -24,12 +28,30 @@ import Control.Monad.IO.Class (MonadIO)
 import Data.Data
 import Data.Time.Calendar (showGregorian)
 import Data.Time.Clock (utctDay)
+import Path (Path, Abs, File, parseAbsFile)
 import Path.IO (getModificationTime)
 
 import Game.FMAssistant.Types
-       (ArchiveFilePath(..), fmAssistantExceptionToException,
+       (fmAssistantExceptionToException,
         fmAssistantExceptionFromException)
 import Game.FMAssistant.Util (basename)
+
+-- | The type for paths which point to an archive file (ZIP, RAR,
+-- etc.).
+newtype ArchiveFilePath =
+  ArchiveFilePath {archiveFilePath :: Path Abs File}
+  deriving (Eq,Show,Ord,Typeable)
+
+-- | Return (as a 'String') the name of an archive file; that is,
+-- given an 'ArchiveFilePath', strip off the pathname portion and the
+-- trailing file suffix, and return what remains.
+--
+-- >>> :set -XOverloadedStrings
+-- >>> bazPath <- parseAbsFile "/foo/bar/baz.rar"
+-- >>> archiveName $ ArchiveFilePath bazPath
+-- "baz"
+archiveName :: ArchiveFilePath -> String
+archiveName = basename . archiveFilePath
 
 generateModId :: (MonadIO m, MonadThrow m) => ArchiveFilePath -> m String
 generateModId (ArchiveFilePath archive) =

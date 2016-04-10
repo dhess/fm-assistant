@@ -17,10 +17,10 @@ Identify supported file types.
 
 module Game.FMAssistant.Magic
        ( -- * Identify files
-         isZipArchive
-       , isRarArchive
-       , identifyArchive
-          -- * Identify streams
+         isZipFile
+       , isRarFile
+       , identifyFile
+         -- * Identify streams
        , isZip
        , isRar
        , identify
@@ -35,22 +35,31 @@ import Data.Data
 import Data.Foldable (foldl')
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map (foldlWithKey', fromList, keys)
-import Path (toFilePath)
+import Path (Path, File, toFilePath)
 import Streaming (runResourceT)
-
-import Game.FMAssistant.Types (ArchiveFilePath(..))
 
 zipMagic :: BS.ByteString
 zipMagic = "\x50\x4b\x03\x04"
 
+-- | Returns 'True' if the path points to a ZIP file.
+isZipFile :: (MonadIO m) => Path b File -> m Bool
+isZipFile fp = liftIO $
+  runResourceT $ isZip $ S.readFile $ toFilePath fp
+
+-- | Returns 'True' if the path points to a RAR file.
+isRarFile :: (MonadIO m) => Path b File -> m Bool
+isRarFile fp = liftIO $
+  runResourceT $ isRar $ S.readFile $ toFilePath fp
+
+-- | Attempt to identify the file pointed to by the given
+-- path.
+identifyFile :: (MonadIO m) => Path b File -> m (Maybe Magic)
+identifyFile fp = liftIO $
+  runResourceT $ identify $ S.readFile $ toFilePath fp
+
 -- | Returns 'True' if the given byte stream is a ZIP archive.
 isZip :: (Monad m) => S.ByteString m r -> m Bool
 isZip = magic zipMagic
-
--- | Returns 'True' if the 'ArchiveFilePath' points to a ZIP file.
-isZipArchive :: (MonadIO m) => ArchiveFilePath -> m Bool
-isZipArchive (ArchiveFilePath fp) = liftIO $
-  runResourceT $ isZip $ S.readFile $ toFilePath fp
 
 rarMagic :: BS.ByteString
 rarMagic = "\x52\x61\x72\x21\x1a\x07\x00"
@@ -58,11 +67,6 @@ rarMagic = "\x52\x61\x72\x21\x1a\x07\x00"
 -- | Returns 'True' if the given byte stream is a RAR archive.
 isRar :: (Monad m) => S.ByteString m r -> m Bool
 isRar = magic rarMagic
-
--- | Returns 'True' if the 'ArchiveFilePath' points to a RAR file.
-isRarArchive :: (MonadIO m) => ArchiveFilePath -> m Bool
-isRarArchive (ArchiveFilePath fp) = liftIO $
-  runResourceT $ isRar $ S.readFile $ toFilePath fp
 
 magic :: (Monad m) => BS.ByteString -> S.ByteString m r -> m Bool
 magic magicString bs =
@@ -95,9 +99,3 @@ identify bs =
       check prefix _ magicString magicValue
         | magicString == BS.take (BS.length magicString) prefix = Just magicValue
         | otherwise = Nothing
-
--- | Attempt to identify the file pointed to by the given
--- 'ArchiveFilePathPath'.
-identifyArchive :: (MonadIO m) => ArchiveFilePath -> m (Maybe Magic)
-identifyArchive (ArchiveFilePath fp) = liftIO $
-  runResourceT $ identify $ S.readFile $ toFilePath fp

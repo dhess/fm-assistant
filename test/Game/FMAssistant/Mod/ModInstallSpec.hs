@@ -4,28 +4,20 @@ module Game.FMAssistant.Mod.ModInstallSpec
        ( spec
        ) where
 
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.Resource (runResourceT)
-import Path ((</>), parseAbsFile, parseRelDir, parseRelFile)
-import Path.IO (doesFileExist, removeDir)
+import Path (Path, Abs, File, parseAbsFile)
 import Test.Hspec
 import Paths_fm_assistant
 
-import Game.FMAssistant.Repack.Unpack
-import Game.FMAssistant.Util (createSystemTempDir)
-import Game.FMAssistant.Types (ArchiveFilePath(..), UserDirPath(..))
-
-getArchiveFilePath :: FilePath -> IO ArchiveFilePath
-getArchiveFilePath fp =
+getPath :: FilePath -> IO (Path Abs File)
+getPath fp =
   do fn <- getDataFileName fp
-     absfn <- parseAbsFile fn
-     return $ ArchiveFilePath absfn
+     parseAbsFile fn
 
-dummyPackV10Zip :: IO ArchiveFilePath
-dummyPackV10Zip = getArchiveFilePath "data/test/Dummy kit pack v1.0.zip"
+dummyPackV10Zip :: IO (Path Abs File)
+dummyPackV10Zip = getPath "data/test/Dummy kit pack v1.0.zip"
 
-dummyPackV11Zip :: IO ArchiveFilePath
-dummyPackV11Zip = getArchiveFilePath "data/test/Dummy kit pack v1.1.zip"
+dummyPackV11Zip :: IO (Path Abs File)
+dummyPackV11Zip = getPath "data/test/Dummy kit pack v1.1.zip"
 
 spec :: Spec
 spec =

@@ -16,7 +16,7 @@ import Paths_fm_assistant
 import Game.FMAssistant.Mod (PackFilePath(..), unpackMod)
 import Game.FMAssistant.Repack.Unpack (UnpackException)
 import Game.FMAssistant.Repack.Kits
-import Game.FMAssistant.Types (ArchiveFilePath(..))
+import Game.FMAssistant.Repack (ArchiveFilePath(..))
 import Game.FMAssistant.Util (basename)
 
 getArchiveFilePath :: (MonadIO m) => FilePath -> m ArchiveFilePath

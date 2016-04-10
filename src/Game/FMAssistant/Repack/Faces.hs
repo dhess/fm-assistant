@@ -27,17 +27,16 @@ import Control.Exception (Exception(..))
 import Control.Monad.Catch (MonadMask, MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Data
-import Path ((</>), Path, Abs, Rel, Dir, mkRelDir, parent, parseRelDir)
+import Path ((</>), Path, Abs, Rel, Dir, mkRelDir, parent)
 import Path.IO
        (doesDirExist, ensureDir, renameDir, withSystemTempDir)
 
 import Game.FMAssistant.Mod
        (PackFilePath, PackAction(CreateUserDir), packDir, packMod)
-import Game.FMAssistant.Repack.Internal (generateModId)
+import Game.FMAssistant.Repack.Internal (ArchiveFilePath(..), generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Types
-       (ArchiveFilePath(..), UnpackDirPath(..),
-        fmAssistantExceptionToException, fmAssistantExceptionFromException)
+       (fmAssistantExceptionToException, fmAssistantExceptionFromException)
 import Game.FMAssistant.Util (basename)
 
 facesSubDir :: Path Rel Dir
@@ -67,7 +66,7 @@ repackFaces
   -> m PackFilePath
 repackFaces modSubDir packSubDir archive@(ArchiveFilePath fn) destDir =
   withSystemTempDir (basename fn) $ \unpackDir ->
-    do unpack archive (UnpackDirPath unpackDir)
+    do unpack archive unpackDir
        let facesDir = unpackDir </> modSubDir
        unlessM (doesDirExist facesDir) $
          throwM $ MissingFacesDir archive

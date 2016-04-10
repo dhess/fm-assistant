@@ -6,125 +6,123 @@ module Game.FMAssistant.MagicSpec
        ( spec
        ) where
 
-import Path (mkAbsFile, parseAbsFile)
+import Path (Path, Abs, File, mkAbsFile, parseAbsFile)
 import Test.Hspec
 import Paths_fm_assistant
 
-import Game.FMAssistant.Types (ArchiveFilePath(..))
 import Game.FMAssistant.Magic
 
-getArchiveFilePath :: FilePath -> IO ArchiveFilePath
-getArchiveFilePath fp =
+getPath :: FilePath -> IO (Path Abs File)
+getPath fp =
   do fn <- getDataFileName fp
-     absfn <- parseAbsFile fn
-     return $ ArchiveFilePath absfn
+     parseAbsFile fn
 
-unsupportedFile :: IO ArchiveFilePath
-unsupportedFile = getArchiveFilePath "data/test/test.tar"
+unsupportedFile :: IO (Path Abs File)
+unsupportedFile = getPath "data/test/test.tar"
 
-zipFile :: IO ArchiveFilePath
-zipFile = getArchiveFilePath "data/test/test.zip"
+zipFile :: IO (Path Abs File)
+zipFile = getPath "data/test/test.zip"
 
-damagedZipFile :: IO ArchiveFilePath
-damagedZipFile = getArchiveFilePath "data/test/damaged-test.zip"
+damagedZipFile :: IO (Path Abs File)
+damagedZipFile = getPath "data/test/damaged-test.zip"
 
-zipFileWithRarExtension :: IO ArchiveFilePath
-zipFileWithRarExtension = getArchiveFilePath "data/test/test_is_actually_zip.rar"
+zipFileWithRarExtension :: IO (Path Abs File)
+zipFileWithRarExtension = getPath "data/test/test_is_actually_zip.rar"
 
-zipFileWithNoExtension :: IO ArchiveFilePath
-zipFileWithNoExtension = getArchiveFilePath "data/test/test_zip"
+zipFileWithNoExtension :: IO (Path Abs File)
+zipFileWithNoExtension = getPath "data/test/test_zip"
 
-rarFile :: IO ArchiveFilePath
-rarFile = getArchiveFilePath "data/test/test.rar"
+rarFile :: IO (Path Abs File)
+rarFile = getPath "data/test/test.rar"
 
-damagedRarFile :: IO ArchiveFilePath
-damagedRarFile = getArchiveFilePath "data/test/damaged-test.rar"
+damagedRarFile :: IO (Path Abs File)
+damagedRarFile = getPath "data/test/damaged-test.rar"
 
-rarFileWithZipExtension :: IO ArchiveFilePath
-rarFileWithZipExtension = getArchiveFilePath "data/test/test_is_actually_rar.zip"
+rarFileWithZipExtension :: IO (Path Abs File)
+rarFileWithZipExtension = getPath "data/test/test_is_actually_rar.zip"
 
-rarFileWithNoExtension :: IO ArchiveFilePath
-rarFileWithNoExtension = getArchiveFilePath "data/test/test_rar"
+rarFileWithNoExtension :: IO (Path Abs File)
+rarFileWithNoExtension = getPath "data/test/test_rar"
 
 spec :: Spec
 spec =
-  do describe "isZipArchive" $
+  do describe "isZipFile" $
        do it "should recognize ZIP archives" $
             do zf <- zipFile
-               isZipArchive zf `shouldReturn` True
+               isZipFile zf `shouldReturn` True
           it "should recognize (some) damaged ZIP archives" $
             do dzf <- damagedZipFile
-               isZipArchive dzf `shouldReturn` True
+               isZipFile dzf `shouldReturn` True
           it "should recognize ZIP archives with the wrong extension" $
             do zf <- zipFileWithRarExtension
-               isZipArchive zf `shouldReturn` True
+               isZipFile zf `shouldReturn` True
           it "should recognize ZIP archives with no extension" $
             do zf <- zipFileWithNoExtension
-               isZipArchive zf `shouldReturn` True
+               isZipFile zf `shouldReturn` True
           it "should not recognize RAR archives" $
             do rf <- rarFile
-               isZipArchive rf `shouldReturn` False
+               isZipFile rf `shouldReturn` False
           it "should not recognize RAR archives with a ZIP extension" $
             do rf <- rarFileWithZipExtension
-               isZipArchive rf `shouldReturn` False
+               isZipFile rf `shouldReturn` False
           it "should not recognize RAR archives with no extension" $
             do rf <- rarFileWithNoExtension
-               isZipArchive rf `shouldReturn` False
+               isZipFile rf `shouldReturn` False
           it "should not recognize unsupported archive types" $
             do tf <- unsupportedFile
-               isZipArchive tf `shouldReturn` False
-     describe "isRarArchive" $
+               isZipFile tf `shouldReturn` False
+     describe "isRarFile" $
        do it "should recognize RAR archives" $
             do rf <- rarFile
-               isRarArchive rf `shouldReturn` True
+               isRarFile rf `shouldReturn` True
           it "should recognize (some) damaged RAR archives" $
             do drf <- damagedRarFile
-               isRarArchive drf `shouldReturn` True
+               isRarFile drf `shouldReturn` True
           it "should recognize RAR archives with the wrong extension" $
             do rf <- rarFileWithZipExtension
-               isRarArchive rf `shouldReturn` True
+               isRarFile rf `shouldReturn` True
           it "should recognize RAR archives with no extension" $
             do rf <- rarFileWithNoExtension
-               isRarArchive rf `shouldReturn` True
+               isRarFile rf `shouldReturn` True
           it "should not recognize ZIP archives" $
             do zf <- zipFile
-               isRarArchive zf `shouldReturn` False
+               isRarFile zf `shouldReturn` False
           it "should not recognize ZIP archives with a RAR extension" $
             do zf <- zipFileWithRarExtension
-               isRarArchive zf `shouldReturn` False
+               isRarFile zf `shouldReturn` False
           it "should not recognize ZIP archives with no extension" $
             do rf <- zipFileWithNoExtension
-               isRarArchive rf `shouldReturn` False
+               isRarFile rf `shouldReturn` False
           it "should not recognize unsupported archive types" $
             do tf <- unsupportedFile
-               isRarArchive tf `shouldReturn` False
-     describe "identifyArchive" $
+               isRarFile tf `shouldReturn` False
+     describe "identifyFile" $
        do it "should recognize RAR archives" $
             do rf <- rarFile
-               identifyArchive rf `shouldReturn` Just Rar
+               identifyFile rf `shouldReturn` Just Rar
           it "should recognize (some) damaged RAR archives" $
             do drf <- damagedRarFile
-               identifyArchive drf `shouldReturn` Just Rar
+               identifyFile drf `shouldReturn` Just Rar
           it "should recognize RAR archives with the wrong extension" $
             do rf <- rarFileWithZipExtension
-               identifyArchive rf `shouldReturn` Just Rar
+               identifyFile rf `shouldReturn` Just Rar
           it "should recognize RAR archives with no extension" $
             do rf <- rarFileWithNoExtension
-               identifyArchive rf `shouldReturn` Just Rar
+               identifyFile rf `shouldReturn` Just Rar
           it "should recognize ZIP archives" $
             do zf <- zipFile
-               identifyArchive zf `shouldReturn` Just Zip
+               identifyFile zf `shouldReturn` Just Zip
           it "should recognize (some) damaged ZIP archives" $
             do dzf <- damagedZipFile
-               identifyArchive dzf `shouldReturn` Just Zip
+               identifyFile dzf `shouldReturn` Just Zip
           it "should recognize ZIP archives with the wrong extension" $
             do zf <- zipFileWithRarExtension
-               identifyArchive zf `shouldReturn` Just Zip
+               identifyFile zf `shouldReturn` Just Zip
           it "should recognize ZIP archives with no extension" $
             do zf <- zipFileWithNoExtension
-               identifyArchive zf `shouldReturn` Just Zip
+               identifyFile zf `shouldReturn` Just Zip
           it "should not recognize unsupported archive types" $
             do tf <- unsupportedFile
-               identifyArchive tf `shouldReturn` Nothing
+               identifyFile tf `shouldReturn` Nothing
           it "should fail when the file doesn't exist" $
-            identifyArchive (ArchiveFilePath $(mkAbsFile "/this/does/not/exist.zip")) `shouldThrow` anyIOException
+            identifyFile $(mkAbsFile "/this/does/not/exist.zip") `shouldThrow` anyIOException
