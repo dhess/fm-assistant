@@ -9,13 +9,12 @@ module Mod
 import Options.Applicative
 
 import Control.Monad (forM, forM_, unless)
-import Control.Monad.Catch (Handler(..), catches)
 import Game.FMAssistant.Mod (PackFilePath(..), installMod, validateMod)
 import Game.FMAssistant.Types (Version(..), defaultUserDir)
 import Path.IO (resolveFile')
 import System.Exit (ExitCode(..))
 
-import Util (anyFailure, handleFME, handleIO, handleIOQuietly)
+import Util (anyFailure, catchesMost, catchesMostQuietly)
 
 data Command
   = Install InstallOptions
@@ -87,15 +86,3 @@ run (Validate (ValidateOptions onlyInvalid True fns)) =
                   unless onlyInvalid $
                     putStrLn fp)
      return ExitSuccess
-
-catchesMost :: IO ExitCode -> IO ExitCode
-catchesMost act =
-  catches act most
-  where
-    most = [Handler handleIO, Handler handleFME]
-
-catchesMostQuietly :: FilePath -> IO () -> IO ()
-catchesMostQuietly fp act =
-  catches act most
-  where
-    most = [Handler (handleIOQuietly fp), Handler (handleIOQuietly fp)]

@@ -3,6 +3,8 @@
 
 module Util
        ( anyFailure
+       , catchesMost
+       , catchesMostQuietly
        , handleFME
        , handleIO
        , handleFMEQuietly
@@ -10,6 +12,7 @@ module Util
        ) where
 
 import Control.Exception (IOException)
+import Control.Monad.Catch (Handler(..), catches)
 import Game.FMAssistant.Types (SomeFMAssistantException)
 import System.Exit (ExitCode(..))
 import System.IO (hPrint, stderr)
@@ -19,6 +22,18 @@ anyFailure failCode codes =
   if all (ExitSuccess ==) codes
      then ExitSuccess
      else failCode
+
+catchesMost :: IO ExitCode -> IO ExitCode
+catchesMost act =
+  catches act most
+  where
+    most = [Handler handleIO, Handler handleFME]
+
+catchesMostQuietly :: FilePath -> IO () -> IO ()
+catchesMostQuietly fp act =
+  catches act most
+  where
+    most = [Handler (handleIOQuietly fp), Handler (handleIOQuietly fp)]
 
 handleFME :: SomeFMAssistantException -> IO ExitCode
 handleFME e = hPrint stderr e >> return (ExitFailure 2)

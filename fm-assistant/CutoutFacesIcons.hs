@@ -8,14 +8,13 @@ module CutoutFacesIcons
 
 import Options.Applicative
 
-import Control.Monad.Catch (Handler(..), catches)
 import Game.FMAssistant.Mod (PackFilePath(..))
 import Game.FMAssistant.Repack (ArchiveFilePath(..), repackCutoutIcons)
 import Path (parent)
 import Path.IO (resolveFile')
 import System.Exit (ExitCode(..))
 
-import Util (handleFME, handleIO)
+import Util (catchesMost)
 
 data Command
   = Repack RepackOptions
@@ -50,9 +49,3 @@ run (Repack (RepackOptions _ fp)) =
        packFile <- repackCutoutIcons (ArchiveFilePath file) destDir
        putStrLn $ "Repacked " ++ fp ++ " to " ++ show (packFilePath packFile)
        return ExitSuccess
-
-catchesMost :: IO ExitCode -> IO ExitCode
-catchesMost act =
-  catches act most
-  where
-    most = [Handler handleIO, Handler handleFME]

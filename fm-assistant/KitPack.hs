@@ -9,14 +9,13 @@ module KitPack
 import Options.Applicative
 
 import Control.Monad (forM)
-import Control.Monad.Catch (Handler(..), catches)
 import Game.FMAssistant.Mod (PackFilePath(..))
 import Game.FMAssistant.Repack (ArchiveFilePath(..), repackKitPack)
 import Path (parent)
 import Path.IO (resolveFile')
 import System.Exit (ExitCode(..))
 
-import Util (anyFailure, handleFME, handleIO)
+import Util (anyFailure, catchesMost)
 
 data Command
   = Repack RepackOptions
@@ -54,9 +53,3 @@ run (Repack (RepackOptions _ fns)) =
                           putStrLn $ "Repacked " ++ fp ++ " to " ++ show (packFilePath packFile)
                           return ExitSuccess)
      return $ anyFailure (ExitFailure 1) codes
-
-catchesMost :: IO ExitCode -> IO ExitCode
-catchesMost act =
-  catches act most
-  where
-    most = [Handler handleIO, Handler handleFME]
