@@ -38,7 +38,9 @@ import qualified Data.ByteString.Lazy as BL (readFile, writeFile)
 import Data.Data
 import Data.Set (Set)
 import qualified Data.Set as Set (fromList, member)
-import Path ((</>), Path, Abs, Rel, Dir, File, dirname, mkRelDir, parseRelFile, toFilePath)
+import Path
+       ((</>), Path, Abs, Rel, Dir, File, dirname, mkRelDir, parseAbsFile,
+        parseRelFile, toFilePath)
 import Path.IO (copyDirRecur, doesDirExist, listDir, withSystemTempDir)
 
 import Game.FMAssistant.Types

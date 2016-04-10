@@ -9,7 +9,17 @@ addPrefix fp = "src" </> "Game" </> "FMAssistant" </> fp
 testFiles :: [FilePath]
 testFiles =
   map addPrefix
-      ["Install.hs", "Magic.hs","Streaming.hs","Types.hs","Repack" </> "Unpack.hs","Util.hs"]
+      ["Magic.hs"
+      ,"Mod.hs"
+      ,"Repack.hs"
+      ,"Repack" </> "Faces.hs"
+      ,"Repack" </> "Internal.hs"
+      ,"Repack" </> "Kits.hs"
+      ,"Repack" </> "Unpack.hs"
+      ,"Streaming.hs"
+      ,"Types.hs"
+      ,"Util.hs"
+      ]
 
 main :: IO ()
 main = doctest testFiles

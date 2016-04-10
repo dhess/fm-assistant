@@ -18,7 +18,6 @@ Library
   HS-Source-Dirs:       src
   GHC-Options:          -Wall
   Exposed-Modules:      Game.FMAssistant
-                      , Game.FMAssistant.Install
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod
                       , Game.FMAssistant.Repack
@@ -86,7 +85,6 @@ Executable fm-assistant
                       , time
                       , transformers
   Other-Modules:        Game.FMAssistant
-                      , Game.FMAssistant.Install
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod
                       , Game.FMAssistant.Repack
@@ -146,7 +144,6 @@ Test-Suite spec
                       , time
                       , transformers
   Other-Modules:        Game.FMAssistant
-                      , Game.FMAssistant.Install
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod
                       , Game.FMAssistant.Repack
