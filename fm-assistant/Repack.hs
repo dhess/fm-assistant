@@ -3,8 +3,9 @@
 module Repack
        ( RepackAction
        , Command
-       , run
        , parser
+       , repackFile
+       , run
        ) where
 
 import Options.Applicative
@@ -46,9 +47,12 @@ parser =
 
 run :: RepackAction -> Command -> IO ExitCode
 run repack (Repack (RepackOptions _ fp)) =
-  catchesMost $
-    do file <- resolveFile' fp
-       let destDir = parent file
-       packFile <- repack (ArchiveFilePath file) destDir
-       putStrLn $ "Repacked " ++ fp ++ " to " ++ show (packFilePath packFile)
-       return ExitSuccess
+  catchesMost $ repackFile repack fp
+
+repackFile :: RepackAction -> FilePath -> IO ExitCode
+repackFile repack fp =
+  do file <- resolveFile' fp
+     let destDir = parent file
+     packFile <- repack (ArchiveFilePath file) destDir
+     putStrLn $ "Repacked " ++ fp ++ " to " ++ show (packFilePath packFile)
+     return ExitSuccess

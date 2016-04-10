@@ -2,20 +2,16 @@
 
 module RepackMultiple
        ( Command
-       , run
        , parser
+       , run
        ) where
 
 import Options.Applicative
 
 import Control.Monad (forM)
-import Game.FMAssistant.Mod (PackFilePath(..))
-import Game.FMAssistant.Repack (ArchiveFilePath(..))
-import Path (parent)
-import Path.IO (resolveFile')
 import System.Exit (ExitCode(..))
 
-import Repack (RepackAction)
+import Repack (RepackAction, repackFile)
 import Util (anyFailure, catchesMost)
 
 data Command
@@ -45,12 +41,5 @@ parser =
 
 run :: RepackAction -> Command -> IO ExitCode
 run repack (Repack (RepackOptions _ fns)) =
-  do codes <- forM fns
-                   (\fp ->
-                     catchesMost $
-                       do file <- resolveFile' fp
-                          let destDir = parent file
-                          packFile <- repack (ArchiveFilePath file) destDir
-                          putStrLn $ "Repacked " ++ fp ++ " to " ++ show (packFilePath packFile)
-                          return ExitSuccess)
+  do codes <- forM fns (catchesMost . repackFile repack)
      return $ anyFailure (ExitFailure 1) codes
