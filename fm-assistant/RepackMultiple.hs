@@ -9,6 +9,7 @@ module RepackMultiple
 import Options.Applicative
 
 import Control.Monad (forM)
+import Path.IO (resolveDir')
 import System.Exit (ExitCode(..))
 
 import Repack (RepackAction, repackFile)
@@ -40,6 +41,9 @@ parser =
     (command "repack" (info repackCmd (progDesc "Repack a mod for use with fm-assistant")))
 
 run :: RepackAction -> Command -> IO ExitCode
-run repack (Repack (RepackOptions _ fns)) =
-  do codes <- forM fns (catchesMost . repackFile repack)
+run repack (Repack (RepackOptions outputDir fns)) =
+  do destDir <- case outputDir of
+                  Nothing -> resolveDir' "."
+                  Just dir -> resolveDir' dir
+     codes <- forM fns (catchesMost . repackFile repack destDir)
      return $ anyFailure (ExitFailure 1) codes

@@ -12,8 +12,8 @@ import Options.Applicative
 
 import Game.FMAssistant.Mod (PackFilePath(..))
 import Game.FMAssistant.Repack (ArchiveFilePath(..))
-import Path (Path, Abs, Dir, parent)
-import Path.IO (resolveFile')
+import Path (Path, Abs, Dir)
+import Path.IO (resolveFile', resolveDir')
 import System.Exit (ExitCode(..))
 
 import Util (catchesMost)
@@ -37,7 +37,7 @@ repackOptions =
             (long "output-dir" <>
               short 'd' <>
               metavar "DIR" <>
-              help "Repack output directory (default is same directory as original mod)")) <*>
+              help "Repack output directory (default is current directory)")) <*>
   argument str (metavar "FILE")
 
 parser :: Parser Command
@@ -46,13 +46,15 @@ parser =
     (command "repack" (info repackCmd (progDesc "Repack a mod for use with fm-assistant")))
 
 run :: RepackAction -> Command -> IO ExitCode
-run repack (Repack (RepackOptions _ fp)) =
-  catchesMost $ repackFile repack fp
+run repack (Repack (RepackOptions outputDir fp)) =
+  do destDir <- case outputDir of
+                  Nothing -> resolveDir' "."
+                  Just dir -> resolveDir' dir
+     catchesMost $ repackFile repack destDir fp
 
-repackFile :: RepackAction -> FilePath -> IO ExitCode
-repackFile repack fp =
+repackFile :: RepackAction -> Path Abs Dir -> FilePath -> IO ExitCode
+repackFile repack outputDir fp =
   do file <- resolveFile' fp
-     let destDir = parent file
-     packFile <- repack (ArchiveFilePath file) destDir
+     packFile <- repack (ArchiveFilePath file) outputDir
      putStrLn $ "Repacked " ++ fp ++ " to " ++ show (packFilePath packFile)
      return ExitSuccess
