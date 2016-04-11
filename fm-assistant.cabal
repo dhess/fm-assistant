@@ -24,6 +24,7 @@ Library
                       , Game.FMAssistant.Repack.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
+                      , Game.FMAssistant.Repack.MetallicLogos
                       , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
@@ -91,6 +92,7 @@ Executable fm-assistant
                       , Game.FMAssistant.Repack.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
+                      , Game.FMAssistant.Repack.MetallicLogos
                       , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
@@ -98,6 +100,7 @@ Executable fm-assistant
                       , CutoutFacesMegapack
                       , CutoutFacesIcons
                       , KitPack
+                      , MetallicLogos
                       , Mod
                       , Repack
                       , RepackMultiple
@@ -152,6 +155,7 @@ Test-Suite spec
                       , Game.FMAssistant.Repack.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
+                      , Game.FMAssistant.Repack.MetallicLogos
                       , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types

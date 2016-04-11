@@ -17,8 +17,10 @@ module Game.FMAssistant.Repack
        , repackCutoutIcons
        , repackCutoutMegapack
        , repackKitPack
+       , repackMetallicLogos
          -- * Mod-specific repacking exceptions
        , FacePackRepackException(..)
+       , MetallicLogosRepackException(..)
          -- * General repacking exceptions
        , RepackException(..)
        ) where
@@ -28,3 +30,4 @@ import Game.FMAssistant.Repack.Faces
 import Game.FMAssistant.Repack.Internal
        (ArchiveFilePath(..), RepackException(..), archiveName)
 import Game.FMAssistant.Repack.Kits (repackKitPack)
+import Game.FMAssistant.Repack.MetallicLogos (MetallicLogosRepackException(..), repackMetallicLogos)
