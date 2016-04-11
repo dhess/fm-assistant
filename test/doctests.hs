@@ -15,7 +15,6 @@ testFiles =
       ,"Repack" </> "Faces.hs"
       ,"Repack" </> "Internal.hs"
       ,"Repack" </> "Kits.hs"
-      ,"Repack" </> "Trophies.hs"
       ,"Repack" </> "Unpack.hs"
       ,"Streaming.hs"
       ,"Types.hs"

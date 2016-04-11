@@ -24,7 +24,6 @@ Library
                       , Game.FMAssistant.Repack.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
-                      , Game.FMAssistant.Repack.Trophies
                       , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
@@ -92,7 +91,6 @@ Executable fm-assistant
                       , Game.FMAssistant.Repack.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
-                      , Game.FMAssistant.Repack.Trophies
                       , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
@@ -103,7 +101,6 @@ Executable fm-assistant
                       , Mod
                       , Repack
                       , RepackMultiple
-                      , Trophies
                       , Util
 
 Test-Suite doctest
@@ -155,7 +152,6 @@ Test-Suite spec
                       , Game.FMAssistant.Repack.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
-                      , Game.FMAssistant.Repack.Trophies
                       , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
