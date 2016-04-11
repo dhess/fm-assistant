@@ -17,6 +17,7 @@ module Game.FMAssistant.Repack
        , repackCutoutIcons
        , repackCutoutMegapack
        , repackKitPack
+       , repackTrophiesPack
          -- * Mod-specific repacking exceptions
        , FacePackRepackException(..)
          -- * General repacking exceptions
@@ -28,3 +29,4 @@ import Game.FMAssistant.Repack.Faces
 import Game.FMAssistant.Repack.Internal
        (ArchiveFilePath(..), RepackException(..), archiveName)
 import Game.FMAssistant.Repack.Kits (repackKitPack)
+import Game.FMAssistant.Repack.Trophies (repackTrophiesPack)

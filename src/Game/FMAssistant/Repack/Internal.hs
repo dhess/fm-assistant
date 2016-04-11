@@ -65,11 +65,15 @@ data RepackException
   | SingleFileArchive ArchiveFilePath
     -- ^ The archive contains just a single file and can't be a valid
     -- kit pack
+  | UnexpectedContents ArchiveFilePath
+    -- ^ The archive contents are not what the repacker expected
+    -- (possibly due to a misnamed or mis-identified mod).
   deriving (Eq,Typeable)
 
 instance Show RepackException where
   show (EmptyArchive fp) = show fp ++ ": Malformed pack (archive file is empty)"
   show (SingleFileArchive fp) = show fp ++ ": Malformed pack (archive file contains just a single file)"
+  show (UnexpectedContents fp) = show fp ++ ": Malformed pack (unexpected archive file contents)"
 
 instance Exception RepackException where
   toException = fmAssistantExceptionToException
