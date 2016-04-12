@@ -20,8 +20,12 @@ module Game.FMAssistant.Types
          Version(..)
        , versionDir
          -- * Path types
+       , AppDirPath(..)
+       , defaultAppDir
        , UserDirPath(..)
        , defaultUserDir
+       , BackupDirPath(..)
+       , defaultBackupDir
          -- * Exceptions
        , SomeFMAssistantException
        , fmAssistantExceptionToException
@@ -33,8 +37,7 @@ import Control.Monad.Catch (MonadThrow)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Data
 import Path ((</>), Path, Abs, Rel, Dir, mkRelDir)
-
-import Game.FMAssistant.Util (defaultSteamDir)
+import Path.IO (getHomeDir)
 
 -- | The game version.
 data Version =
@@ -48,18 +51,50 @@ data Version =
 versionDir :: Version -> Path Rel Dir
 versionDir FM16 = $(mkRelDir "Football Manager 2016")
 
+-- | Paths which point to application directories, i.e., where the
+-- game's files are located.
+newtype AppDirPath =
+  AppDirPath {appDirPath :: Path Abs Dir}
+  deriving (Eq,Show,Ord,Typeable)
+
+-- | The default app directory for a given game version.
+defaultAppDir :: (MonadThrow m, MonadIO m) => Version -> m AppDirPath
+defaultAppDir version =
+  do homeDir <- getHomeDir
+     return $
+       AppDirPath (homeDir </>
+                   $(mkRelDir "Library/Application Support/Steam/SteamApps/common") </>
+                   versionDir version)
+
 -- | The type for paths which point to a user directory, where game
 -- saves, kits, and most other mods, are stored.
 newtype UserDirPath =
   UserDirPath {userDirPath :: Path Abs Dir}
   deriving (Eq,Show,Ord,Typeable)
 
---- | The default user directory, where save games and most mod types
---- live.
+--- | The default user directory for a given game version, where save
+--- games and most mod types live.
 defaultUserDir :: (MonadThrow m, MonadIO m) => Version -> m UserDirPath
 defaultUserDir version =
-  do steamDir <- defaultSteamDir
-     return $ UserDirPath (steamDir </> versionDir version)
+  do homeDir <- getHomeDir
+     return $
+       UserDirPath (homeDir </>
+                    $(mkRelDir "Documents/Sports Interactive") </>
+                    versionDir version)
+
+-- | Paths for storing backups of game content which mods might
+-- overwrite or delete.
+newtype BackupDirPath =
+  BackupDirPath {backupDirPath :: Path Abs Dir}
+  deriving (Eq,Show,Ord,Typeable)
+
+-- | The default backup directory.
+defaultBackupDir :: (MonadThrow m, MonadIO m) => m BackupDirPath
+defaultBackupDir =
+  do homeDir <- getHomeDir
+     return $
+       BackupDirPath (homeDir </>
+                     $(mkRelDir "Library/Application Support/FMAssistant"))
 
 -- | The root exception type for @fm-assistant@.
 data SomeFMAssistantException =

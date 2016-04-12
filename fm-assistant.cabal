@@ -25,6 +25,7 @@ Library
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
                       , Game.FMAssistant.Repack.MetallicLogos
+                      , Game.FMAssistant.Repack.RealNamesFix
                       , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
@@ -93,6 +94,7 @@ Executable fm-assistant
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
                       , Game.FMAssistant.Repack.MetallicLogos
+                      , Game.FMAssistant.Repack.RealNamesFix
                       , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
@@ -102,6 +104,7 @@ Executable fm-assistant
                       , KitPack
                       , MetallicLogos
                       , Mod
+                      , RealNamesFix
                       , Repack
                       , RepackMultiple
                       , Util
@@ -156,6 +159,7 @@ Test-Suite spec
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
                       , Game.FMAssistant.Repack.MetallicLogos
+                      , Game.FMAssistant.Repack.RealNamesFix
                       , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types

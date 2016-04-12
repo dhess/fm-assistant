@@ -18,19 +18,20 @@ Helpful functions and combinators.
 module Game.FMAssistant.Util
        ( createSystemTempDir
        , createTempDir
-       , defaultSteamDir
        , executeQuietly
        , basename
+       , touchFile
        ) where
 
-import Control.Monad.Catch (MonadThrow)
+import Control.Monad (unless)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Trans.Resource (MonadResource, ReleaseKey, allocate)
-import Path ((</>), Path, Abs, Dir, File, filename, mkRelDir, toFilePath)
-import Path.IO (getHomeDir, getTempDir, removeDirRecur)
+import Path (Path, Abs, Dir, File, filename, toFilePath)
+import Path.IO (doesFileExist, getTempDir, removeDirRecur)
 import qualified Path.IO as Path (createTempDir)
 import System.Exit (ExitCode)
 import System.FilePath (takeBaseName)
+import System.IO (IOMode(WriteMode), withFile)
 import System.Process.Streaming (execute, exitCode, piped, proc)
 
 -- | Create a temporary directory in the system temporary directory
@@ -70,13 +71,6 @@ executeQuietly
         -- ^ Exit code
 executeQuietly cmd args = liftIO $ execute (piped (proc cmd args)) exitCode
 
--- | The platform-specific Steam directory for the user who is running
--- the 'MonadIO' action.
-defaultSteamDir :: (MonadThrow m, MonadIO m) => m (Path Abs Dir)
-defaultSteamDir =
-  do homeDir <- getHomeDir
-     return $ homeDir </> $(mkRelDir "Documents/Sports Interactive")
-
 -- | Return (as a 'String') the filename of the given file path,
 -- without the extension.
 basename
@@ -85,3 +79,11 @@ basename
   -> String
   -- ^ The filename without the extension
 basename = takeBaseName . toFilePath . filename
+
+-- | Create a zero-length file, if it doesn't already exist;
+-- otherwise, do nothing.
+touchFile :: (MonadIO m) => Path Abs File -> m ()
+touchFile file =
+  do exists <- doesFileExist file
+     unless exists $
+       liftIO $ withFile (toFilePath file) WriteMode (\_ -> return ())

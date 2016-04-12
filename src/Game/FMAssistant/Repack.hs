@@ -18,9 +18,11 @@ module Game.FMAssistant.Repack
        , repackCutoutMegapack
        , repackKitPack
        , repackMetallicLogos
+       , repackRealNamesFix
          -- * Mod-specific repacking exceptions
        , FacePackRepackException(..)
        , MetallicLogosRepackException(..)
+       , RealNamesFixRepackException(..)
          -- * General repacking exceptions
        , RepackException(..)
        ) where
@@ -31,3 +33,4 @@ import Game.FMAssistant.Repack.Internal
        (ArchiveFilePath(..), RepackException(..), archiveName)
 import Game.FMAssistant.Repack.Kits (repackKitPack)
 import Game.FMAssistant.Repack.MetallicLogos (MetallicLogosRepackException(..), repackMetallicLogos)
+import Game.FMAssistant.Repack.RealNamesFix (RealNamesFixRepackException(..), repackRealNamesFix)

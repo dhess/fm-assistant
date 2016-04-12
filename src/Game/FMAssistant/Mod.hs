@@ -18,6 +18,7 @@ Portability : non-portable
 module Game.FMAssistant.Mod
        ( PackFilePath(..)
        , packId
+       , packBackupDir
        , PackAction(..)
        , packDir
        , packMod
@@ -39,13 +40,16 @@ import Data.Data
 import Data.Set (Set)
 import qualified Data.Set as Set (fromList, member)
 import Path
-       ((</>), Path, Abs, Rel, Dir, File, dirname, mkRelDir, parseAbsFile,
-        parseRelFile, toFilePath)
-import Path.IO (copyDirRecur, doesDirExist, listDir, withSystemTempDir)
+       ((</>), Path, Abs, Rel, Dir, File, dirname, isParentOf, mkRelDir,
+        parent, parseAbsFile, parseRelDir, parseRelFile, toFilePath)
+import Path.IO
+       (AnyPath(..), copyDirRecur, doesDirExist, ensureDir,
+        ignoringAbsence, listDir, listDirRecur, renameFile,
+        withSystemTempDir)
 
 import Game.FMAssistant.Types
-       (UserDirPath(..), fmAssistantExceptionToException,
-        fmAssistantExceptionFromException)
+       (AppDirPath(..), BackupDirPath(..), UserDirPath(..),
+        fmAssistantExceptionToException, fmAssistantExceptionFromException)
 import Game.FMAssistant.Util (basename)
 
 -- | The type for paths which point to a pack file.
@@ -64,20 +68,30 @@ newtype PackFilePath =
 packId :: PackFilePath -> String
 packId = basename . packFilePath
 
+-- | Uniquely identify a backup directory for the given pack file.
+packBackupDir :: (MonadThrow m) => PackFilePath -> BackupDirPath -> m (Path Abs Dir)
+packBackupDir packFile backupParentDir =
+  do backupSubDir <- parseRelDir $ basename (packFilePath packFile)
+     return $ (backupDirPath backupParentDir) </> backupSubDir
+
 -- | All possible actions when installing a mod.
 --
 -- Note: order matters here! Actions will be processed in the order
 -- specified by the type. (Conversely, when uninstalling a mod,
 -- reversing the actions will be done in the reverse of the order
 -- specified by the type.)
-data PackAction =
-  CreateUserDir
+data PackAction
+  = RemoveAppDir
+  | CreateAppDir
+  | CreateUserDir
   deriving (Eq,Ord,Enum,Bounded,Show)
 
 allActions :: [PackAction]
 allActions = [minBound ..]
 
 packDir :: PackAction -> Path Rel Dir
+packDir RemoveAppDir = $(mkRelDir "remove_app")
+packDir CreateAppDir = $(mkRelDir "create_app")
 packDir CreateUserDir = $(mkRelDir "create_user")
 
 -- | The set of valid top-level directories in a mod pack.
@@ -133,6 +147,7 @@ packMod srcDir destDir modName =
      createTar tarPath dirs
      return $ PackFilePath tarPath
   where
+    -- XXX TODO: refuse to write symbolic links.
     createTar :: (MonadIO m) => Path Abs File -> [Path Rel Dir] -> m ()
     createTar tarFile dirs = liftIO $
       do entries <- Tar.pack (toFilePath srcDir) (map toFilePath dirs)
@@ -146,6 +161,7 @@ unpackMod
   -- ^ Where to unpack the mod pack file
   -> m ()
 unpackMod (PackFilePath pf) unpackDir = liftIO $
+  -- XXX TODO: refuse to unpack symbolic links.
   do entries <- liftM (Tar.read . Lzma.decompress) $ BL.readFile (toFilePath pf)
      Tar.unpack (toFilePath unpackDir) entries
 
@@ -153,10 +169,14 @@ installMod
   :: (MonadIO m, MonadThrow m, MonadCatch m, MonadMask m)
   => PackFilePath
   -- ^ Location of the packed mod
+  -> AppDirPath
+  -- ^ The target app/game directory
   -> UserDirPath
   -- ^ The target user directory
+  -> BackupDirPath
+  -- ^ The user's backup directory
   -> m ()
-installMod packFile userDir =
+installMod packFile appDir userDir backupDir =
   withSystemTempDir "installMod" install
   where
     install :: (MonadIO m, MonadThrow m, MonadCatch m) => Path Abs Dir -> m ()
@@ -172,10 +192,42 @@ installMod packFile userDir =
                  let subDir = unpackDir </> packDir action
                  in do exists <- doesDirExist subDir
                        when exists $ go action subDir)
-    go :: (MonadIO m, MonadCatch m) => PackAction -> Path Abs Dir -> m ()
+    go :: (MonadIO m, MonadThrow m, MonadCatch m) => PackAction -> Path Abs Dir -> m ()
+    go RemoveAppDir subDir =
+      do checkBackupDir backupDir
+         checkAppDir appDir
+         -- XXX TODO: need a better method for uniquely identifying
+         -- the mod; use the hash, perhaps?
+         modBackupDir <- packBackupDir packFile backupDir
+         ensureDir modBackupDir
+         (_, files) <- listDirRecur subDir
+         forM_ files
+               (\fn ->
+                  -- For security purposes, make sure the file to
+                  -- remove actually lives in the app directory!
+                  do relFn <- makeRelative subDir fn
+                     let targetFile = appDirPath appDir </> relFn
+                     unless (isParentOf (appDirPath appDir) targetFile) $
+                       throwM $ InvalidPath (packDir RemoveAppDir </> relFn)
+                     let backupFile = modBackupDir </> relFn
+                     unless (isParentOf (backupDirPath backupDir) backupFile) $
+                       throwM $ InvalidPath (packDir RemoveAppDir </> relFn)
+                     ensureDir (parent backupFile)
+                     ignoringAbsence $ renameFile targetFile backupFile)
+    go CreateAppDir subDir =
+      do checkAppDir appDir
+         copyDirRecur subDir (appDirPath appDir)
     go CreateUserDir subDir =
       do checkUserDir userDir
          copyDirRecur subDir (userDirPath userDir)
+
+-- | Check that the backup directory exists by throwing
+-- 'NoSuchBackupDirectory' if it does not.
+checkBackupDir :: (MonadThrow m, MonadIO m) => BackupDirPath -> m ()
+checkBackupDir backupDir =
+  do exists <- doesDirExist (backupDirPath backupDir)
+     unless exists $
+       throwM $ NoSuchBackupDirectory backupDir
 
 -- | Check that the user directory exists by throwing
 -- 'NoSuchUserDirectory' if it does not.
@@ -184,6 +236,14 @@ checkUserDir userDir =
   do exists <- doesDirExist (userDirPath userDir)
      unless exists $
        throwM $ NoSuchUserDirectory userDir
+
+-- | Check that the app directory exists by throwing
+-- 'NoSuchAppDirectory' if it does not.
+checkAppDir :: (MonadThrow m, MonadIO m) => AppDirPath -> m ()
+checkAppDir appDir =
+  do exists <- doesDirExist (appDirPath appDir)
+     unless exists $
+       throwM $ NoSuchAppDirectory appDir
 
 -- | Exceptions which can occur while packing, installing, or
 -- validating a mod.
@@ -196,6 +256,12 @@ data ModException
     -- ^ The mod directory contains an invalid top-level directory
   | NoSuchUserDirectory UserDirPath
     -- ^ The user directory doesn't exist
+  | NoSuchAppDirectory AppDirPath
+    -- ^ The app directory doesn't exist
+  | NoSuchBackupDirectory BackupDirPath
+    -- ^ The backup directory doesn't exist
+  | InvalidPath (Path Rel File)
+    -- ^ The mod contains a path to an invalid location
   deriving (Eq,Typeable)
 
 instance Show ModException where
@@ -203,6 +269,9 @@ instance Show ModException where
   show TopLevelFiles = "The mod directory contains top-level files"
   show (InvalidTopLevelDirectory dir) = "The mod directory contains an invalid top-level directory ( " ++ show dir ++ ")"
   show (NoSuchUserDirectory fp) = show fp ++ ": The game user directory doesn't exist"
+  show (NoSuchAppDirectory fp) = show fp ++ ": The game application directory doesn't exist"
+  show (NoSuchBackupDirectory fp) = show fp ++ ": The backup directory doesn't exist"
+  show (InvalidPath fp) = show fp ++ ": Invalid/insecure path found in mod pack"
 
 instance Exception ModException where
   toException = fmAssistantExceptionToException

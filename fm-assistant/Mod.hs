@@ -10,7 +10,7 @@ import Options.Applicative
 
 import Control.Monad (forM, forM_, unless)
 import Game.FMAssistant.Mod (PackFilePath(..), installMod, validateMod)
-import Game.FMAssistant.Types (Version(..), defaultUserDir)
+import Game.FMAssistant.Types (Version(..), defaultAppDir, defaultBackupDir,defaultUserDir)
 import Path.IO (resolveFile')
 import System.Exit (ExitCode(..))
 
@@ -59,11 +59,13 @@ parser =
 run :: Command -> IO ExitCode
 run (Install (InstallOptions fns)) =
   do userDir <- defaultUserDir FM16
+     appDir <- defaultAppDir FM16
+     backupDir <- defaultBackupDir
      codes <- forM fns
                    (\fp ->
                      catchesMost $
                        do file <- resolveFile' fp
-                          installMod (PackFilePath file) userDir
+                          installMod (PackFilePath file) appDir userDir backupDir
                           putStrLn $ "Installed " ++ fp
                           return ExitSuccess)
      return $ anyFailure (ExitFailure 1) codes

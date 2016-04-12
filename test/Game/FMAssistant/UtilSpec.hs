@@ -5,29 +5,26 @@ module Game.FMAssistant.UtilSpec
        ( spec
        ) where
 
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.Resource (runResourceT)
-import Path ((</>), isParentOf, mkRelDir)
-import Path.IO (doesDirExist, getHomeDir, getTempDir)
+import Path ((</>), mkRelFile)
+import Path.IO (doesFileExist, withSystemTempDir)
 import Test.Hspec
 
 import Game.FMAssistant.Util
 
 spec :: Spec
 spec =
-  do describe "defaultSteamDir" $
-       it "returns the expected value" $
-         do homeDir <- getHomeDir
-            defaultSteamDir `shouldReturn` (homeDir </> $(mkRelDir "Documents/Sports Interactive"))
-     -- describe "createSystemTempDir" $
-     --   do it "creates a temporary directory in the system temporary directory" $
-     --        runResourceT $
-     --          do (_, tmpDir) <- createSystemTempDir "Foo"
-     --             sysTmpDir <- getTempDir
-     --             liftIO $ isParentOf sysTmpDir tmpDir `shouldBe` True
-     --             liftIO $ doesDirExist tmpDir `shouldReturn` True
-     --      it "removes the temporary directory when finished" $
-     --        do tmpDir <- runResourceT $
-     --             do (_, td) <- createSystemTempDir "Foo"
-     --                return td
-     --           doesDirExist tmpDir `shouldReturn` False
+  do describe "basename" $
+       it "should return the filename stripped of extension" $
+         basename $(mkRelFile "xyz/abc.def") `shouldBe` "abc"
+     describe "touchFile" $
+       do it "should create a new file" $
+            withSystemTempDir "UtilSpec" $ \dir ->
+              let testFile = dir </> $(mkRelFile "testTouchFile")
+              in do touchFile testFile
+                    doesFileExist testFile `shouldReturn` True
+          it "should be idempotent" $
+            withSystemTempDir "UtilSpec" $ \dir ->
+              let testFile = dir </> $(mkRelFile "testTouchFile")
+              in do touchFile testFile
+                    touchFile testFile
+                    doesFileExist testFile `shouldReturn` True
