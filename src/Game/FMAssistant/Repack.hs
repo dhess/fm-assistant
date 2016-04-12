@@ -16,10 +16,12 @@ module Game.FMAssistant.Repack
          -- * Repacking actions
        , repackCutoutIcons
        , repackCutoutMegapack
+       , repackDebskisHairstyles
        , repackKitPack
        , repackMetallicLogos
        , repackRealNamesFix
          -- * Mod-specific repacking exceptions
+       , DebskisHairstylesRepackException(..)
        , FacePackRepackException(..)
        , MetallicLogosRepackException(..)
        , RealNamesFixRepackException(..)
@@ -27,6 +29,8 @@ module Game.FMAssistant.Repack
        , RepackException(..)
        ) where
 
+import Game.FMAssistant.Repack.DebskisHairstyles
+       (DebskisHairstylesRepackException(..), repackDebskisHairstyles)
 import Game.FMAssistant.Repack.Faces
        (FacePackRepackException(..), repackCutoutIcons, repackCutoutMegapack)
 import Game.FMAssistant.Repack.Internal

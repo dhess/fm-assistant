@@ -21,6 +21,7 @@ Library
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod
                       , Game.FMAssistant.Repack
+                      , Game.FMAssistant.Repack.DebskisHairstyles
                       , Game.FMAssistant.Repack.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
@@ -90,6 +91,7 @@ Executable fm-assistant
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod
                       , Game.FMAssistant.Repack
+                      , Game.FMAssistant.Repack.DebskisHairstyles
                       , Game.FMAssistant.Repack.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits
@@ -101,6 +103,7 @@ Executable fm-assistant
                       , Game.FMAssistant.Util
                       , CutoutFacesMegapack
                       , CutoutFacesIcons
+                      , DebskisHairstyles
                       , KitPack
                       , MetallicLogos
                       , Mod
@@ -155,6 +158,7 @@ Test-Suite spec
                       , Game.FMAssistant.Magic
                       , Game.FMAssistant.Mod
                       , Game.FMAssistant.Repack
+                      , Game.FMAssistant.Repack.DebskisHairstyles
                       , Game.FMAssistant.Repack.Faces
                       , Game.FMAssistant.Repack.Internal
                       , Game.FMAssistant.Repack.Kits

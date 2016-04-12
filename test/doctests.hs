@@ -12,6 +12,7 @@ testFiles =
       ["Magic.hs"
       ,"Mod.hs"
       ,"Repack.hs"
+      ,"Repack" </> "DebskisHairstyles.hs"
       ,"Repack" </> "Faces.hs"
       ,"Repack" </> "Internal.hs"
       ,"Repack" </> "Kits.hs"

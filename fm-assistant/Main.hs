@@ -7,6 +7,7 @@ import System.Exit (ExitCode(..), exitWith)
 
 import qualified CutoutFacesMegapack (run)
 import qualified CutoutFacesIcons (run)
+import qualified DebskisHairstyles (run)
 import qualified KitPack (run)
 import qualified MetallicLogos (run)
 import qualified Mod (Command, run, parser)
@@ -18,12 +19,16 @@ data GlobalOptions =
   GlobalOptions {_cmd :: Command}
 
 data Command
-  = KitPack RepackMultiple.Command
+  = DebskisHairstyles Repack.Command
+  | KitPack RepackMultiple.Command
   | CutoutFacesMegapack Repack.Command
   | CutoutFacesIcons Repack.Command
   | MetallicLogos Repack.Command
   | Mod Mod.Command
   | RealNamesFix Repack.Command
+
+debskisHairstylesCmd :: Parser Command
+debskisHairstylesCmd = DebskisHairstyles <$> Repack.parser
 
 kitPackCmd :: Parser Command
 kitPackCmd = KitPack <$> RepackMultiple.parser
@@ -47,7 +52,8 @@ cmds :: Parser GlobalOptions
 cmds =
   GlobalOptions <$>
   hsubparser
-    (command "kitpack" (info kitPackCmd (progDesc "Kit pack commands")) <>
+    (command "debskis-hairstyles" (info debskisHairstylesCmd (progDesc "Debski's World of Hairstyles commands")) <>
+     command "kitpack" (info kitPackCmd (progDesc "Kit pack commands")) <>
      command "cutout-faces-megapack" (info cutoutFacesMegapackCmd (progDesc "Sortioutsi Cutout Megapack commands")) <>
      command "cutout-faces-icons" (info cutoutFacesIconsCmd (progDesc "Sortioutsi Cutout Icons commands")) <>
      command "metallic-logos" (info metallicLogosCmd (progDesc "Metallic Logos commands")) <>
@@ -55,6 +61,7 @@ cmds =
      command "mod" (info modCmd (progDesc "Mod pack commands")))
 
 run :: GlobalOptions -> IO ExitCode
+run (GlobalOptions (DebskisHairstyles cmd)) = DebskisHairstyles.run cmd
 run (GlobalOptions (KitPack cmd)) = KitPack.run cmd
 run (GlobalOptions (CutoutFacesMegapack cmd)) = CutoutFacesMegapack.run cmd
 run (GlobalOptions (CutoutFacesIcons cmd)) = CutoutFacesIcons.run cmd
