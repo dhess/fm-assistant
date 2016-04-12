@@ -1,21 +1,8 @@
 # fm-assistant
 
-TODO: Write description here
+A very crude tool to automate the installation of Football Manager
+mods.
 
-## Installation
-
-TODO: Write installation instructions here
-
-## Usage
-
-TODO: Write usage instructions here
-
-## How to run tests
-
-```
-cabal configure --enable-tests && cabal build && cabal test
-```
-
-## Contributing
-
-TODO: Write contribution instructions here
+This package is a prototype, is not ready for prime-time, and will
+certainly undergo breaking changes in the future. Use at your own
+risk.
