@@ -28,7 +28,7 @@ import Control.Monad.IO.Class (MonadIO)
 import Data.Data
 import Data.Time.Calendar (showGregorian)
 import Data.Time.Clock (utctDay)
-import Path (Path, Abs, File, parseAbsFile)
+import Path (Path, Abs, File)
 import Path.IO (getModificationTime)
 
 import Game.FMAssistant.Types
@@ -47,6 +47,7 @@ newtype ArchiveFilePath =
 -- trailing file suffix, and return what remains.
 --
 -- >>> :set -XOverloadedStrings
+-- >>> import Path (parseAbsFile)
 -- >>> bazPath <- parseAbsFile "/foo/bar/baz.rar"
 -- >>> archiveName $ ArchiveFilePath bazPath
 -- "baz"

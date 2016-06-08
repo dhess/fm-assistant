@@ -21,7 +21,7 @@ module Game.FMAssistant.Repack.MetallicLogos
        , MetallicLogosRepackException(..)
        ) where
 
-import Control.Conditional (unlessM)
+import Control.Conditional (unlessM, whenM)
 import Control.Exception (Exception(..))
 import Control.Monad.Catch (MonadMask, MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
@@ -63,8 +63,6 @@ repackMetallicLogos archive@(ArchiveFilePath fn) destDir =
        unlessM (doesDirExist unpackedEditorDataDir) $
          throwM $ MissingEditorDataDir archive
        let unpackedRetinaDir = unpackDir </> $(mkRelDir "Optional Retina Files/Football Manager 2016/graphics/pictures")
-       unlessM (doesDirExist unpackedRetinaDir) $
-         throwM $ MissingRetinaDir archive
        withSystemTempDir "repackMetallicLogos" $ \tarDir ->
          let modPicturesDir = tarDir </> packDir CreateUserDir </> picturesSubDir
              modEditorDataSubDir = tarDir </> packDir CreateUserDir </> editorDataSubDir
@@ -72,7 +70,8 @@ repackMetallicLogos archive@(ArchiveFilePath fn) destDir =
                ensureDir (parent modEditorDataSubDir)
                renameDir unpackedPicturesDir modPicturesDir
                renameDir unpackedEditorDataDir modEditorDataSubDir
-               copyDirRecur unpackedRetinaDir modPicturesDir
+               whenM (doesDirExist unpackedRetinaDir) $
+                 copyDirRecur unpackedRetinaDir modPicturesDir
                modId <- generateModId archive
                packMod tarDir destDir modId
 
@@ -81,14 +80,11 @@ data MetallicLogosRepackException
     -- ^ The archive is missing a "pictures" directory
   | MissingEditorDataDir ArchiveFilePath
     -- ^ The archive is missing an "editor data" directory
-  | MissingRetinaDir ArchiveFilePath
-    -- ^ The archive is missing an "pictures" directory for Retina files
   deriving (Eq,Typeable)
 
 instance Show MetallicLogosRepackException where
   show (MissingPicturesDir fp) = show fp ++ ": Malformed face pack (no \"pictures\" directory)"
   show (MissingEditorDataDir fp) = show fp ++ ": Malformed face pack (no \"editor data\" directory)"
-  show (MissingRetinaDir fp) = show fp ++ ": Malformed face pack (no \"pictures\" directory for Retina files)"
 
 instance Exception MetallicLogosRepackException where
   toException = fmAssistantExceptionToException
