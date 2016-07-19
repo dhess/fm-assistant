@@ -53,9 +53,9 @@ repackKitPack archive@(ArchiveFilePath fn) destDir =
 --
 -- If there is some problem during the unpacking of the archive, or if
 -- the kit pack does not appear to be valid, this action will throw an
--- exception. See the 'KitPackException' type for exceptions specific
--- to kit packs (although other exceptions are possible, of course, as
--- this action runs in 'MonadIO'.).
+-- exception. See the 'RepackException' type (although other
+-- exceptions are possible, of course, as this action runs in
+-- 'MonadIO'.).
 unpackKitPack :: (MonadThrow m, MonadIO m) => ArchiveFilePath -> Path Abs Dir -> m (Path Abs Dir)
 unpackKitPack archive unpackDir =
   do unpack archive unpackDir

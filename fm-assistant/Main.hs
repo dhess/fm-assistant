@@ -14,6 +14,7 @@ import qualified Mod (Command, run, parser)
 import qualified RealNamesFix (run)
 import qualified Repack (Command, parser)
 import qualified RepackMultiple (Command, parser)
+import qualified Skin (run)
 
 data GlobalOptions =
   GlobalOptions {_cmd :: Command}
@@ -26,6 +27,7 @@ data Command
   | MetallicLogos Repack.Command
   | Mod Mod.Command
   | RealNamesFix Repack.Command
+  | Skin RepackMultiple.Command
 
 debskisHairstylesCmd :: Parser Command
 debskisHairstylesCmd = DebskisHairstyles <$> Repack.parser
@@ -48,6 +50,9 @@ modCmd = Mod <$> Mod.parser
 realNamesFixCmd :: Parser Command
 realNamesFixCmd = RealNamesFix <$> Repack.parser
 
+skinCmd :: Parser Command
+skinCmd = Skin <$> RepackMultiple.parser
+
 cmds :: Parser GlobalOptions
 cmds =
   GlobalOptions <$>
@@ -58,6 +63,7 @@ cmds =
      command "cutout-faces-icons" (info cutoutFacesIconsCmd (progDesc "Sortioutsi Cutout Icons commands")) <>
      command "metallic-logos" (info metallicLogosCmd (progDesc "Metallic Logos commands")) <>
      command "real-names-fix" (info realNamesFixCmd (progDesc "Sortitoutsi Real Names Fix commands")) <>
+     command "skin" (info skinCmd (progDesc "Skin commands")) <>
      command "mod" (info modCmd (progDesc "Mod pack commands")))
 
 run :: GlobalOptions -> IO ExitCode
@@ -68,6 +74,7 @@ run (GlobalOptions (CutoutFacesIcons cmd)) = CutoutFacesIcons.run cmd
 run (GlobalOptions (MetallicLogos cmd)) = MetallicLogos.run cmd
 run (GlobalOptions (Mod cmd)) = Mod.run cmd
 run (GlobalOptions (RealNamesFix cmd)) = RealNamesFix.run cmd
+run (GlobalOptions (Skin cmd)) = Skin.run cmd
 
 main :: IO ExitCode
 main = execParser opts >>= run >>= exitWith

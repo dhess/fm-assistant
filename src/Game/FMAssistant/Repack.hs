@@ -20,6 +20,7 @@ module Game.FMAssistant.Repack
        , repackKitPack
        , repackMetallicLogos
        , repackRealNamesFix
+       , repackSkin
          -- * Mod-specific repacking exceptions
        , DebskisHairstylesRepackException(..)
        , FacePackRepackException(..)
@@ -38,3 +39,4 @@ import Game.FMAssistant.Repack.Internal
 import Game.FMAssistant.Repack.Kits (repackKitPack)
 import Game.FMAssistant.Repack.MetallicLogos (MetallicLogosRepackException(..), repackMetallicLogos)
 import Game.FMAssistant.Repack.RealNamesFix (RealNamesFixRepackException(..), repackRealNamesFix)
+import Game.FMAssistant.Repack.Skins (repackSkin)

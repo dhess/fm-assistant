@@ -1,5 +1,5 @@
 Name:                   fm-assistant
-Version:                0.5.0
+Version:                0.5.1
 Author:                 Drew Hess <src@drewhess.com>
 Maintainer:             Drew Hess <src@drewhess.com>
 License:                BSD3
@@ -27,6 +27,7 @@ Library
                       , Game.FMAssistant.Repack.Kits
                       , Game.FMAssistant.Repack.MetallicLogos
                       , Game.FMAssistant.Repack.RealNamesFix
+                      , Game.FMAssistant.Repack.Skins
                       , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
@@ -97,6 +98,7 @@ Executable fm-assistant
                       , Game.FMAssistant.Repack.Kits
                       , Game.FMAssistant.Repack.MetallicLogos
                       , Game.FMAssistant.Repack.RealNamesFix
+                      , Game.FMAssistant.Repack.Skins
                       , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types
@@ -110,6 +112,7 @@ Executable fm-assistant
                       , RealNamesFix
                       , Repack
                       , RepackMultiple
+                      , Skin
                       , Util
 
 Test-Suite doctest
@@ -164,6 +167,7 @@ Test-Suite spec
                       , Game.FMAssistant.Repack.Kits
                       , Game.FMAssistant.Repack.MetallicLogos
                       , Game.FMAssistant.Repack.RealNamesFix
+                      , Game.FMAssistant.Repack.Skins
                       , Game.FMAssistant.Repack.Unpack
                       , Game.FMAssistant.Streaming
                       , Game.FMAssistant.Types

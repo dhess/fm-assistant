@@ -18,6 +18,7 @@ testFiles =
       ,"Repack" </> "Kits.hs"
       ,"Repack" </> "MetallicLogos.hs"
       ,"Repack" </> "RealNamesFix.hs"
+      ,"Repack" </> "Skins.hs"
       ,"Repack" </> "Unpack.hs"
       ,"Streaming.hs"
       ,"Types.hs"
