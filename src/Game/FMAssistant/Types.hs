@@ -19,6 +19,7 @@ module Game.FMAssistant.Types
        ( -- * Game versions
          Version(..)
        , versionDir
+       , versions
          -- * Path types
        , AppDirPath(..)
        , defaultAppDir
@@ -43,7 +44,7 @@ import Path.IO (getHomeDir)
 data Version
   = FM16
   | FM17
-  deriving (Eq,Show,Ord,Typeable,Read)
+  deriving (Eq,Ord,Enum,Bounded,Typeable,Show,Read)
 
 -- | The game version subdirectory.
 --
@@ -54,6 +55,10 @@ data Version
 versionDir :: Version -> Path Rel Dir
 versionDir FM16 = $(mkRelDir "Football Manager 2016")
 versionDir FM17 = $(mkRelDir "Football Manager 2017")
+
+-- | A list of all 'Version's.
+versions :: [Version]
+versions = [minBound ..]
 
 -- | Paths which point to application directories, i.e., where the
 -- game's files are located.
