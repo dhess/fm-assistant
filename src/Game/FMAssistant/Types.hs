@@ -89,12 +89,13 @@ newtype BackupDirPath =
   deriving (Eq,Show,Ord,Typeable)
 
 -- | The default backup directory.
-defaultBackupDir :: (MonadThrow m, MonadIO m) => m BackupDirPath
-defaultBackupDir =
+defaultBackupDir :: (MonadThrow m, MonadIO m) => Version -> m BackupDirPath
+defaultBackupDir version =
   do homeDir <- getHomeDir
      return $
        BackupDirPath (homeDir </>
-                     $(mkRelDir "Library/Application Support/FMAssistant"))
+                     $(mkRelDir "Library/Application Support/FMAssistant") </>
+                     versionDir version)
 
 -- | The root exception type for @fm-assistant@.
 data SomeFMAssistantException =

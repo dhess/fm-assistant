@@ -67,7 +67,7 @@ run :: Command -> IO ExitCode
 run (Install (InstallOptions version fns)) =
   do userDir <- defaultUserDir version
      appDir <- defaultAppDir version
-     backupDir <- defaultBackupDir
+     backupDir <- defaultBackupDir version
      codes <- forM fns
                    (\fp ->
                      catchesMost $
