@@ -42,7 +42,7 @@ import Path.IO (getHomeDir)
 -- | The game version.
 data Version =
   FM16
-  deriving (Eq,Show,Ord,Typeable)
+  deriving (Eq,Show,Ord,Typeable,Read)
 
 -- | The game version subdirectory.
 --

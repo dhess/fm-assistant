@@ -21,7 +21,8 @@ data Command
   | Validate ValidateOptions
 
 data InstallOptions =
-  InstallOptions {_installFileNames :: [String]}
+  InstallOptions {_version :: !Version
+                 ,_installFileNames :: [String]}
 
 installCmd :: Parser Command
 installCmd = Install <$> installOptions
@@ -29,6 +30,12 @@ installCmd = Install <$> installOptions
 installOptions :: Parser InstallOptions
 installOptions =
   InstallOptions <$>
+    option auto (long "version" <>
+                short 'V' <>
+                metavar "VERSION" <>
+                value FM16 <>
+                showDefault <>
+                help "FM version") <*>
     some (argument str (metavar "FILE [FILE] ..."))
 
 data ValidateOptions =
@@ -57,9 +64,9 @@ parser =
      command "validate" (info validateCmd (progDesc "Validate mod packs")))
 
 run :: Command -> IO ExitCode
-run (Install (InstallOptions fns)) =
-  do userDir <- defaultUserDir FM16
-     appDir <- defaultAppDir FM16
+run (Install (InstallOptions version fns)) =
+  do userDir <- defaultUserDir version
+     appDir <- defaultAppDir version
      backupDir <- defaultBackupDir
      codes <- forM fns
                    (\fp ->
