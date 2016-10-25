@@ -40,16 +40,20 @@ import Path ((</>), Path, Abs, Rel, Dir, mkRelDir)
 import Path.IO (getHomeDir)
 
 -- | The game version.
-data Version =
-  FM16
+data Version
+  = FM16
+  | FM17
   deriving (Eq,Show,Ord,Typeable,Read)
 
 -- | The game version subdirectory.
 --
 -- >>> versionDir FM16
 -- "Football Manager 2016/"
+-- >>> versionDir FM17
+-- "Football Manager 2017/"
 versionDir :: Version -> Path Rel Dir
 versionDir FM16 = $(mkRelDir "Football Manager 2016")
+versionDir FM17 = $(mkRelDir "Football Manager 2017")
 
 -- | Paths which point to application directories, i.e., where the
 -- game's files are located.
