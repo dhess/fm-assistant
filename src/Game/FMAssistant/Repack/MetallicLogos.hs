@@ -36,8 +36,8 @@ import Game.FMAssistant.Mod
 import Game.FMAssistant.Repack.Internal (ArchiveFilePath(..), generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Types
-       (Version(..), versionDir, versions,
-        fmAssistantExceptionToException, fmAssistantExceptionFromException)
+       (fmAssistantExceptionToException,
+        fmAssistantExceptionFromException)
 import Game.FMAssistant.Util (basename)
 
 picturesSubDir :: Path Rel Dir
@@ -46,17 +46,19 @@ picturesSubDir = $(mkRelDir "graphics/pictures")
 editorDataSubDir :: Path Rel Dir
 editorDataSubDir = $(mkRelDir "editor data")
 
-identifyVersion :: (MonadIO m) => Path Abs Dir -> m (Maybe Version)
-identifyVersion rootDir =
-  liftIO $ foldrM subDirExists Nothing versions
+findSubDir :: (MonadIO m) => Path Abs Dir -> m (Maybe (Path Rel Dir))
+findSubDir rootDir =
+  liftIO $ foldrM subDirExists Nothing [$(mkRelDir "Football Manager 2016")
+                                       ,$(mkRelDir "Football Manager 2017")
+                                       ,$(mkRelDir "sortitoutsi Metallic Logos")]
   where
-    subDirExists :: Version -> Maybe Version -> IO (Maybe Version)
-    subDirExists version Nothing =
-      do exists <- doesDirExist $ rootDir </> versionDir version
+    subDirExists :: Path Rel Dir -> Maybe (Path Rel Dir) -> IO (Maybe (Path Rel Dir))
+    subDirExists subdir Nothing =
+      do exists <- doesDirExist $ rootDir </> subdir
          if exists
-           then return $ Just version
+           then return $ Just subdir
            else return Nothing
-    subDirExists _ version = return version
+    subDirExists _ subdir = return subdir
 
 -- | Repack the Metallic Logos pack.
 repackMetallicLogos
@@ -70,16 +72,16 @@ repackMetallicLogos
 repackMetallicLogos archive@(ArchiveFilePath fn) destDir =
   withSystemTempDir (basename fn) $ \unpackDir ->
     do unpack archive unpackDir
-       identifyVersion unpackDir >>= \case
+       findSubDir unpackDir >>= \case
          Nothing -> throwM $ UnknownVersion archive
-         Just version ->
-           do let unpackedPicturesDir = unpackDir </> versionDir version </> picturesSubDir
+         Just subdir ->
+           do let unpackedPicturesDir = unpackDir </> subdir </> picturesSubDir
               unlessM (doesDirExist unpackedPicturesDir) $
                 throwM $ MissingPicturesDir archive
-              let unpackedEditorDataDir = unpackDir </> versionDir version </> editorDataSubDir
+              let unpackedEditorDataDir = unpackDir </> subdir </> editorDataSubDir
               unlessM (doesDirExist unpackedEditorDataDir) $
                 throwM $ MissingEditorDataDir archive
-              let unpackedRetinaDir = unpackDir </> $(mkRelDir "Optional Retina Files") </> versionDir version </> picturesSubDir
+              let unpackedRetinaDir = unpackDir </> $(mkRelDir "Optional Retina Files") </> subdir </> picturesSubDir
               withSystemTempDir "repackMetallicLogos" $ \tarDir ->
                 let modPicturesDir = tarDir </> packDir CreateUserDir </> picturesSubDir
                     modEditorDataSubDir = tarDir </> packDir CreateUserDir </> editorDataSubDir
