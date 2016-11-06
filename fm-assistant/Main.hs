@@ -11,7 +11,7 @@ import qualified DebskisHairstyles (run)
 import qualified KitPack (run)
 import qualified MetallicLogos (run)
 import qualified Mod (Command, run, parser)
-import qualified RealNamesFix16 (run)
+import qualified RealNamesFix (run)
 import qualified Repack (Command, parser)
 import qualified RepackMultiple (Command, parser)
 import qualified Skin (run)
@@ -26,7 +26,7 @@ data Command
   | CutoutFacesIcons Repack.Command
   | MetallicLogos Repack.Command
   | Mod Mod.Command
-  | RealNamesFix16 Repack.Command
+  | RealNamesFix Repack.Command
   | Skin RepackMultiple.Command
 
 debskisHairstylesCmd :: Parser Command
@@ -47,8 +47,8 @@ metallicLogosCmd = MetallicLogos <$> Repack.parser
 modCmd :: Parser Command
 modCmd = Mod <$> Mod.parser
 
-realNamesFix16Cmd :: Parser Command
-realNamesFix16Cmd = RealNamesFix16 <$> Repack.parser
+realNamesFixCmd :: Parser Command
+realNamesFixCmd = RealNamesFix <$> Repack.parser
 
 skinCmd :: Parser Command
 skinCmd = Skin <$> RepackMultiple.parser
@@ -62,7 +62,7 @@ cmds =
      command "cutout-faces-megapack" (info cutoutFacesMegapackCmd (progDesc "Sortioutsi Cutout Megapack commands")) <>
      command "cutout-faces-icons" (info cutoutFacesIconsCmd (progDesc "Sortioutsi Cutout Icons commands")) <>
      command "metallic-logos" (info metallicLogosCmd (progDesc "Metallic Logos commands")) <>
-     command "real-names-fix-16" (info realNamesFix16Cmd (progDesc "Sortitoutsi Real Names Fix (for FM16) commands")) <>
+     command "real-names-fix" (info realNamesFixCmd (progDesc "Sortitoutsi Real Names Fix commands")) <>
      command "skin" (info skinCmd (progDesc "Skin commands")) <>
      command "mod" (info modCmd (progDesc "Mod pack commands")))
 
@@ -73,7 +73,7 @@ run (GlobalOptions (CutoutFacesMegapack cmd)) = CutoutFacesMegapack.run cmd
 run (GlobalOptions (CutoutFacesIcons cmd)) = CutoutFacesIcons.run cmd
 run (GlobalOptions (MetallicLogos cmd)) = MetallicLogos.run cmd
 run (GlobalOptions (Mod cmd)) = Mod.run cmd
-run (GlobalOptions (RealNamesFix16 cmd)) = RealNamesFix16.run cmd
+run (GlobalOptions (RealNamesFix cmd)) = RealNamesFix.run cmd
 run (GlobalOptions (Skin cmd)) = Skin.run cmd
 
 main :: IO ExitCode

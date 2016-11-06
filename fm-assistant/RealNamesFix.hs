@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module RealNamesFix16
+module RealNamesFix
        ( run
        ) where
 
-import Game.FMAssistant.Repack (repackRealNamesFix16)
+import Game.FMAssistant.Repack (repackRealNamesFix)
 import System.Exit (ExitCode(..))
 
 import Repack (Command)
 import qualified Repack (run)
 
 run :: Command -> IO ExitCode
-run = Repack.run repackRealNamesFix16
+run = Repack.run repackRealNamesFix

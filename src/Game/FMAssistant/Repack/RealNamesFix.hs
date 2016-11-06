@@ -1,6 +1,6 @@
 {-|
-Module      : Game.FMAssistant.Repack.RealNamesFix16
-Description : Repack the Real Names Fix mod (for FM16)
+Module      : Game.FMAssistant.Repack.RealNamesFix
+Description : Repack the Real Names Fix mod
 Copyright   : (c) 2016, Drew Hess
 License     : BSD3
 Maintainer  : Drew Hess <src@drewhess.com>
@@ -15,10 +15,10 @@ Portability : non-portable
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
 
-module Game.FMAssistant.Repack.RealNamesFix16
-       ( repackRealNamesFix16
+module Game.FMAssistant.Repack.RealNamesFix
+       ( repackRealNamesFix
          -- * Exceptions
-       , RealNamesFix16RepackException(..)
+       , RealNamesFixRepackException(..)
        ) where
 
 import Control.Conditional (unlessM)
@@ -108,7 +108,7 @@ removeLncFiles =
 -- happens is that a few files are deleted, and a few are added. Here
 -- we do the minimum required changes. (By doing so, we can also make
 -- this mod work for all database versions.)
-repackRealNamesFix16
+repackRealNamesFix
   :: (MonadThrow m, MonadMask m, MonadIO m)
   => ArchiveFilePath
   -- ^ The archive file
@@ -116,7 +116,7 @@ repackRealNamesFix16
   -- ^ The destination directory
   -> m PackFilePath
   -- ^ The output mod pack
-repackRealNamesFix16 archive@(ArchiveFilePath fn) destDir =
+repackRealNamesFix archive@(ArchiveFilePath fn) destDir =
   withSystemTempDir (basename fn) $ \unpackDir ->
     do unpack archive unpackDir
        let unpackedLncDir = unpackDir </> $(mkRelDir "lnc")
@@ -124,8 +124,8 @@ repackRealNamesFix16 archive@(ArchiveFilePath fn) destDir =
          throwM $ MissingLncDir archive
        let unpackedRnfDir = unpackDir </> rnfDir
        unlessM (doesDirExist unpackedRnfDir) $
-         throwM $ MissingRealNamesFix16Dir archive
-       withSystemTempDir "repackRealNamesFix16" $ \tarDir ->
+         throwM $ MissingRealNamesFixDir archive
+       withSystemTempDir "repackRealNamesFix" $ \tarDir ->
          let modRnfDir = tarDir </> packDir CreateUserDir </> rnfSubDir
          in do ensureDir (parent modRnfDir)
                copyDirRecur unpackedRnfDir modRnfDir
@@ -155,23 +155,23 @@ repackRealNamesFix16 archive@(ArchiveFilePath fn) destDir =
          ensureDir (parent modFn)
          touchFile modFn
 
-data RealNamesFix16RepackException
+data RealNamesFixRepackException
   = MissingDbcDir ArchiveFilePath
     -- ^ The archive is missing the "dbc" directory
   | MissingEdtDir ArchiveFilePath
     -- ^ The archive is missing the "edt" directory
   | MissingLncDir ArchiveFilePath
     -- ^ The archive is missing the "lnc" directory
-  | MissingRealNamesFix16Dir ArchiveFilePath
+  | MissingRealNamesFixDir ArchiveFilePath
     -- ^ The archive is missing the Real Names Fix directory
   deriving (Eq,Typeable)
 
-instance Show RealNamesFix16RepackException where
+instance Show RealNamesFixRepackException where
   show (MissingDbcDir fp) = show fp ++ ": Malformed Real Names fix mod (no \"dbc\" directory)"
   show (MissingEdtDir fp) = show fp ++ ": Malformed Real Names Fix mod (no \"edt\" directory)"
   show (MissingLncDir fp) = show fp ++ ": Malformed Real Names Fix mod (no \"lnc\" directory for Retina files)"
-  show (MissingRealNamesFix16Dir fp) = show fp ++ ": Malformed Real Names Fix mod (no \"Real Names Fix\" directory for Retina files)"
+  show (MissingRealNamesFixDir fp) = show fp ++ ": Malformed Real Names Fix mod (no \"Real Names Fix\" directory for Retina files)"
 
-instance Exception RealNamesFix16RepackException where
+instance Exception RealNamesFixRepackException where
   toException = fmAssistantExceptionToException
   fromException = fmAssistantExceptionFromException
