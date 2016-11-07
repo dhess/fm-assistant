@@ -33,7 +33,8 @@ import Path.IO
 
 import Game.FMAssistant.Mod
        (PackFilePath, PackAction(CreateUserDir), packDir, packMod)
-import Game.FMAssistant.Repack.Internal (ArchiveFilePath(..), generateModId)
+import Game.FMAssistant.Repack.Internal
+       (ArchiveFilePath(..), Repack, generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Types
        (fmAssistantExceptionToException, fmAssistantExceptionFromException)
@@ -46,11 +47,11 @@ iconFacesSubDir :: Path Rel Dir
 iconFacesSubDir = $(mkRelDir "graphics/iconfaces")
 
 -- | Repack the Sortitoutsi "Cutout Megapack" face pack.
-repackCutoutMegapack :: (MonadMask m, MonadIO m) => ArchiveFilePath -> Path Abs Dir -> m PackFilePath
+repackCutoutMegapack :: (MonadMask m, MonadIO m) => Repack m
 repackCutoutMegapack = repackFaces $(mkRelDir "sortitoutsi/faces") facesSubDir
 
 -- | Repack the Sortitoutsi "Cutout Megapack" face pack.
-repackCutoutIcons :: (MonadMask m, MonadIO m) => ArchiveFilePath -> Path Abs Dir -> m PackFilePath
+repackCutoutIcons :: (MonadMask m, MonadIO m) => Repack m
 repackCutoutIcons = repackFaces $(mkRelDir "sortitoutsi/iconfaces") iconFacesSubDir
 
 repackFaces

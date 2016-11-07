@@ -26,9 +26,9 @@ import Path.IO
         withSystemTempDir)
 
 import Game.FMAssistant.Mod
-       (PackFilePath, PackAction(CreateUserDir), packDir, packMod)
+       (PackAction(CreateUserDir), packDir, packMod)
 import Game.FMAssistant.Repack.Internal
-       (ArchiveFilePath(..), RepackException(..), archiveName,
+       (ArchiveFilePath(..), Repack, RepackException(..), archiveName,
         generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Util (basename)
@@ -36,7 +36,7 @@ import Game.FMAssistant.Util (basename)
 kitSubDir :: Path Rel Dir
 kitSubDir = $(mkRelDir "graphics/kits")
 
-repackKitPack :: (MonadMask m, MonadIO m) => ArchiveFilePath -> Path Abs Dir -> m PackFilePath
+repackKitPack :: (MonadMask m, MonadIO m) => Repack m
 repackKitPack archive@(ArchiveFilePath fn) destDir =
   withSystemTempDir (basename fn) $ \tmpDir ->
     do unpackedKitDir <- unpackKitPack archive tmpDir

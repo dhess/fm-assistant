@@ -9,10 +9,11 @@ module RepackMultiple
 import Options.Applicative
 
 import Control.Monad (forM)
+import Game.FMAssistant.Repack (Repack)
 import Path.IO (resolveDir')
 import System.Exit (ExitCode(..))
 
-import Repack (RepackAction, repackFile)
+import Repack (repackFile)
 import Util (anyFailure, catchesMost)
 
 data Command
@@ -40,7 +41,7 @@ parser =
   hsubparser
     (command "repack" (info repackCmd (progDesc "Repack a mod for use with fm-assistant")))
 
-run :: RepackAction -> Command -> IO ExitCode
+run :: Repack IO -> Command -> IO ExitCode
 run repack (Repack (RepackOptions outputDir fns)) =
   do destDir <- case outputDir of
                   Nothing -> resolveDir' "."

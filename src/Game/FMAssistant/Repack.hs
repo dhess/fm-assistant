@@ -14,6 +14,7 @@ module Game.FMAssistant.Repack
          ArchiveFilePath(..)
        , archiveName
          -- * Repacking actions
+       , Repack
        , repackCutoutIcons
        , repackCutoutMegapack
        , repackDebskisHairstyles
@@ -35,7 +36,7 @@ import Game.FMAssistant.Repack.DebskisHairstyles
 import Game.FMAssistant.Repack.Faces
        (FacePackRepackException(..), repackCutoutIcons, repackCutoutMegapack)
 import Game.FMAssistant.Repack.Internal
-       (ArchiveFilePath(..), RepackException(..), archiveName)
+       (ArchiveFilePath(..), Repack, RepackException(..), archiveName)
 import Game.FMAssistant.Repack.Kits (repackKitPack)
 import Game.FMAssistant.Repack.MetallicLogos (MetallicLogosRepackException(..), repackMetallicLogos)
 import Game.FMAssistant.Repack.RealNamesFix (RealNamesFixRepackException(..), repackRealNamesFix)

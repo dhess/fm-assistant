@@ -28,9 +28,9 @@ import Path ((</>), Path, Abs, Rel, Dir, mkRelDir, parseRelDir)
 import Path.IO (ensureDir, listDir, renameDir, withSystemTempDir)
 
 import Game.FMAssistant.Mod
-       (PackFilePath, PackAction(CreateUserDir), packDir, packMod)
+       (PackAction(CreateUserDir), packDir, packMod)
 import Game.FMAssistant.Repack.Internal
-       (ArchiveFilePath(..), RepackException(..), archiveName,
+       (ArchiveFilePath(..), Repack, RepackException(..), archiveName,
         generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Types
@@ -40,7 +40,7 @@ import Game.FMAssistant.Util (basename)
 skinSubDir :: Path Rel Dir
 skinSubDir = $(mkRelDir "skins")
 
-repackSkin :: (MonadMask m, MonadIO m) => ArchiveFilePath -> Path Abs Dir -> m PackFilePath
+repackSkin :: (MonadMask m, MonadIO m) => Repack m
 repackSkin archive@(ArchiveFilePath fn) destDir =
   withSystemTempDir (basename fn) $ \tmpDir ->
     do unpackedSkinDir <- unpackSkin archive tmpDir

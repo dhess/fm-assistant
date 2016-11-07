@@ -34,10 +34,10 @@ import Path.IO
         withSystemTempDir)
 
 import Game.FMAssistant.Mod
-       (PackFilePath,
-        PackAction(CreateAppDir, RemoveAppDir, CreateUserDir), packDir,
+       (PackAction(CreateAppDir, RemoveAppDir, CreateUserDir), packDir,
         packMod)
-import Game.FMAssistant.Repack.Internal (ArchiveFilePath(..), generateModId)
+import Game.FMAssistant.Repack.Internal
+       (ArchiveFilePath(..), Repack, generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Types
        (fmAssistantExceptionToException, fmAssistantExceptionFromException)
@@ -108,14 +108,7 @@ removeLncFiles =
 -- happens is that a few files are deleted, and a few are added. Here
 -- we do the minimum required changes. (By doing so, we can also make
 -- this mod work for all database versions.)
-repackRealNamesFix
-  :: (MonadThrow m, MonadMask m, MonadIO m)
-  => ArchiveFilePath
-  -- ^ The archive file
-  -> Path Abs Dir
-  -- ^ The destination directory
-  -> m PackFilePath
-  -- ^ The output mod pack
+repackRealNamesFix :: (MonadThrow m, MonadMask m, MonadIO m) => Repack m
 repackRealNamesFix archive@(ArchiveFilePath fn) destDir =
   withSystemTempDir (basename fn) $ \unpackDir ->
     do unpack archive unpackDir

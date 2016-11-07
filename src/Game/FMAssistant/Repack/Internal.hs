@@ -13,8 +13,11 @@ Portability : non-portable
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Repack.Internal
-       ( -- * File paths
-         ArchiveFilePath(..)
+       ( -- * Repack action type
+         Repack
+
+         -- * File paths
+       , ArchiveFilePath(..)
        , archiveName
          -- * Utilities
        , generateModId
@@ -28,13 +31,17 @@ import Control.Monad.IO.Class (MonadIO)
 import Data.Data
 import Data.Time.Calendar (showGregorian)
 import Data.Time.Clock (utctDay)
-import Path (Path, Abs, File)
+import Path (Path, Abs, Dir, File)
 import Path.IO (getModificationTime)
 
+import Game.FMAssistant.Mod (PackFilePath)
 import Game.FMAssistant.Types
        (fmAssistantExceptionToException,
         fmAssistantExceptionFromException)
 import Game.FMAssistant.Util (basename)
+
+-- | Repack actions all have the same type.
+type Repack m = ArchiveFilePath -> Path Abs Dir -> m PackFilePath
 
 -- | The type for paths which point to an archive file (ZIP, RAR,
 -- etc.).

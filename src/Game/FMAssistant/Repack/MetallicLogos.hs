@@ -32,8 +32,9 @@ import Path.IO
        (copyDirRecur, doesDirExist, ensureDir, renameDir, withSystemTempDir)
 
 import Game.FMAssistant.Mod
-       (PackFilePath, PackAction(CreateUserDir), packDir, packMod)
-import Game.FMAssistant.Repack.Internal (ArchiveFilePath(..), generateModId)
+       (PackAction(CreateUserDir), packDir, packMod)
+import Game.FMAssistant.Repack.Internal
+       (ArchiveFilePath(..), Repack, generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Types
        (fmAssistantExceptionToException,
@@ -61,14 +62,7 @@ findSubDir rootDir =
     subDirExists _ subdir = return subdir
 
 -- | Repack the Metallic Logos pack.
-repackMetallicLogos
-  :: (MonadThrow m, MonadMask m, MonadIO m)
-  => ArchiveFilePath
-  -- ^ The archive file
-  -> Path Abs Dir
-  -- ^ The destination directory
-  -> m PackFilePath
-  -- ^ The output mod pack
+repackMetallicLogos :: (MonadThrow m, MonadMask m, MonadIO m) => Repack m
 repackMetallicLogos archive@(ArchiveFilePath fn) destDir =
   withSystemTempDir (basename fn) $ \unpackDir ->
     do unpack archive unpackDir

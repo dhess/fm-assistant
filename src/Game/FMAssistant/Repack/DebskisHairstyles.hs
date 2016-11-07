@@ -32,7 +32,8 @@ import Path.IO
 
 import Game.FMAssistant.Mod
        (PackFilePath, PackAction(CreateAppDir), packDir, packMod)
-import Game.FMAssistant.Repack.Internal (ArchiveFilePath(..), generateModId)
+import Game.FMAssistant.Repack.Internal
+       (ArchiveFilePath(..), Repack, generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Types
        (fmAssistantExceptionToException, fmAssistantExceptionFromException)
@@ -45,14 +46,7 @@ gameHairDir :: Path Rel Dir
 gameHairDir = $(mkRelDir "data/facegen/hair")
 
 -- | Repack Debski's World of Hairstyles pack.
-repackDebskisHairstyles
-  :: (MonadThrow m, MonadMask m, MonadIO m)
-  => ArchiveFilePath
-  -- ^ The archive file
-  -> Path Abs Dir
-  -- ^ The destination directory
-  -> m PackFilePath
-  -- ^ The output mod pack
+repackDebskisHairstyles :: (MonadThrow m, MonadMask m, MonadIO m) => Repack m
 repackDebskisHairstyles archive@(ArchiveFilePath fn) destDir =
   withSystemTempDir (basename fn) $ \unpackDir ->
     do unpack archive unpackDir
