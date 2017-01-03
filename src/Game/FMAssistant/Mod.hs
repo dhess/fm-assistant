@@ -194,8 +194,7 @@ installMod packFile appDir userDir backupDir =
                        when exists $ go action subDir)
     go :: (MonadIO m, MonadThrow m, MonadCatch m) => PackAction -> Path Abs Dir -> m ()
     go RemoveAppDir subDir =
-      do checkBackupDir backupDir
-         checkAppDir appDir
+      do checkAppDir appDir
          -- XXX TODO: need a better method for uniquely identifying
          -- the mod; use the hash, perhaps?
          modBackupDir <- packBackupDir packFile backupDir
@@ -220,14 +219,6 @@ installMod packFile appDir userDir backupDir =
     go CreateUserDir subDir =
       do checkUserDir userDir
          copyDirRecur subDir (userDirPath userDir)
-
--- | Check that the backup directory exists by throwing
--- 'NoSuchBackupDirectory' if it does not.
-checkBackupDir :: (MonadThrow m, MonadIO m) => BackupDirPath -> m ()
-checkBackupDir backupDir =
-  do exists <- doesDirExist (backupDirPath backupDir)
-     unless exists $
-       throwM $ NoSuchBackupDirectory backupDir
 
 -- | Check that the user directory exists by throwing
 -- 'NoSuchUserDirectory' if it does not.
@@ -258,8 +249,6 @@ data ModException
     -- ^ The user directory doesn't exist
   | NoSuchAppDirectory AppDirPath
     -- ^ The app directory doesn't exist
-  | NoSuchBackupDirectory BackupDirPath
-    -- ^ The backup directory doesn't exist
   | InvalidPath (Path Rel File)
     -- ^ The mod contains a path to an invalid location
   deriving (Eq,Typeable)
@@ -270,7 +259,6 @@ instance Show ModException where
   show (InvalidTopLevelDirectory dir) = "The mod directory contains an invalid top-level directory ( " ++ show dir ++ ")"
   show (NoSuchUserDirectory fp) = show fp ++ ": The game user directory doesn't exist"
   show (NoSuchAppDirectory fp) = show fp ++ ": The game application directory doesn't exist"
-  show (NoSuchBackupDirectory fp) = show fp ++ ": The backup directory doesn't exist"
   show (InvalidPath fp) = show fp ++ ": Invalid/insecure path found in mod pack"
 
 instance Exception ModException where
