@@ -72,7 +72,7 @@ packId = basename . packFilePath
 packBackupDir :: (MonadThrow m) => PackFilePath -> BackupDirPath -> m (Path Abs Dir)
 packBackupDir packFile backupParentDir =
   do backupSubDir <- parseRelDir $ basename (packFilePath packFile)
-     return $ (backupDirPath backupParentDir) </> backupSubDir
+     return $ backupDirPath backupParentDir </> backupSubDir
 
 -- | All possible actions when installing a mod.
 --
@@ -162,7 +162,7 @@ unpackMod
   -> m ()
 unpackMod (PackFilePath pf) unpackDir = liftIO $
   -- XXX TODO: refuse to unpack symbolic links.
-  do entries <- fmap (Tar.read . Lzma.decompress) $ BL.readFile (toFilePath pf)
+  do entries <- (Tar.read . Lzma.decompress) <$> BL.readFile (toFilePath pf)
      Tar.unpack (toFilePath unpackDir) entries
 
 installMod
