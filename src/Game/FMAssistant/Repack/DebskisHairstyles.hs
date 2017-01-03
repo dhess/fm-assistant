@@ -26,12 +26,12 @@ import Control.Exception (Exception(..))
 import Control.Monad.Catch (MonadMask, MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Data
-import Path ((</>), Path, Abs, Rel, Dir, mkRelDir, parent)
+import Path ((</>), Path, Rel, Dir, mkRelDir, parent)
 import Path.IO
        (doesDirExist, ensureDir, renameDir, withSystemTempDir)
 
 import Game.FMAssistant.Mod
-       (PackFilePath, PackAction(CreateAppDir), packDir, packMod)
+       (PackAction(CreateAppDir), packDir, packMod)
 import Game.FMAssistant.Repack.Internal
        (ArchiveFilePath(..), Repack, generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)

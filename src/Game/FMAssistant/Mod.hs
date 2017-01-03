@@ -32,7 +32,7 @@ module Game.FMAssistant.Mod
 import qualified Codec.Archive.Tar as Tar (pack, read, unpack, write)
 import qualified Codec.Compression.Lzma as Lzma (compress, decompress)
 import Control.Exception (Exception(..))
-import Control.Monad (forM_, liftM, unless, void, when)
+import Control.Monad (forM_, unless, void, when)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow, throwM)
 import qualified Data.ByteString.Lazy as BL (readFile, writeFile)
@@ -41,7 +41,7 @@ import Data.Set (Set)
 import qualified Data.Set as Set (fromList, member)
 import Path
        ((</>), Path, Abs, Rel, Dir, File, dirname, isParentOf, mkRelDir,
-        parent, parseAbsFile, parseRelDir, parseRelFile, toFilePath)
+        parent, parseRelDir, parseRelFile, toFilePath)
 import Path.IO
        (AnyPath(..), copyDirRecur, doesDirExist, ensureDir,
         ignoringAbsence, listDir, listDirRecur, renameFile,
@@ -101,9 +101,9 @@ validTLDs = Set.fromList $ map packDir allActions
 -- | Validate a mod pack: throws an exception if any problems are
 -- detected, otherwise returns the void result.
 validateMod
-  :: (MonadIO m, MonadThrow m, MonadMask m)
+  :: (MonadIO m, MonadMask m)
   => PackFilePath
-  -- ^ The mod pack
+     -- ^ The mod pack
   -> m ()
 validateMod packFile =
   withSystemTempDir "validateMod" $ \tmpDir ->
@@ -154,32 +154,32 @@ packMod srcDir destDir modName =
          BL.writeFile (toFilePath tarFile) $ Lzma.compress $ Tar.write entries
 
 unpackMod
-  :: (MonadIO m, MonadThrow m)
+  :: (MonadIO m)
   => PackFilePath
-  -- ^ The mod pack file
+     -- ^ The mod pack file
   -> Path Abs Dir
-  -- ^ Where to unpack the mod pack file
+     -- ^ Where to unpack the mod pack file
   -> m ()
 unpackMod (PackFilePath pf) unpackDir = liftIO $
   -- XXX TODO: refuse to unpack symbolic links.
-  do entries <- liftM (Tar.read . Lzma.decompress) $ BL.readFile (toFilePath pf)
+  do entries <- fmap (Tar.read . Lzma.decompress) $ BL.readFile (toFilePath pf)
      Tar.unpack (toFilePath unpackDir) entries
 
 installMod
-  :: (MonadIO m, MonadThrow m, MonadCatch m, MonadMask m)
+  :: (MonadIO m, MonadMask m)
   => PackFilePath
-  -- ^ Location of the packed mod
+     -- ^ Location of the packed mod
   -> AppDirPath
-  -- ^ The target app/game directory
+     -- ^ The target app/game directory
   -> UserDirPath
-  -- ^ The target user directory
+     -- ^ The target user directory
   -> BackupDirPath
-  -- ^ The user's backup directory
+     -- ^ The user's backup directory
   -> m ()
 installMod packFile appDir userDir backupDir =
   withSystemTempDir "installMod" install
   where
-    install :: (MonadIO m, MonadThrow m, MonadCatch m) => Path Abs Dir -> m ()
+    install :: (MonadIO m, MonadCatch m) => Path Abs Dir -> m ()
     install unpackDir =
       do unpackMod packFile unpackDir
          void $ validateMod' unpackDir
@@ -192,7 +192,7 @@ installMod packFile appDir userDir backupDir =
                  let subDir = unpackDir </> packDir action
                  in do exists <- doesDirExist subDir
                        when exists $ go action subDir)
-    go :: (MonadIO m, MonadThrow m, MonadCatch m) => PackAction -> Path Abs Dir -> m ()
+    go :: (MonadIO m, MonadCatch m) => PackAction -> Path Abs Dir -> m ()
     go RemoveAppDir subDir =
       do checkAppDir appDir
          -- XXX TODO: need a better method for uniquely identifying

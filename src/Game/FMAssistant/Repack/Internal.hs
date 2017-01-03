@@ -26,7 +26,6 @@ module Game.FMAssistant.Repack.Internal
        ) where
 
 import Control.Exception (Exception(..))
-import Control.Monad.Catch (MonadThrow)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Data
 import Data.Time.Calendar (showGregorian)
@@ -61,7 +60,7 @@ newtype ArchiveFilePath =
 archiveName :: ArchiveFilePath -> String
 archiveName = basename . archiveFilePath
 
-generateModId :: (MonadIO m, MonadThrow m) => ArchiveFilePath -> m String
+generateModId :: (MonadIO m) => ArchiveFilePath -> m String
 generateModId (ArchiveFilePath archive) =
   let base = basename archive
   in do modifiedTime <- getModificationTime archive
