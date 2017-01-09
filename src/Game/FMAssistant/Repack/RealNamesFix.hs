@@ -35,7 +35,7 @@ import Path.IO
 
 import Game.FMAssistant.Mod
        (PackAction(CreateAppDir, RemoveAppDir, CreateUserDir), packDir,
-        packMod)
+        pack)
 import Game.FMAssistant.Repack.Internal
        (ArchiveFilePath(..), Repack, generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
@@ -140,7 +140,7 @@ repackRealNamesFix archive@(ArchiveFilePath fn) destDir =
                         forM_ removeEdtFiles (removeModFile modRemoveEdtDir)
                         forM_ removeLncFiles (removeModFile modRemoveLncDir)
                modId <- generateModId archive
-               packMod tarDir destDir modId
+               pack tarDir destDir modId
   where
     removeModFile :: (MonadIO m) => Path Abs Dir -> Path Rel File -> m ()
     removeModFile modDir relFile =

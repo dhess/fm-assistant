@@ -28,7 +28,7 @@ import Path ((</>), Path, Abs, Rel, Dir, mkRelDir, parseRelDir)
 import Path.IO (ensureDir, listDir, renameDir, withSystemTempDir)
 
 import Game.FMAssistant.Mod
-       (PackAction(CreateUserDir), packDir, packMod)
+       (PackAction(CreateUserDir), packDir, pack)
 import Game.FMAssistant.Repack.Internal
        (ArchiveFilePath(..), Repack, RepackException(..), archiveName,
         generateModId)
@@ -50,7 +50,7 @@ repackSkin archive@(ArchiveFilePath fn) destDir =
                modDir <- parseRelDir $ archiveName archive
                renameDir unpackedSkinDir (modParentDir </> modDir)
                modId <- generateModId archive
-               packMod tarDir destDir modId
+               pack tarDir destDir modId
 
 -- | Unpack an archive file assumed to contain a skin to the given
 -- parent directory.

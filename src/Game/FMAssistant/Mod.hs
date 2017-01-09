@@ -10,33 +10,57 @@ Portability : non-portable
 -}
 
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
 
 module Game.FMAssistant.Mod
-       ( PackFilePath(..)
+       ( -- * Mod configuration
+         Config(..)
+       , appDir
+       , userDir
+       , backupDir
+       , version
+       , HasConfig
+
+         -- * The mod monad
+       , ModT(..)
+       , Mod
+       , runMod
+
+         -- * Mod actions and types
+       , PackFilePath(..)
        , packId
        , packBackupDir
        , PackAction(..)
        , packDir
-       , packMod
-       , unpackMod
-       , validateMod
-       , installMod
+       , pack
+       , unpack
+       , validate
+       , install
+
          -- * Exceptions
        , ModException
        ) where
 
 import qualified Codec.Archive.Tar as Tar (pack, read, unpack, write)
 import qualified Codec.Compression.Lzma as Lzma (compress, decompress)
-import Control.Lens (view)
+import Control.Applicative (Alternative)
+import Control.Lens (makeClassy, view)
 import Control.Exception (Exception(..))
-import Control.Monad (forM_, unless, void, when)
+import Control.Monad (MonadPlus, forM_, unless, void, when)
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow, throwM)
+import Control.Monad.Cont (MonadCont)
+import Control.Monad.Except (MonadError)
+import Control.Monad.Fix (MonadFix)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Control.Monad.Reader (MonadReader(..))
+import Control.Monad.Reader (MonadReader, ReaderT, runReaderT)
+import Control.Monad.RWS (MonadRWS)
+import Control.Monad.Writer (MonadWriter)
+import Control.Monad.State (MonadState)
+import Control.Monad.Trans.Class (MonadTrans, lift)
 import qualified Data.ByteString.Lazy as BL (readFile, writeFile)
 import Data.Data
 import Data.Set (Set)
@@ -50,10 +74,33 @@ import Path.IO
         withSystemTempDir)
 
 import Game.FMAssistant.Types
-       (AppDirPath(..), BackupDirPath(..), HasConfig, UserDirPath(..),
-        appDir, userDir, backupDir, fmAssistantExceptionToException,
-        fmAssistantExceptionFromException)
+       (AppDirPath(..), BackupDirPath(..), UserDirPath(..), Version(..),
+        fmAssistantExceptionToException, fmAssistantExceptionFromException)
 import Game.FMAssistant.Util (basename)
+
+-- | Mod configuration.
+data Config =
+  Config {_appDir :: AppDirPath
+         ,_userDir :: UserDirPath
+         ,_backupDir :: BackupDirPath
+         ,_version :: Version}
+
+makeClassy ''Config
+
+-- | The mod monad transformer, for building your own applications.
+newtype ModT m a =
+  ModT { runModT :: m a }
+  deriving (Functor, Alternative, Applicative, Monad, MonadFix, MonadPlus, MonadThrow, MonadCatch, MonadMask, MonadCont, MonadIO, MonadReader r, MonadError e, MonadWriter w, MonadState s, MonadRWS r w s)
+
+instance MonadTrans ModT where
+  lift = ModT
+
+-- | A convenient alias for the default mod monad ('ModT' over 'IO').
+type Mod a = ModT (ReaderT Config IO) a
+
+-- | Run a mod action in 'IO'.
+runMod :: Config -> Mod a -> IO a
+runMod c a = runReaderT (runModT a) c
 
 -- | The type for paths which point to a pack file.
 newtype PackFilePath =
@@ -103,26 +150,26 @@ validTLDs = Set.fromList $ map packDir allActions
 
 -- | Validate a mod pack: throws an exception if any problems are
 -- detected, otherwise returns the void result.
-validateMod
+validate
   :: (MonadIO m, MonadMask m)
   => PackFilePath
      -- ^ The mod pack
   -> m ()
-validateMod packFile =
-  withSystemTempDir "validateMod" $ \tmpDir ->
-    do unpackMod packFile tmpDir
-       void $ validateMod' tmpDir
+validate packFile =
+  withSystemTempDir "validate" $ \tmpDir ->
+    do unpack packFile tmpDir
+       void $ validate' tmpDir
 
 -- | (Strictly) validate an unpacked mod's contents, returning the
 -- list of top-level mod subdirectories if the mod is valid, throwing
 -- an exception if not.
-validateMod'
+validate'
   :: (MonadIO m, MonadThrow m)
   => Path Abs Dir
   -- ^ Location of the unpacked mod
   -> m [Path Rel Dir]
   -- ^ The list of top-level mod subdirectories
-validateMod' modDir =
+validate' modDir =
   listDir modDir >>= \case
     ([], []) -> throwM NoContents
     (absDirs, []) ->
@@ -133,7 +180,7 @@ validateMod' modDir =
            _ -> return $! dirs
     (_, _) -> throwM TopLevelFiles
 
-packMod
+pack
   :: (MonadIO m, MonadThrow m)
   => Path Abs Dir
   -- ^ The top-level directory where the mod contents live
@@ -143,8 +190,8 @@ packMod
   -- ^ The mod name/ID
   -> m PackFilePath
   -- ^ The path to the created mod pack
-packMod srcDir destDir modName =
-  do dirs <- validateMod' srcDir
+pack srcDir destDir modName =
+  do dirs <- validate' srcDir
      tarFileName <- parseRelFile (modName ++ ".fmax")
      let tarPath = destDir </> tarFileName
      createTar tarPath dirs
@@ -156,30 +203,30 @@ packMod srcDir destDir modName =
       do entries <- Tar.pack (toFilePath srcDir) (map toFilePath dirs)
          BL.writeFile (toFilePath tarFile) $ Lzma.compress $ Tar.write entries
 
-unpackMod
+unpack
   :: (MonadIO m)
   => PackFilePath
      -- ^ The mod pack file
   -> Path Abs Dir
      -- ^ Where to unpack the mod pack file
   -> m ()
-unpackMod (PackFilePath pf) unpackDir = liftIO $
+unpack (PackFilePath pf) unpackDir = liftIO $
   -- XXX TODO: refuse to unpack symbolic links.
   do entries <- (Tar.read . Lzma.decompress) <$> BL.readFile (toFilePath pf)
      Tar.unpack (toFilePath unpackDir) entries
 
-installMod
+install
   :: (MonadIO m, MonadMask m, MonadReader r m, HasConfig r)
   => PackFilePath
      -- ^ Location of the packed mod
   -> m ()
-installMod packFile =
-  withSystemTempDir "installMod" install
+install packFile =
+  withSystemTempDir "install" install'
   where
-    install :: (MonadIO m, MonadCatch m, MonadReader r m, HasConfig r) => Path Abs Dir -> m ()
-    install unpackDir =
-      do unpackMod packFile unpackDir
-         void $ validateMod' unpackDir
+    install' :: (MonadIO m, MonadCatch m, MonadReader r m, HasConfig r) => Path Abs Dir -> m ()
+    install' unpackDir =
+      do unpack packFile unpackDir
+         void $ validate' unpackDir
          -- Try each pack action, in order.
          --
          -- XXX TODO: should back out of install if an exception

@@ -10,10 +10,9 @@ import Options.Applicative
 
 import Control.Monad (forM, forM_, unless)
 import Game.FMAssistant.Mod
-       (PackFilePath(..), installMod, validateMod)
+       (Config(..), PackFilePath(..), install, runMod, validate)
 import Game.FMAssistant.Types
-       (Config(..), Version(..), defaultAppDir, defaultBackupDir,
-        defaultUserDir, runApp)
+       (Version(..), defaultAppDir, defaultBackupDir, defaultUserDir)
 import Path.IO (resolveFile')
 import System.Exit (ExitCode(..))
 
@@ -76,7 +75,7 @@ run (Install (InstallOptions version fns)) =
                    (\fp ->
                      catchesMost $
                        do file <- resolveFile' fp
-                          runApp config $ installMod (PackFilePath file)
+                          runMod config $ install (PackFilePath file)
                           putStrLn $ "Installed " ++ fp
                           return ExitSuccess)
      return $ anyFailure (ExitFailure 1) codes
@@ -85,7 +84,7 @@ run (Validate (ValidateOptions onlyInvalid False fns)) =
                    (\fp ->
                      catchesMost $
                        do file <- resolveFile' fp
-                          validateMod (PackFilePath file)
+                          validate (PackFilePath file)
                           unless onlyInvalid $
                             putStrLn $ fp ++ ": valid mod pack"
                           return ExitSuccess)
@@ -95,7 +94,7 @@ run (Validate (ValidateOptions onlyInvalid True fns)) =
            (\fp ->
              catchesMostQuietly fp $
                do file <- resolveFile' fp
-                  validateMod (PackFilePath file)
+                  validate (PackFilePath file)
                   unless onlyInvalid $
                     putStrLn fp)
      return ExitSuccess

@@ -12,7 +12,6 @@ Portability : non-portable
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
@@ -31,39 +30,15 @@ module Game.FMAssistant.Types
        , BackupDirPath(..)
        , defaultBackupDir
 
-         -- * Configuration
-       , Config(..)
-       , appDir
-       , userDir
-       , backupDir
-       , version
-       , HasConfig
-
-         -- * Application monad
-       , AppT(..)
-       , App
-       , runApp
-
          -- * Exceptions
        , SomeFMAssistantException
        , fmAssistantExceptionToException
        , fmAssistantExceptionFromException
        ) where
 
-import Control.Applicative (Alternative)
-import Control.Lens (makeClassy)
 import Control.Exception (Exception, SomeException, fromException, toException)
-import Control.Monad (MonadPlus)
-import Control.Monad.Cont (MonadCont)
-import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow)
-import Control.Monad.Except (MonadError)
-import Control.Monad.Fix (MonadFix)
+import Control.Monad.Catch (MonadThrow)
 import Control.Monad.IO.Class (MonadIO)
-import Control.Monad.Reader (MonadReader, ReaderT, runReaderT)
-import Control.Monad.RWS (MonadRWS)
-import Control.Monad.Writer (MonadWriter)
-import Control.Monad.State (MonadState)
-import Control.Monad.Trans.Class (MonadTrans, lift)
 import Data.Data
 import Path ((</>), Path, Abs, Rel, Dir, mkRelDir)
 import Path.IO (getHomeDir)
@@ -133,32 +108,6 @@ defaultBackupDir version =
        BackupDirPath (homeDir </>
                      $(mkRelDir "Library/Application Support/FMAssistant") </>
                      versionDir version)
-
--- | Application configuration, for use in reader and state monads.
-data Config =
-  Config {_appDir :: AppDirPath
-         ,_userDir :: UserDirPath
-         ,_backupDir :: BackupDirPath
-         ,_version :: Version}
-
-makeClassy ''Config
-
--- | The application monad transformer, for building your own
--- applications.
-newtype AppT m a =
-  AppT { runAppT :: m a }
-  deriving (Functor, Alternative, Applicative, Monad, MonadFix, MonadPlus, MonadThrow, MonadCatch, MonadMask, MonadCont, MonadIO, MonadReader r, MonadError e, MonadWriter w, MonadState s, MonadRWS r w s)
-
-instance MonadTrans AppT where
-  lift = AppT
-
--- | A convenient alias for the default application monad ('AppT' over
--- 'IO').
-type App a = AppT (ReaderT Config IO) a
-
--- | Run an application action in 'IO'.
-runApp :: Config -> App a -> IO a
-runApp c a = runReaderT (runAppT a) c
 
 -- | The root exception type for @fm-assistant@.
 data SomeFMAssistantException =

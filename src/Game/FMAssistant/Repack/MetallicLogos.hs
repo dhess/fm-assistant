@@ -32,7 +32,7 @@ import Path.IO
        (copyDirRecur, doesDirExist, ensureDir, renameDir, withSystemTempDir)
 
 import Game.FMAssistant.Mod
-       (PackAction(CreateUserDir), packDir, packMod)
+       (PackAction(CreateUserDir), packDir, pack)
 import Game.FMAssistant.Repack.Internal
        (ArchiveFilePath(..), Repack, generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
@@ -86,7 +86,7 @@ repackMetallicLogos archive@(ArchiveFilePath fn) destDir =
                       whenM (doesDirExist unpackedRetinaDir) $
                         copyDirRecur unpackedRetinaDir modPicturesDir
                       modId <- generateModId archive
-                      packMod tarDir destDir modId
+                      pack tarDir destDir modId
 
 data MetallicLogosRepackException
   = UnknownVersion ArchiveFilePath
