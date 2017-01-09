@@ -9,8 +9,11 @@ module Mod
 import Options.Applicative
 
 import Control.Monad (forM, forM_, unless)
-import Game.FMAssistant.Mod (PackFilePath(..), installMod, validateMod)
-import Game.FMAssistant.Types (Version(..), defaultAppDir, defaultBackupDir,defaultUserDir)
+import Game.FMAssistant.Mod
+       (PackFilePath(..), installMod, validateMod)
+import Game.FMAssistant.Types
+       (Config(..), Version(..), defaultAppDir, defaultBackupDir,
+        defaultUserDir, runApp)
 import Path.IO (resolveFile')
 import System.Exit (ExitCode(..))
 
@@ -68,11 +71,12 @@ run (Install (InstallOptions version fns)) =
   do userDir <- defaultUserDir version
      appDir <- defaultAppDir version
      backupDir <- defaultBackupDir version
+     let config = Config appDir userDir backupDir version
      codes <- forM fns
                    (\fp ->
                      catchesMost $
                        do file <- resolveFile' fp
-                          installMod (PackFilePath file) appDir userDir backupDir
+                          runApp config $ installMod (PackFilePath file)
                           putStrLn $ "Installed " ++ fp
                           return ExitSuccess)
      return $ anyFailure (ExitFailure 1) codes

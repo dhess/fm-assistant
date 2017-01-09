@@ -31,10 +31,12 @@ module Game.FMAssistant.Mod
 
 import qualified Codec.Archive.Tar as Tar (pack, read, unpack, write)
 import qualified Codec.Compression.Lzma as Lzma (compress, decompress)
+import Control.Lens (view)
 import Control.Exception (Exception(..))
 import Control.Monad (forM_, unless, void, when)
-import Control.Monad.IO.Class (MonadIO, liftIO)
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow, throwM)
+import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Reader (MonadReader(..))
 import qualified Data.ByteString.Lazy as BL (readFile, writeFile)
 import Data.Data
 import Data.Set (Set)
@@ -48,8 +50,9 @@ import Path.IO
         withSystemTempDir)
 
 import Game.FMAssistant.Types
-       (AppDirPath(..), BackupDirPath(..), UserDirPath(..),
-        fmAssistantExceptionToException, fmAssistantExceptionFromException)
+       (AppDirPath(..), BackupDirPath(..), HasConfig, UserDirPath(..),
+        appDir, userDir, backupDir, fmAssistantExceptionToException,
+        fmAssistantExceptionFromException)
 import Game.FMAssistant.Util (basename)
 
 -- | The type for paths which point to a pack file.
@@ -166,20 +169,14 @@ unpackMod (PackFilePath pf) unpackDir = liftIO $
      Tar.unpack (toFilePath unpackDir) entries
 
 installMod
-  :: (MonadIO m, MonadMask m)
+  :: (MonadIO m, MonadMask m, MonadReader r m, HasConfig r)
   => PackFilePath
      -- ^ Location of the packed mod
-  -> AppDirPath
-     -- ^ The target app/game directory
-  -> UserDirPath
-     -- ^ The target user directory
-  -> BackupDirPath
-     -- ^ The user's backup directory
   -> m ()
-installMod packFile appDir userDir backupDir =
+installMod packFile =
   withSystemTempDir "installMod" install
   where
-    install :: (MonadIO m, MonadCatch m) => Path Abs Dir -> m ()
+    install :: (MonadIO m, MonadCatch m, MonadReader r m, HasConfig r) => Path Abs Dir -> m ()
     install unpackDir =
       do unpackMod packFile unpackDir
          void $ validateMod' unpackDir
@@ -192,12 +189,14 @@ installMod packFile appDir userDir backupDir =
                  let subDir = unpackDir </> packDir action
                  in do exists <- doesDirExist subDir
                        when exists $ go action subDir)
-    go :: (MonadIO m, MonadCatch m) => PackAction -> Path Abs Dir -> m ()
+    go :: (MonadIO m, MonadCatch m, MonadReader r m, HasConfig r) => PackAction -> Path Abs Dir -> m ()
     go RemoveAppDir subDir =
-      do checkAppDir appDir
+      do adir <- view appDir
+         checkAppDir adir
          -- XXX TODO: need a better method for uniquely identifying
          -- the mod; use the hash, perhaps?
-         modBackupDir <- packBackupDir packFile backupDir
+         bdir <- view backupDir
+         modBackupDir <- packBackupDir packFile bdir
          ensureDir modBackupDir
          (_, files) <- listDirRecur subDir
          forM_ files
@@ -205,36 +204,38 @@ installMod packFile appDir userDir backupDir =
                   -- For security purposes, make sure the file to
                   -- remove actually lives in the app directory!
                   do relFn <- makeRelative subDir fn
-                     let targetFile = appDirPath appDir </> relFn
-                     unless (isParentOf (appDirPath appDir) targetFile) $
+                     let targetFile = appDirPath adir </> relFn
+                     unless (isParentOf (appDirPath adir) targetFile) $
                        throwM $ InvalidPath (packDir RemoveAppDir </> relFn)
                      let backupFile = modBackupDir </> relFn
-                     unless (isParentOf (backupDirPath backupDir) backupFile) $
+                     unless (isParentOf (backupDirPath bdir) backupFile) $
                        throwM $ InvalidPath (packDir RemoveAppDir </> relFn)
                      ensureDir (parent backupFile)
                      ignoringAbsence $ renameFile targetFile backupFile)
     go CreateAppDir subDir =
-      do checkAppDir appDir
-         copyDirRecur subDir (appDirPath appDir)
+      do adir <- view appDir
+         checkAppDir adir
+         copyDirRecur subDir (appDirPath adir)
     go CreateUserDir subDir =
-      do checkUserDir userDir
-         copyDirRecur subDir (userDirPath userDir)
+      do udir <- view userDir
+         checkUserDir udir
+         copyDirRecur subDir (userDirPath udir)
 
--- | Check that the user directory exists by throwing
+-- | Check that the user directory exists, throwing
 -- 'NoSuchUserDirectory' if it does not.
 checkUserDir :: (MonadThrow m, MonadIO m) => UserDirPath -> m ()
-checkUserDir userDir =
-  do exists <- doesDirExist (userDirPath userDir)
+checkUserDir d =
+  do exists <- doesDirExist (userDirPath d)
      unless exists $
-       throwM $ NoSuchUserDirectory userDir
+       throwM $ NoSuchUserDirectory d
 
--- | Check that the app directory exists by throwing
+-- | Check that the app directory exists, throwing
 -- 'NoSuchAppDirectory' if it does not.
 checkAppDir :: (MonadThrow m, MonadIO m) => AppDirPath -> m ()
-checkAppDir appDir =
-  do exists <- doesDirExist (appDirPath appDir)
+checkAppDir d =
+  do exists <- doesDirExist (appDirPath d)
      unless exists $
-       throwM $ NoSuchAppDirectory appDir
+       throwM $ NoSuchAppDirectory d
 
 -- | Exceptions which can occur while packing, installing, or
 -- validating a mod.
