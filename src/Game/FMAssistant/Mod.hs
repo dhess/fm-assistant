@@ -112,6 +112,7 @@ newtype PackFilePath =
 -- portion and the trailing file suffix, and return what remains.
 --
 -- >>> :set -XOverloadedStrings
+-- >>> import Path (parseAbsFile)
 -- >>> bazPath <- parseAbsFile "/foo/bar/baz.20160401.fmax"
 -- >>> packId $ PackFilePath bazPath
 -- "baz.20160401"

@@ -13,7 +13,7 @@ import Path.IO (doesFileExist, getModificationTime, withSystemTempDir)
 import Test.Hspec
 import Paths_fm_assistant
 
-import Game.FMAssistant.Mod (PackFilePath(..), unpackMod)
+import Game.FMAssistant.Mod (PackFilePath(..), unpack)
 import Game.FMAssistant.Repack.Unpack (UnpackException)
 import Game.FMAssistant.Repack.Kits
 import Game.FMAssistant.Repack (ArchiveFilePath(..))
@@ -56,10 +56,10 @@ spec =
             withSystemTempDir "KitsSpec" $ \tmpDir ->
               do kitPack1 <- dummyPackV10Zip
                  modPack1 <- repackKitPack kitPack1 tmpDir
-                 unpackMod modPack1 tmpDir
+                 unpack modPack1 tmpDir
                  kitPack2 <- sillyKitsZip
                  modPack2 <- repackKitPack kitPack2 tmpDir
-                 unpackMod modPack2 tmpDir
+                 unpack modPack2 tmpDir
                  doesFileExist (tmpDir </> $(mkRelFile "create_user/graphics/kits/Dummy kit pack v1.0/config.xml")) `shouldReturn` True
                  doesFileExist (tmpDir </> $(mkRelFile "create_user/graphics/kits/Dummy kit pack v1.0/flamengo_1.png")) `shouldReturn` True
                  doesFileExist (tmpDir </> $(mkRelFile "create_user/graphics/kits/Dummy kit pack v1.0/santos_1.png")) `shouldReturn` True
@@ -70,7 +70,7 @@ spec =
             withSystemTempDir "KitsSpec" $ \tmpDir ->
               do kitPack <- malformedPackRar
                  modPack <- repackKitPack kitPack tmpDir
-                 unpackMod modPack tmpDir
+                 unpack modPack tmpDir
                  doesFileExist (tmpDir </> $(mkRelFile "create_user/graphics/kits/Malformed dummy kit pack v1.0/config.xml")) `shouldReturn` True
                  doesFileExist (tmpDir </> $(mkRelFile "create_user/graphics/kits/Malformed dummy kit pack v1.0/flamengo_1.png")) `shouldReturn` True
                  doesFileExist (tmpDir </> $(mkRelFile "create_user/graphics/kits/Malformed dummy kit pack v1.0/santos_1.png")) `shouldReturn` True
