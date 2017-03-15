@@ -6,6 +6,7 @@ module Mod
        , parser
        ) where
 
+import Data.Monoid ((<>))
 import Options.Applicative
 
 import Control.Monad (forM, forM_, unless)

@@ -7,6 +7,7 @@ module Repack
        , run
        ) where
 
+import Data.Monoid ((<>))
 import Options.Applicative
 
 import Game.FMAssistant.Mod (PackFilePath(..))

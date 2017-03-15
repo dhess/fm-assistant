@@ -41,7 +41,12 @@ let
                        then pkgs.haskellPackages
                        else pkgs.haskell.packages.${compiler};
 
-  drv = haskellPackages.callPackage f {};
+  modifiedHaskellPackages = haskellPackages.override {
+      overrides = self: super: {
+        lzma = pkgs.haskell.lib.doJailbreak super.lzma;
+      };
+  };
+  drv = modifiedHaskellPackages.callPackage f {};
 
 in
 

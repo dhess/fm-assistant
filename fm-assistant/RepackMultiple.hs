@@ -6,6 +6,7 @@ module RepackMultiple
        , run
        ) where
 
+import Data.Monoid ((<>))
 import Options.Applicative
 
 import Control.Monad (forM)
