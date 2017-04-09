@@ -20,7 +20,7 @@ module Game.FMAssistant.Types
        ( -- * Game versions
          Version(..)
        , versionDir
-       , versions
+       , allVersions
 
          -- * Path types
        , AppDirPath(..)
@@ -60,8 +60,8 @@ versionDir FM16 = $(mkRelDir "Football Manager 2016")
 versionDir FM17 = $(mkRelDir "Football Manager 2017")
 
 -- | A list of all 'Version's.
-versions :: [Version]
-versions = [minBound ..]
+allVersions :: [Version]
+allVersions = [minBound ..]
 
 -- | Paths which point to application directories, i.e., where the
 -- game's files are located.
