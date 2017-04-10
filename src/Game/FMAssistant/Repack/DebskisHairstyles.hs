@@ -31,7 +31,7 @@ import Path.IO
        (doesDirExist, ensureDir, renameDir, withSystemTempDir)
 
 import Game.FMAssistant.Mod
-       (PackAction(CreateAppDir), packDir, pack)
+       (PackAction(CreateFilesInAppDir), packDir, pack)
 import Game.FMAssistant.Repack.Internal
        (ArchiveFilePath(..), Repack, generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
@@ -54,7 +54,7 @@ repackDebskisHairstyles archive@(ArchiveFilePath fn) destDir =
        unlessM (doesDirExist unpackedHairDir) $
          throwM $ MissingHairDir archive
        withSystemTempDir "repackDebskisHairstyles" $ \tarDir ->
-         let packHairDir = tarDir </> packDir CreateAppDir </> gameHairDir </> modHairDir
+         let packHairDir = tarDir </> packDir CreateFilesInAppDir </> gameHairDir </> modHairDir
          in do ensureDir (parent packHairDir)
                renameDir unpackedHairDir packHairDir
                modId <- generateModId archive

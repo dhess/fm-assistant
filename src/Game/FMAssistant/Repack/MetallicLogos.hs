@@ -32,7 +32,7 @@ import Path.IO
        (copyDirRecur, doesDirExist, ensureDir, renameDir, withSystemTempDir)
 
 import Game.FMAssistant.Mod
-       (PackAction(CreateUserDir), packDir, pack)
+       (PackAction(CreateFilesInUserDir), packDir, pack)
 import Game.FMAssistant.Repack.Internal
        (ArchiveFilePath(..), Repack, generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
@@ -77,8 +77,8 @@ repackMetallicLogos archive@(ArchiveFilePath fn) destDir =
                 throwM $ MissingEditorDataDir archive
               let unpackedRetinaDir = unpackDir </> $(mkRelDir "Optional Retina Files") </> subdir </> picturesSubDir
               withSystemTempDir "repackMetallicLogos" $ \tarDir ->
-                let modPicturesDir = tarDir </> packDir CreateUserDir </> picturesSubDir
-                    modEditorDataSubDir = tarDir </> packDir CreateUserDir </> editorDataSubDir
+                let modPicturesDir = tarDir </> packDir CreateFilesInUserDir </> picturesSubDir
+                    modEditorDataSubDir = tarDir </> packDir CreateFilesInUserDir </> editorDataSubDir
                 in do ensureDir (parent modPicturesDir)
                       ensureDir (parent modEditorDataSubDir)
                       renameDir unpackedPicturesDir modPicturesDir

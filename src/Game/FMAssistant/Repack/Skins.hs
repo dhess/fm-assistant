@@ -32,7 +32,7 @@ import Path.IO
        (ensureDir, renameDir, renameFile, walkDirAccum, withSystemTempDir)
 
 import Game.FMAssistant.Mod
-       (PackAction(CreateUserDir), packDir, pack)
+       (PackAction(CreateFilesInUserDir), packDir, pack)
 import Game.FMAssistant.Repack.Internal
        (ArchiveFilePath(..), Repack, generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
@@ -61,7 +61,7 @@ repackSkin archive@(ArchiveFilePath fn) destDir =
   withSystemTempDir (basename fn) $ \tmpDir -> do
     unpackedSkinDirs <- unpackSkins archive tmpDir
     withSystemTempDir "repackSkin" $ \tarDir ->
-      let modDir = tarDir </> packDir CreateUserDir </> skinSubDir
+      let modDir = tarDir </> packDir CreateFilesInUserDir </> skinSubDir
       in do
         ensureDir modDir
         forM_ unpackedSkinDirs $ \skinDir ->

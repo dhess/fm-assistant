@@ -26,7 +26,7 @@ import Path.IO
         withSystemTempDir)
 
 import Game.FMAssistant.Mod
-       (PackAction(CreateUserDir), packDir, pack)
+       (PackAction(CreateFilesInUserDir), packDir, pack)
 import Game.FMAssistant.Repack.Internal
        (ArchiveFilePath(..), Repack, RepackException(..), archiveName,
         generateModId)
@@ -41,7 +41,7 @@ repackKitPack archive@(ArchiveFilePath fn) destDir =
   withSystemTempDir (basename fn) $ \tmpDir ->
     do unpackedKitDir <- unpackKitPack archive tmpDir
        withSystemTempDir "repackKitPack" $ \tarDir ->
-         let modParentDir = tarDir </> packDir CreateUserDir </> kitSubDir
+         let modParentDir = tarDir </> packDir CreateFilesInUserDir </> kitSubDir
          in do ensureDir modParentDir
                modDir <- parseRelDir $ archiveName archive
                renameDir unpackedKitDir (modParentDir </> modDir)

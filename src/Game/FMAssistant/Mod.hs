@@ -1,7 +1,7 @@
 {-|
 Module      : Game.FMAssistant.Mod
 Description : Game mods
-Copyright   : (c) 2016, Drew Hess
+Copyright   : (c) 2017, Drew Hess
 License     : BSD3
 Maintainer  : Drew Hess <src@drewhess.com>
 Stability   : experimental
@@ -132,18 +132,18 @@ packBackupDir packFile backupParentDir =
 -- reversing the actions will be done in the reverse of the order
 -- specified by the type.)
 data PackAction
-  = RemoveAppDir
-  | CreateAppDir
-  | CreateUserDir
+  = RemoveFilesFromAppDir
+  | CreateFilesInAppDir
+  | CreateFilesInUserDir
   deriving (Eq,Ord,Enum,Bounded,Show)
 
 allActions :: [PackAction]
 allActions = [minBound ..]
 
 packDir :: PackAction -> Path Rel Dir
-packDir RemoveAppDir = $(mkRelDir "remove_app")
-packDir CreateAppDir = $(mkRelDir "create_app")
-packDir CreateUserDir = $(mkRelDir "create_user")
+packDir RemoveFilesFromAppDir = $(mkRelDir "remove_app")
+packDir CreateFilesInAppDir = $(mkRelDir "create_app")
+packDir CreateFilesInUserDir = $(mkRelDir "create_user")
 
 -- | The set of valid top-level directories in a mod pack.
 validTLDs :: Set (Path Rel Dir)
@@ -238,7 +238,7 @@ install packFile =
                  in do exists <- doesDirExist subDir
                        when exists $ go action subDir)
     go :: (MonadIO m, MonadCatch m, MonadReader r m, HasConfig r) => PackAction -> Path Abs Dir -> m ()
-    go RemoveAppDir subDir =
+    go RemoveFilesFromAppDir subDir =
       do adir <- view appDir
          checkAppDir adir
          -- XXX TODO: need a better method for uniquely identifying
@@ -254,17 +254,17 @@ install packFile =
                   do relFn <- makeRelative subDir fn
                      let targetFile = appDirPath adir </> relFn
                      unless (isParentOf (appDirPath adir) targetFile) $
-                       throwM $ InvalidPath (packDir RemoveAppDir </> relFn)
+                       throwM $ InvalidPath (packDir RemoveFilesFromAppDir </> relFn)
                      let backupFile = modBackupDir </> relFn
                      unless (isParentOf (backupDirPath bdir) backupFile) $
-                       throwM $ InvalidPath (packDir RemoveAppDir </> relFn)
+                       throwM $ InvalidPath (packDir RemoveFilesFromAppDir </> relFn)
                      ensureDir (parent backupFile)
                      ignoringAbsence $ renameFile targetFile backupFile)
-    go CreateAppDir subDir =
+    go CreateFilesInAppDir subDir =
       do adir <- view appDir
          checkAppDir adir
          copyDirRecur subDir (appDirPath adir)
-    go CreateUserDir subDir =
+    go CreateFilesInUserDir subDir =
       do udir <- view userDir
          checkUserDir udir
          copyDirRecur subDir (userDirPath udir)

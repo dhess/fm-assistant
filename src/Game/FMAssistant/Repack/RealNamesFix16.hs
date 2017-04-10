@@ -30,7 +30,7 @@ import Path.IO
         withSystemTempDir)
 
 import Game.FMAssistant.Mod
-       (PackAction(CreateAppDir, RemoveAppDir, CreateUserDir), packDir,
+       (PackAction(CreateFilesInAppDir, RemoveFilesFromAppDir, CreateFilesInUserDir), packDir,
         pack)
 import Game.FMAssistant.Repack.Internal
        (ArchiveFilePath(..), Repack, generateModId)
@@ -101,14 +101,14 @@ repackRealNamesFix16 archive@(ArchiveFilePath fn) destDir =
        unlessM (doesDirExist unpackedRnfDir) $
          throwM $ MissingRealNamesFixDir archive
        withSystemTempDir "repackRealNamesFix" $ \tarDir ->
-         let modRnfDir = tarDir </> packDir CreateUserDir </> rnfSubDir
+         let modRnfDir = tarDir </> packDir CreateFilesInUserDir </> rnfSubDir
          in do ensureDir (parent modRnfDir)
                copyDirRecur unpackedRnfDir modRnfDir
                forM_ dbVersions $ \dbVersion ->
-                 let modLncDir = tarDir </> packDir CreateAppDir </> lncSubDir dbVersion
-                     modRemoveDbcDir = tarDir </> packDir RemoveAppDir </> dbcSubDir dbVersion
-                     modRemoveEdtDir = tarDir </> packDir RemoveAppDir </> edtSubDir dbVersion
-                     modRemoveLncDir = tarDir </> packDir RemoveAppDir </> lncSubDir dbVersion
+                 let modLncDir = tarDir </> packDir CreateFilesInAppDir </> lncSubDir dbVersion
+                     modRemoveDbcDir = tarDir </> packDir RemoveFilesFromAppDir </> dbcSubDir dbVersion
+                     modRemoveEdtDir = tarDir </> packDir RemoveFilesFromAppDir </> edtSubDir dbVersion
+                     modRemoveLncDir = tarDir </> packDir RemoveFilesFromAppDir </> lncSubDir dbVersion
                  in  do ensureDir (parent modLncDir)
                         ensureDir (parent modRemoveDbcDir)
                         ensureDir (parent modRemoveEdtDir)

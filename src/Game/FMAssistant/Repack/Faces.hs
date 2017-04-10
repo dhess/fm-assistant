@@ -32,7 +32,7 @@ import Path.IO
        (doesDirExist, ensureDir, renameDir, withSystemTempDir)
 
 import Game.FMAssistant.Mod
-       (PackFilePath, PackAction(CreateUserDir), packDir, pack)
+       (PackFilePath, PackAction(CreateFilesInUserDir), packDir, pack)
 import Game.FMAssistant.Repack.Internal
        (ArchiveFilePath(..), Repack, generateModId)
 import Game.FMAssistant.Repack.Unpack (unpack)
@@ -72,7 +72,7 @@ repackFaces modSubDir packSubDir archive@(ArchiveFilePath fn) destDir =
        unlessM (doesDirExist facesDir) $
          throwM $ MissingFacesDir archive
        withSystemTempDir "repackFacePack" $ \tarDir ->
-         let modDir = tarDir </> packDir CreateUserDir </> packSubDir
+         let modDir = tarDir </> packDir CreateFilesInUserDir </> packSubDir
          in do ensureDir (parent modDir)
                renameDir unpackDir modDir
                modId <- generateModId archive
