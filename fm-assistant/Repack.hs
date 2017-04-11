@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Repack
-       ( Command
+       ( Command(..)
+       , RepackOptions(..)
        , parser
        , repackFile
        , run

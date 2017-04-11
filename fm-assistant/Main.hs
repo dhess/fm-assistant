@@ -12,7 +12,7 @@ import qualified DebskisHairstyles (run)
 import qualified KitPack (run)
 import qualified MetallicLogos (run)
 import qualified Mod (Command, run, parser)
-import qualified RealNamesFix16 (run)
+import qualified RealNamesFix (run)
 import qualified Repack (Command, parser)
 import qualified RepackMultiple (Command, parser)
 import qualified Skin (run)
@@ -74,7 +74,7 @@ run (GlobalOptions (CutoutFacesMegapack cmd)) = CutoutFacesMegapack.run cmd
 run (GlobalOptions (CutoutFacesIcons cmd)) = CutoutFacesIcons.run cmd
 run (GlobalOptions (MetallicLogos cmd)) = MetallicLogos.run cmd
 run (GlobalOptions (Mod cmd)) = Mod.run cmd
-run (GlobalOptions (RealNamesFix cmd)) = RealNamesFix16.run cmd
+run (GlobalOptions (RealNamesFix cmd)) = RealNamesFix.run cmd
 run (GlobalOptions (Skin cmd)) = Skin.run cmd
 
 main :: IO ExitCode

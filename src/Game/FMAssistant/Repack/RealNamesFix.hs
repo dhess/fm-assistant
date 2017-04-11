@@ -57,6 +57,8 @@ data RealNamesFixRepackException
     -- ^ The archive is missing the "edt" directory
   | MissingLncDir ArchiveFilePath
     -- ^ The archive is missing the "lnc" directory
+  | MissingRnfEditorDataDir ArchiveFilePath
+    -- ^ The archive is missing the "editor data" directory
   | MissingRealNamesFixDir ArchiveFilePath
     -- ^ The archive is missing the Real Names Fix directory
   deriving (Eq,Typeable)
@@ -64,8 +66,9 @@ data RealNamesFixRepackException
 instance Show RealNamesFixRepackException where
   show (MissingDbcDir fp) = show fp ++ ": Malformed Real Names fix mod (no \"dbc\" directory)"
   show (MissingEdtDir fp) = show fp ++ ": Malformed Real Names Fix mod (no \"edt\" directory)"
-  show (MissingLncDir fp) = show fp ++ ": Malformed Real Names Fix mod (no \"lnc\" directory for Retina files)"
-  show (MissingRealNamesFixDir fp) = show fp ++ ": Malformed Real Names Fix mod (no \"Real Names Fix\" directory for Retina files)"
+  show (MissingLncDir fp) = show fp ++ ": Malformed Real Names Fix mod (no \"lnc\" directory)"
+  show (MissingRnfEditorDataDir fp) = show fp ++ ": Malformed Real Names Fix mod (no \"editor data\" directory)"
+  show (MissingRealNamesFixDir fp) = show fp ++ ": Malformed Real Names Fix mod (no \"Real Names Fix\" directory)"
 
 instance Exception RealNamesFixRepackException where
   toException = fmAssistantExceptionToException

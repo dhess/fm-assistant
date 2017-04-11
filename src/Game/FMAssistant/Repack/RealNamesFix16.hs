@@ -17,14 +17,17 @@ Portability : non-portable
 
 module Game.FMAssistant.Repack.RealNamesFix16
        ( repackRealNamesFix16
+       , supported
        ) where
 
 import Control.Conditional (unlessM)
 import Control.Monad (forM_)
 import Control.Monad.Catch (MonadMask, MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
+import Data.Set (fromList, member)
 import Path
-       ((</>), Path, Abs, Rel, Dir, File, mkRelDir, mkRelFile, parent)
+       ((</>), Path, Abs, Rel, Dir, File, filename, mkRelDir, mkRelFile,
+        parent)
 import Path.IO
        (copyDirRecur, copyFile, doesDirExist, ensureDir,
         withSystemTempDir)
@@ -39,6 +42,12 @@ import Game.FMAssistant.Repack.RealNamesFix
         edtSubDir, lncSubDir)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Util (basename, touchFile)
+
+supported :: ArchiveFilePath -> Bool
+supported (ArchiveFilePath fn) =
+  member (filename fn) $
+  fromList
+    [$(mkRelFile "FM16 Real Names Fix Files from sortitoutsi.net v3.2.rar")]
 
 rnfDir :: Path Rel Dir
 rnfDir = $(mkRelDir "FM16 Real Names Fix Files from sortitoutsi.net v3.2")

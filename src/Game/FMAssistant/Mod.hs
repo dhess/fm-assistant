@@ -50,7 +50,7 @@ import qualified Codec.Compression.Lzma as Lzma (compress, decompress)
 import Control.Applicative (Alternative)
 import Control.Lens (makeClassy, view)
 import Control.Exception (Exception(..))
-import Control.Monad (MonadPlus, forM_, unless, void, when)
+import Control.Monad (MonadPlus, filterM, forM_, unless, void, when)
 import Control.Monad.Catch (MonadCatch, MonadMask, MonadThrow, throwM)
 import Control.Monad.Cont (MonadCont)
 import Control.Monad.Except (MonadError)
@@ -70,7 +70,7 @@ import Path
         parent, parseRelDir, parseRelFile, toFilePath)
 import Path.IO
        (AnyPath(..), copyDirRecur, doesDirExist, ensureDir,
-        ignoringAbsence, listDir, listDirRecur, renameFile,
+        ignoringAbsence, listDir, listDirRecur, renameDir, renameFile,
         withSystemTempDir)
 
 import Game.FMAssistant.Types
@@ -132,7 +132,8 @@ packBackupDir packFile backupParentDir =
 -- reversing the actions will be done in the reverse of the order
 -- specified by the type.)
 data PackAction
-  = RemoveFilesFromAppDir
+  = RemoveDirsFromAppDir
+  | RemoveFilesFromAppDir
   | CreateFilesInAppDir
   | CreateFilesInUserDir
   deriving (Eq,Ord,Enum,Bounded,Show)
@@ -141,6 +142,7 @@ allActions :: [PackAction]
 allActions = [minBound ..]
 
 packDir :: PackAction -> Path Rel Dir
+packDir RemoveDirsFromAppDir = $(mkRelDir "remove_app_dirs")
 packDir RemoveFilesFromAppDir = $(mkRelDir "remove_app")
 packDir CreateFilesInAppDir = $(mkRelDir "create_app")
 packDir CreateFilesInUserDir = $(mkRelDir "create_user")
@@ -237,7 +239,35 @@ install packFile =
                  let subDir = unpackDir </> packDir action
                  in do exists <- doesDirExist subDir
                        when exists $ go action subDir)
+
+    isLeafDir :: (MonadIO m, MonadThrow m) => Path Abs Dir -> m Bool
+    isLeafDir dir = do
+      (subdirs, _) <- listDir dir
+      return $ null subdirs
+
     go :: (MonadIO m, MonadCatch m, MonadReader r m, HasConfig r) => PackAction -> Path Abs Dir -> m ()
+    go RemoveDirsFromAppDir subDir = do
+      adir <- view appDir
+      checkAppDir adir
+      bdir <- view backupDir
+      modBackupDir <- packBackupDir packFile bdir
+      ensureDir modBackupDir
+      (dirs, _) <- listDirRecur subDir
+      -- Only remove leaf dirs!
+      leafDirs <- filterM isLeafDir dirs
+      forM_ leafDirs $ \dir -> do
+        -- For security purposes, make sure the file to
+        -- remove actually lives in the app directory!
+        relDir <- makeRelative subDir dir
+        let targetDir = appDirPath adir </> relDir
+        unless (isParentOf (appDirPath adir) targetDir) $
+          throwM $ InvalidDirPath (packDir RemoveDirsFromAppDir </> relDir)
+        let backup = modBackupDir </> relDir
+        unless (isParentOf (backupDirPath bdir) backup) $
+          throwM $ InvalidDirPath (packDir RemoveDirsFromAppDir </> relDir)
+        ensureDir (parent backup)
+        ignoringAbsence $ renameDir targetDir backup
+
     go RemoveFilesFromAppDir subDir =
       do adir <- view appDir
          checkAppDir adir
@@ -254,10 +284,10 @@ install packFile =
                   do relFn <- makeRelative subDir fn
                      let targetFile = appDirPath adir </> relFn
                      unless (isParentOf (appDirPath adir) targetFile) $
-                       throwM $ InvalidPath (packDir RemoveFilesFromAppDir </> relFn)
+                       throwM $ InvalidFilePath (packDir RemoveFilesFromAppDir </> relFn)
                      let backupFile = modBackupDir </> relFn
                      unless (isParentOf (backupDirPath bdir) backupFile) $
-                       throwM $ InvalidPath (packDir RemoveFilesFromAppDir </> relFn)
+                       throwM $ InvalidFilePath (packDir RemoveFilesFromAppDir </> relFn)
                      ensureDir (parent backupFile)
                      ignoringAbsence $ renameFile targetFile backupFile)
     go CreateFilesInAppDir subDir =
@@ -298,8 +328,10 @@ data ModException
     -- ^ The user directory doesn't exist
   | NoSuchAppDirectory AppDirPath
     -- ^ The app directory doesn't exist
-  | InvalidPath (Path Rel File)
-    -- ^ The mod contains a path to an invalid location
+  | InvalidFilePath (Path Rel File)
+    -- ^ The mod contains a path to an invalid file location
+  | InvalidDirPath (Path Rel Dir)
+    -- ^ The mod contains a path to an invalid directory location
   deriving (Eq,Typeable)
 
 instance Show ModException where
@@ -308,7 +340,8 @@ instance Show ModException where
   show (InvalidTopLevelDirectory dir) = "The mod directory contains an invalid top-level directory ( " ++ show dir ++ ")"
   show (NoSuchUserDirectory fp) = show fp ++ ": The game user directory doesn't exist"
   show (NoSuchAppDirectory fp) = show fp ++ ": The game application directory doesn't exist"
-  show (InvalidPath fp) = show fp ++ ": Invalid/insecure path found in mod pack"
+  show (InvalidFilePath fp) = show fp ++ ": Invalid/insecure file path found in mod pack"
+  show (InvalidDirPath dp) = show dp ++ ": Invalid/insecure directory path found in mod pack"
 
 instance Exception ModException where
   toException = fmAssistantExceptionToException
