@@ -6,7 +6,7 @@
 }:
 mkDerivation {
   pname = "fm-assistant";
-  version = "0.5.2";
+  version = "0.6.0.0";
   src = ./.;
   isLibrary = true;
   isExecutable = true;
