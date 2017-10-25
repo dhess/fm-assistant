@@ -1,0 +1,112 @@
+name:       fm-assistant
+version:    0.6.0.0
+synopsis:   Install Football Manager mods
+category:   Games
+stability:  experimental
+author:     Drew Hess <src@drewhess.com>
+maintainer: Drew Hess <src@drewhess.com>
+copyright:  Copyright (c) 2017, Drew Hess
+license:    BSD3
+github:     dhess/fm-assistant
+
+description: ! 'Install Football Manager mods.
+
+
+  Note that only certain mods are supported.'
+
+tested-with: GHC==8.0.2 GHC==8.2.1
+
+flags:
+  test-doctests:
+    description: Build doctests
+    manual: true
+    default: true
+
+ghc-options:
+  - -Wall
+  - -Wincomplete-uni-patterns
+  - -Wincomplete-record-updates
+
+dependencies:
+  - base >=4 && <5
+  - bytestring
+  - cond
+  - containers
+  - directory
+  - exceptions
+  - filepath
+  - foldl
+  - lens
+  - lzma
+  - mtl
+  - path
+  - path-io
+  - process-streaming
+  - resourcet
+  - streaming
+  - streaming-bytestring
+  - system-filepath
+  - tar
+  - template-haskell
+  - temporary
+  - text
+  - time
+  - transformers
+
+library:
+  ghc-options:
+    - -Wcompat
+    - -Wnoncanonical-monad-instances
+    - -Wnoncanonical-monadfail-instances
+  source-dirs: src
+
+executables:
+  fm-assistant:
+    main: Main.hs
+    source-dirs:
+      - fm-assistant
+    ghc-options:
+      - -Wall
+      - -threaded
+    dependencies:
+      - base
+      - fm-assistant
+      - optparse-applicative >=0.11.0
+
+tests:
+  doctest:
+    main: doctests.hs
+    source-dirs: test
+    other-modules: []
+    ghc-options:
+      - -threaded
+    when:
+      - condition: "!(flag(test-doctests))"
+        then:
+          buildable: false
+        else:
+          dependencies:
+            - base
+            - doctest
+  spec:
+    main: Spec.hs
+    source-dirs:
+      - test
+    ghc-options:
+      - -Wall
+      - -threaded
+    dependencies:
+      - base
+      - fm-assistant
+      - hspec        >= 2.1.7
+
+data-files:
+  - data/test/*.rar
+  - data/test/*.zip
+  - data/test/*.tar
+
+extra-source-files:
+  - README.md
+  - package.yaml
+  - default.nix
+  - shell.nix

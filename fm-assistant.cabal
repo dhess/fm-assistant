@@ -1,185 +1,235 @@
-Name:                   fm-assistant
-Version:                0.6.0.0
-Author:                 Drew Hess <src@drewhess.com>
-Maintainer:             Drew Hess <src@drewhess.com>
-License:                BSD3
-License-File:           LICENSE
--- Synopsis:               
--- Description:            
-Cabal-Version:          >= 1.10
-Build-Type:             Simple
+-- This file has been generated from package.yaml by hpack version 0.19.2.
+--
+-- see: https://github.com/sol/hpack
 
-Data-Files:             data/test/*.rar
-                      , data/test/*.zip
-                      , data/test/*.tar
+name:                   fm-assistant
+version:                0.6.0.0
+synopsis:               Install Football Manager mods
+description:            Install Football Manager mods.
+                        .
+                        Note that only certain mods are supported.
+category:               Games
+stability:              experimental
+homepage:               https://github.com/dhess/fm-assistant#readme
+bug-reports:            https://github.com/dhess/fm-assistant/issues
+author:                 Drew Hess <src@drewhess.com>
+maintainer:             Drew Hess <src@drewhess.com>
+copyright:              Copyright (c) 2017, Drew Hess
+license:                BSD3
+license-file:           LICENSE
+tested-with:            GHC==8.0.2 GHC==8.2.1
+build-type:             Simple
+cabal-version:          >= 1.10
 
-Library
-  Default-Language:     Haskell2010
-  HS-Source-Dirs:       src
-  GHC-Options:          -Wall
-  Exposed-Modules:      Game.FMAssistant
-                      , Game.FMAssistant.Magic
-                      , Game.FMAssistant.Mod
-                      , Game.FMAssistant.Repack
-                      , Game.FMAssistant.Repack.DebskisHairstyles
-                      , Game.FMAssistant.Repack.Faces
-                      , Game.FMAssistant.Repack.Internal
-                      , Game.FMAssistant.Repack.Kits
-                      , Game.FMAssistant.Repack.MetallicLogos
-                      , Game.FMAssistant.Repack.RealNamesFix
-                      , Game.FMAssistant.Repack.RealNamesFix16
-                      , Game.FMAssistant.Repack.RealNamesFix17
-                      , Game.FMAssistant.Repack.Skins
-                      , Game.FMAssistant.Repack.Unpack
-                      , Game.FMAssistant.Streaming
-                      , Game.FMAssistant.Types
-                      , Game.FMAssistant.Util
-  Build-Depends:        base >= 4 && < 5
-                      , bytestring
-                      , cond
-                      , containers
-                      , directory
-                      , exceptions
-                      , filepath
-                      , foldl
-                      , lens
-                      , lzma
-                      , mtl
-                      , path
-                      , path-io
-                      , process-streaming
-                      , resourcet
-                      , streaming
-                      , streaming-bytestring
-                      , system-filepath
-                      , tar
-                      , template-haskell
-                      , temporary
-                      , text
-                      , time
-                      , transformers
+extra-source-files:
+    default.nix
+    package.yaml
+    README.md
+    shell.nix
 
-Executable fm-assistant
-  Main-Is:              Main.hs
-  Default-Language:     Haskell2010
-  HS-Source-Dirs:       fm-assistant
-                      , src
-  GHC-Options:          -Wall -threaded
-  Build-Depends:        base >= 4 && < 5
-                      , bytestring
-                      , cond
-                      , containers
-                      , directory
-                      , exceptions
-                      , filepath
-                      , foldl
-                      , lens
-                      , lzma
-                      , mtl
-                      , optparse-applicative >= 0.11.0
-                      , path
-                      , path-io
-                      , process-streaming
-                      , resourcet
-                      , streaming
-                      , streaming-bytestring
-                      , system-filepath
-                      , tar
-                      , template-haskell
-                      , temporary
-                      , text
-                      , time
-                      , transformers
-  Other-Modules:        Game.FMAssistant
-                      , Game.FMAssistant.Magic
-                      , Game.FMAssistant.Mod
-                      , Game.FMAssistant.Repack
-                      , Game.FMAssistant.Repack.DebskisHairstyles
-                      , Game.FMAssistant.Repack.Faces
-                      , Game.FMAssistant.Repack.Internal
-                      , Game.FMAssistant.Repack.Kits
-                      , Game.FMAssistant.Repack.MetallicLogos
-                      , Game.FMAssistant.Repack.RealNamesFix
-                      , Game.FMAssistant.Repack.RealNamesFix16
-                      , Game.FMAssistant.Repack.RealNamesFix17
-                      , Game.FMAssistant.Repack.Skins
-                      , Game.FMAssistant.Repack.Unpack
-                      , Game.FMAssistant.Streaming
-                      , Game.FMAssistant.Types
-                      , Game.FMAssistant.Util
-                      , CutoutFacesMegapack
-                      , CutoutFacesIcons
-                      , DebskisHairstyles
-                      , KitPack
-                      , MetallicLogos
-                      , Mod
-                      , RealNamesFix
-                      , Repack
-                      , RepackMultiple
-                      , Skin
-                      , Util
+data-files:
+    data/test/damaged-test.rar
+    data/test/damaged-test.zip
+    data/test/Dummy kit pack v1.0.rar
+    data/test/Dummy kit pack v1.0.zip
+    data/test/Dummy kit pack v1.1.rar
+    data/test/Dummy kit pack v1.1.zip
+    data/test/Malformed dummy kit pack v1.0.rar
+    data/test/Malformed dummy kit pack v1.0.zip
+    data/test/Silly kits.zip
+    data/test/test.rar
+    data/test/test.tar
+    data/test/test.zip
+    data/test/test_is_actually_rar.zip
+    data/test/test_is_actually_zip.rar
 
-Test-Suite doctest
-  Type:                 exitcode-stdio-1.0
-  Default-Language:     Haskell2010
-  Hs-Source-Dirs:       test
-  Ghc-Options:          -Wall -threaded
-  Main-Is:              doctests.hs
-  Build-Depends:        base
-                      , doctest
-                      , filepath
+source-repository head
+  type: git
+  location: https://github.com/dhess/fm-assistant
 
-Test-Suite spec
-  Type:                 exitcode-stdio-1.0
-  Default-Language:     Haskell2010
-  Hs-Source-Dirs:       src
-                      , test
-  Ghc-Options:          -Wall -threaded
-  Main-Is:              Spec.hs
-  Build-Depends:        base
-                      , bytestring
-                      , cond
-                      , containers
-                      , directory
-                      , exceptions
-                      , filepath
-                      , foldl
-                      , hspec
-                      , lens
-                      , lzma
-                      , mtl
-                      , path
-                      , path-io
-                      , process-streaming
-                      , resourcet
-                      , streaming
-                      , streaming-bytestring
-                      , system-filepath
-                      , tar
-                      , template-haskell
-                      , temporary
-                      , text
-                      , time
-                      , transformers
-  Other-Modules:        Game.FMAssistant
-                      , Game.FMAssistant.Magic
-                      , Game.FMAssistant.Mod
-                      , Game.FMAssistant.Repack
-                      , Game.FMAssistant.Repack.DebskisHairstyles
-                      , Game.FMAssistant.Repack.Faces
-                      , Game.FMAssistant.Repack.Internal
-                      , Game.FMAssistant.Repack.Kits
-                      , Game.FMAssistant.Repack.MetallicLogos
-                      , Game.FMAssistant.Repack.RealNamesFix
-                      , Game.FMAssistant.Repack.RealNamesFix16
-                      , Game.FMAssistant.Repack.RealNamesFix17
-                      , Game.FMAssistant.Repack.Skins
-                      , Game.FMAssistant.Repack.Unpack
-                      , Game.FMAssistant.Streaming
-                      , Game.FMAssistant.Types
-                      , Game.FMAssistant.Util
-                      , Paths_fm_assistant
+flag test-doctests
+  description: Build doctests
+  manual: True
+  default: True
 
-Source-Repository head
-  Type:                 git
---  Location:             
+library
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Wnoncanonical-monad-instances -Wnoncanonical-monadfail-instances
+  build-depends:
+      base >=4 && <5
+    , bytestring
+    , cond
+    , containers
+    , directory
+    , exceptions
+    , filepath
+    , foldl
+    , lens
+    , lzma
+    , mtl
+    , path
+    , path-io
+    , process-streaming
+    , resourcet
+    , streaming
+    , streaming-bytestring
+    , system-filepath
+    , tar
+    , template-haskell
+    , temporary
+    , text
+    , time
+    , transformers
+  exposed-modules:
+      Game.FMAssistant
+      Game.FMAssistant.Magic
+      Game.FMAssistant.Mod
+      Game.FMAssistant.Repack
+      Game.FMAssistant.Repack.DebskisHairstyles
+      Game.FMAssistant.Repack.Faces
+      Game.FMAssistant.Repack.Internal
+      Game.FMAssistant.Repack.Kits
+      Game.FMAssistant.Repack.MetallicLogos
+      Game.FMAssistant.Repack.RealNamesFix
+      Game.FMAssistant.Repack.RealNamesFix16
+      Game.FMAssistant.Repack.RealNamesFix17
+      Game.FMAssistant.Repack.Skins
+      Game.FMAssistant.Repack.Unpack
+      Game.FMAssistant.Streaming
+      Game.FMAssistant.Types
+      Game.FMAssistant.Util
+  other-modules:
+      Paths_fm_assistant
+  default-language: Haskell2010
+
+executable fm-assistant
+  main-is: Main.hs
+  hs-source-dirs:
+      fm-assistant
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wall -threaded
+  build-depends:
+      base
+    , bytestring
+    , cond
+    , containers
+    , directory
+    , exceptions
+    , filepath
+    , fm-assistant
+    , foldl
+    , lens
+    , lzma
+    , mtl
+    , optparse-applicative >=0.11.0
+    , path
+    , path-io
+    , process-streaming
+    , resourcet
+    , streaming
+    , streaming-bytestring
+    , system-filepath
+    , tar
+    , template-haskell
+    , temporary
+    , text
+    , time
+    , transformers
+  other-modules:
+      CutoutFacesIcons
+      CutoutFacesMegapack
+      DebskisHairstyles
+      KitPack
+      MetallicLogos
+      Mod
+      RealNamesFix
+      Repack
+      RepackMultiple
+      Skin
+      Util
+      Paths_fm_assistant
+  default-language: Haskell2010
+
+test-suite doctest
+  type: exitcode-stdio-1.0
+  main-is: doctests.hs
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -threaded
+  build-depends:
+      base >=4 && <5
+    , bytestring
+    , cond
+    , containers
+    , directory
+    , exceptions
+    , filepath
+    , foldl
+    , lens
+    , lzma
+    , mtl
+    , path
+    , path-io
+    , process-streaming
+    , resourcet
+    , streaming
+    , streaming-bytestring
+    , system-filepath
+    , tar
+    , template-haskell
+    , temporary
+    , text
+    , time
+    , transformers
+  if !(flag(test-doctests))
+    buildable: False
+  else
+    build-depends:
+        base
+      , doctest
+  default-language: Haskell2010
+
+test-suite spec
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wall -threaded
+  build-depends:
+      base
+    , bytestring
+    , cond
+    , containers
+    , directory
+    , exceptions
+    , filepath
+    , fm-assistant
+    , foldl
+    , hspec >=2.1.7
+    , lens
+    , lzma
+    , mtl
+    , path
+    , path-io
+    , process-streaming
+    , resourcet
+    , streaming
+    , streaming-bytestring
+    , system-filepath
+    , tar
+    , template-haskell
+    , temporary
+    , text
+    , time
+    , transformers
+  other-modules:
+      Game.FMAssistant.MagicSpec
+      Game.FMAssistant.Mod.ModInstallSpec
+      Game.FMAssistant.Repack.KitsSpec
+      Game.FMAssistant.Repack.UnpackSpec
+      Game.FMAssistant.RepackSpec
+      Game.FMAssistant.TypesSpec
+      Game.FMAssistant.UtilSpec
+      Main
+      Paths_fm_assistant
+  default-language: Haskell2010
