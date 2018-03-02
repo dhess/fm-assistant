@@ -20,6 +20,9 @@ spec =
           context "FM17" $
             it "returns the proper version directory" $
               do versionDir FM17 `shouldBe` $(mkRelDir "Football Manager 2017")
+          context "FM18" $
+            it "returns the proper version directory" $
+              do versionDir FM18 `shouldBe` $(mkRelDir "Football Manager 2018")
      describe "defaultUserDir" $
        do context "FM16" $
             it "returns the expected value" $
@@ -29,6 +32,10 @@ spec =
             it "returns the expected value" $
               do homeDir <- getHomeDir
                  defaultUserDir FM17 `shouldReturn` UserDirPath (homeDir </> $(mkRelDir "Documents/Sports Interactive/Football Manager 2017"))
+          context "FM18" $
+            it "returns the expected value" $
+              do homeDir <- getHomeDir
+                 defaultUserDir FM18 `shouldReturn` UserDirPath (homeDir </> $(mkRelDir "Documents/Sports Interactive/Football Manager 2018"))
      describe "defaultAppDir" $
        do context "FM16" $
             it "returns the expected value" $
@@ -38,6 +45,10 @@ spec =
             it "returns the expected value" $
               do homeDir <- getHomeDir
                  defaultAppDir FM17 `shouldReturn` AppDirPath (homeDir </> $(mkRelDir "Library/Application Support/Steam/SteamApps/common/Football Manager 2017"))
+          context "FM18" $
+            it "returns the expected value" $
+              do homeDir <- getHomeDir
+                 defaultAppDir FM18 `shouldReturn` AppDirPath (homeDir </> $(mkRelDir "Library/Application Support/Steam/SteamApps/common/Football Manager 2018"))
      describe "defaultBackupDir" $
        do context "FM16" $
             it "returns the expected value" $
@@ -47,3 +58,7 @@ spec =
             it "returns the expected value" $
               do homeDir <- getHomeDir
                  defaultBackupDir FM17 `shouldReturn` BackupDirPath (homeDir </> $(mkRelDir "Library/Application Support/FMAssistant/Football Manager 2017"))
+          context "FM18" $
+            it "returns the expected value" $
+              do homeDir <- getHomeDir
+                 defaultBackupDir FM18 `shouldReturn` BackupDirPath (homeDir </> $(mkRelDir "Library/Application Support/FMAssistant/Football Manager 2018"))

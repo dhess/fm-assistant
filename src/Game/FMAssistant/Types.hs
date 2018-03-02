@@ -47,6 +47,7 @@ import Path.IO (getHomeDir)
 data Version
   = FM16
   | FM17
+  | FM18
   deriving (Eq,Ord,Enum,Bounded,Typeable,Show,Read)
 
 -- | The game version subdirectory.
@@ -55,9 +56,12 @@ data Version
 -- "Football Manager 2016/"
 -- >>> versionDir FM17
 -- "Football Manager 2017/"
+-- >>> versionDir FM18
+-- "Football Manager 2018/"
 versionDir :: Version -> Path Rel Dir
 versionDir FM16 = $(mkRelDir "Football Manager 2016")
 versionDir FM17 = $(mkRelDir "Football Manager 2017")
+versionDir FM18 = $(mkRelDir "Football Manager 2018")
 
 -- | A list of all 'Version's.
 allVersions :: [Version]

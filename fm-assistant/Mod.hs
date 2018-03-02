@@ -36,7 +36,7 @@ installOptions =
     option auto (long "version" <>
                 short 'V' <>
                 metavar "VERSION" <>
-                value FM17 <>
+                value FM18 <>
                 showDefault <>
                 help "FM version") <*>
     some (argument str (metavar "FILE [FILE] ..."))
