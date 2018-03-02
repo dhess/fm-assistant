@@ -1,7 +1,7 @@
 {-|
-Module      : Game.FMAssistant.Repack.RealNamesFix17
-Description : Repack the Real Names Fix mod for FM17
-Copyright   : (c) 2017, Drew Hess
+Module      : Game.FMAssistant.Repack.RealNamesFix18
+Description : Repack the Real Names Fix mod for FM18
+Copyright   : (c) 2018, Drew Hess
 License     : BSD3
 Maintainer  : Drew Hess <src@drewhess.com>
 Stability   : experimental
@@ -15,8 +15,8 @@ Portability : non-portable
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Trustworthy #-}
 
-module Game.FMAssistant.Repack.RealNamesFix17
-       ( repackRealNamesFix17
+module Game.FMAssistant.Repack.RealNamesFix18
+       ( repackRealNamesFix18
        , supported
        ) where
 
@@ -38,26 +38,24 @@ import Game.FMAssistant.Repack.RealNamesFix
         edtSubDir, lncSubDir)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Util (basename)
-import Game.FMAssistant.Types (Version(FM17))
+import Game.FMAssistant.Types (Version(FM18))
 
 supported :: ArchiveFilePath -> Bool
 supported (ArchiveFilePath fn) =
   member (filename fn) $
   fromList
-    [$(mkRelFile "FM17 Real Names Fix Files from sortitoutsi.net v2.1.rar")]
+    [$(mkRelFile "FM18 Real Names Fix Files from sortitoutsi.net v2.0.rar")]
 
 dbVersions :: [Path Rel Dir]
 dbVersions =
-  [$(mkRelDir "1700")
-  ,$(mkRelDir "1701")
-  ,$(mkRelDir "1710")
-  ,$(mkRelDir "1712")
-  ,$(mkRelDir "1730")
+  [$(mkRelDir "1800")
+  ,$(mkRelDir "1810")
+  ,$(mkRelDir "1830")
   ]
 
 -- | Repack the Real Names Fix pack.
-repackRealNamesFix17 :: (MonadThrow m, MonadMask m, MonadIO m) => Repack m
-repackRealNamesFix17 archive@(ArchiveFilePath fn) destDir =
+repackRealNamesFix18 :: (MonadThrow m, MonadMask m, MonadIO m) => Repack m
+repackRealNamesFix18 archive@(ArchiveFilePath fn) destDir =
   withSystemTempDir (basename fn) $ \unpackDir -> do
     unpack archive unpackDir
     let unpackedLncDir = unpackDir </> $(mkRelDir "lnc")
@@ -74,14 +72,14 @@ repackRealNamesFix17 archive@(ArchiveFilePath fn) destDir =
       copyDirRecur unpackedEditorDataDir modEditorDataDir
       forM_ dbVersions $ \dbVersion ->
         let copyDirs =
-              [ (unpackedLncDir, tarDir </> packDir CreateFilesInAppDir </> lncSubDir FM17 dbVersion)
-              , (unpackedDbcDir, tarDir </> packDir CreateFilesInAppDir </> dbcSubDir FM17 dbVersion)
-              , (unpackedEdtDir, tarDir </> packDir CreateFilesInAppDir </> edtSubDir FM17 dbVersion)
+              [ (unpackedLncDir, tarDir </> packDir CreateFilesInAppDir </> lncSubDir FM18 dbVersion)
+              , (unpackedDbcDir, tarDir </> packDir CreateFilesInAppDir </> dbcSubDir FM18 dbVersion)
+              , (unpackedEdtDir, tarDir </> packDir CreateFilesInAppDir </> edtSubDir FM18 dbVersion)
               ]
             rmDirs =
-              [ tarDir </> packDir RemoveDirsFromAppDir </> lncSubDir FM17 dbVersion
-              , tarDir </> packDir RemoveDirsFromAppDir </> dbcSubDir FM17 dbVersion
-              , tarDir </> packDir RemoveDirsFromAppDir </> edtSubDir FM17 dbVersion
+              [ tarDir </> packDir RemoveDirsFromAppDir </> lncSubDir FM18 dbVersion
+              , tarDir </> packDir RemoveDirsFromAppDir </> dbcSubDir FM18 dbVersion
+              , tarDir </> packDir RemoveDirsFromAppDir </> edtSubDir FM18 dbVersion
               ]
         in do
           forM_ rmDirs ensureDir

@@ -33,19 +33,23 @@ import Path ((</>), Path, Rel, Dir, mkRelDir)
 
 import Game.FMAssistant.Repack.Internal (ArchiveFilePath(..))
 import Game.FMAssistant.Types
-       (fmAssistantExceptionToException, fmAssistantExceptionFromException)
+  ( Version(..)
+  , fmAssistantExceptionFromException
+  , fmAssistantExceptionToException
+  )
 
-dbSubDir :: Path Rel Dir -> Path Rel Dir
-dbSubDir dbVersionDir = $(mkRelDir "data/db") </> dbVersionDir
+dbSubDir :: Version -> Path Rel Dir -> Path Rel Dir
+dbSubDir FM18 dbVersionDir = $(mkRelDir "data/database/db") </> dbVersionDir
+dbSubDir _ dbVersionDir = $(mkRelDir "data/db") </> dbVersionDir
 
-dbcSubDir :: Path Rel Dir -> Path Rel Dir
-dbcSubDir dbVersionDir = dbSubDir dbVersionDir </> $(mkRelDir "dbc")
+dbcSubDir :: Version -> Path Rel Dir -> Path Rel Dir
+dbcSubDir version dbVersionDir = dbSubDir version dbVersionDir </> $(mkRelDir "dbc")
 
-edtSubDir :: Path Rel Dir -> Path Rel Dir
-edtSubDir dbVersionDir = dbSubDir dbVersionDir </> $(mkRelDir "edt")
+edtSubDir :: Version -> Path Rel Dir -> Path Rel Dir
+edtSubDir version dbVersionDir = dbSubDir version dbVersionDir </> $(mkRelDir "edt")
 
-lncSubDir :: Path Rel Dir -> Path Rel Dir
-lncSubDir dbVersionDir = dbSubDir dbVersionDir </> $(mkRelDir "lnc")
+lncSubDir :: Version -> Path Rel Dir -> Path Rel Dir
+lncSubDir version dbVersionDir = dbSubDir version dbVersionDir </> $(mkRelDir "lnc")
 
 editorDataSubDir :: Path Rel Dir
 editorDataSubDir = $(mkRelDir "editor data")

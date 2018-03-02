@@ -42,6 +42,7 @@ import Game.FMAssistant.Repack.RealNamesFix
         edtSubDir, lncSubDir)
 import Game.FMAssistant.Repack.Unpack (unpack)
 import Game.FMAssistant.Util (basename, touchFile)
+import Game.FMAssistant.Types (Version(FM16))
 
 supported :: ArchiveFilePath -> Bool
 supported (ArchiveFilePath fn) =
@@ -114,10 +115,10 @@ repackRealNamesFix16 archive@(ArchiveFilePath fn) destDir =
          in do ensureDir (parent modRnfDir)
                copyDirRecur unpackedRnfDir modRnfDir
                forM_ dbVersions $ \dbVersion ->
-                 let modLncDir = tarDir </> packDir CreateFilesInAppDir </> lncSubDir dbVersion
-                     modRemoveDbcDir = tarDir </> packDir RemoveFilesFromAppDir </> dbcSubDir dbVersion
-                     modRemoveEdtDir = tarDir </> packDir RemoveFilesFromAppDir </> edtSubDir dbVersion
-                     modRemoveLncDir = tarDir </> packDir RemoveFilesFromAppDir </> lncSubDir dbVersion
+                 let modLncDir = tarDir </> packDir CreateFilesInAppDir </> lncSubDir FM16 dbVersion
+                     modRemoveDbcDir = tarDir </> packDir RemoveFilesFromAppDir </> dbcSubDir FM16 dbVersion
+                     modRemoveEdtDir = tarDir </> packDir RemoveFilesFromAppDir </> edtSubDir FM16 dbVersion
+                     modRemoveLncDir = tarDir </> packDir RemoveFilesFromAppDir </> lncSubDir FM16 dbVersion
                  in  do ensureDir (parent modLncDir)
                         ensureDir (parent modRemoveDbcDir)
                         ensureDir (parent modRemoveEdtDir)

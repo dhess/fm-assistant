@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 46acf2495912a94eaaa76e3b2838a9707031d52defd0fc61a43e13feb9ed8c60
+-- hash: 0eb52704590c412bd6d0fc1e6d9c043001c803045a0ae8325515d60237e526f3
 
 name:                   fm-assistant
 version:                0.6.0.0
@@ -99,6 +99,7 @@ library
       Game.FMAssistant.Repack.RealNamesFix
       Game.FMAssistant.Repack.RealNamesFix16
       Game.FMAssistant.Repack.RealNamesFix17
+      Game.FMAssistant.Repack.RealNamesFix18
       Game.FMAssistant.Repack.Skins
       Game.FMAssistant.Repack.Unpack
       Game.FMAssistant.Streaming
