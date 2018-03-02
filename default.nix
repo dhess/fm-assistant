@@ -1,32 +1,20 @@
-{ mkDerivation, base, bytestring, cond, containers, directory
-, doctest, exceptions, filepath, foldl, hspec, lens, lzma, mtl
-, optparse-applicative, path, path-io, process-streaming, resourcet
-, stdenv, streaming, streaming-bytestring, system-filepath, tar
-, template-haskell, temporary, text, time, transformers
-}:
-mkDerivation {
-  pname = "fm-assistant";
-  version = "0.6.0.0";
-  src = ./.;
-  isLibrary = true;
-  isExecutable = true;
-  libraryHaskellDepends = [
-    base bytestring cond containers directory exceptions filepath foldl
-    lens lzma mtl path path-io process-streaming resourcet streaming
-    streaming-bytestring system-filepath tar template-haskell temporary
-    text time transformers
-  ];
-  executableHaskellDepends = [
-    base bytestring cond containers directory exceptions filepath foldl
-    lens lzma mtl optparse-applicative path path-io process-streaming
-    resourcet streaming streaming-bytestring system-filepath tar
-    template-haskell temporary text time transformers
-  ];
-  testHaskellDepends = [
-    base bytestring cond containers directory doctest exceptions
-    filepath foldl hspec lens lzma mtl path path-io process-streaming
-    resourcet streaming streaming-bytestring system-filepath tar
-    template-haskell temporary text time transformers
-  ];
-  license = stdenv.lib.licenses.bsd3;
-}
+# From GitHub: mozilla/nixpkgs-mozilla/default.nix.
+
+self: super:
+
+let
+
+  localLib = import nix/lib.nix;
+
+in
+
+with super.lib;
+
+(foldl' (flip extends) (_: super) [
+
+  (import localLib.fetchNixPkgsLibQuixoftic)
+
+  (import ./nix/overlays/lib.nix)
+  (import ./nix/overlays/haskell-overrides.nix)
+
+]) self

@@ -5,7 +5,7 @@ category:   Games
 stability:  experimental
 author:     Drew Hess <src@drewhess.com>
 maintainer: Drew Hess <src@drewhess.com>
-copyright:  Copyright (c) 2017, Drew Hess
+copyright:  Copyright (c) 2018, Drew Hess
 license:    BSD3
 github:     dhess/fm-assistant
 
@@ -14,9 +14,13 @@ description: ! 'Install Football Manager mods.
 
   Note that only certain mods are supported.'
 
-tested-with: GHC==8.0.2 GHC==8.2.1
+tested-with: GHC==8.2.2
 
 flags:
+  test-hlint:
+    description: Build hlint test
+    manual: true
+    default: false
   test-doctests:
     description: Build doctests
     manual: true
@@ -27,38 +31,37 @@ ghc-options:
   - -Wincomplete-uni-patterns
   - -Wincomplete-record-updates
 
-dependencies:
-  - base >=4 && <5
-  - bytestring
-  - cond
-  - containers
-  - directory
-  - exceptions
-  - filepath
-  - foldl
-  - lens
-  - lzma
-  - mtl
-  - path
-  - path-io
-  - process-streaming
-  - resourcet
-  - streaming
-  - streaming-bytestring
-  - system-filepath
-  - tar
-  - template-haskell
-  - temporary
-  - text
-  - time
-  - transformers
-
 library:
   ghc-options:
     - -Wcompat
     - -Wnoncanonical-monad-instances
     - -Wnoncanonical-monadfail-instances
   source-dirs: src
+  dependencies:
+    - base >=4 && <5
+    - bytestring
+    - cond
+    - containers
+    - directory
+    - exceptions
+    - filepath
+    - foldl
+    - lens
+    - lzma
+    - mtl
+    - path
+    - path-io
+    - process-streaming
+    - resourcet
+    - streaming
+    - streaming-bytestring
+    - system-filepath
+    - tar
+    - template-haskell
+    - temporary
+    - text
+    - time
+    - transformers
 
 executables:
   fm-assistant:
@@ -66,18 +69,38 @@ executables:
     source-dirs:
       - fm-assistant
     ghc-options:
-      - -Wall
-      - -threaded
+    - -threaded
+    - -Wcompat
+    - -Wnoncanonical-monad-instances
+    - -Wnoncanonical-monadfail-instances
+    - -fno-warn-redundant-constraints
     dependencies:
       - base
+      - exceptions
       - fm-assistant
       - optparse-applicative >=0.11.0
+      - path
+      - path-io
 
 tests:
-  doctest:
-    main: doctests.hs
+  hlint: &test
+    main: hlint.hs
     source-dirs: test
     other-modules: []
+    ghc-options:
+    - -w
+    - -threaded
+    when:
+    - condition: "!(flag(test-hlint))"
+      then:
+        buildable: false
+      else:
+        dependencies:
+        - base
+        - hlint     >=2.0 && <2.2
+  doctest:
+    <<: *test
+    main: doctests.hs
     ghc-options:
       - -threaded
     when:
@@ -89,9 +112,8 @@ tests:
             - base
             - doctest
   spec:
+    <<: *test
     main: Spec.hs
-    source-dirs:
-      - test
     ghc-options:
       - -Wall
       - -threaded
@@ -99,6 +121,10 @@ tests:
       - base
       - fm-assistant
       - hspec        >= 2.1.7
+      - path
+      - path-io
+      - resourcet
+      - time
 
 data-files:
   - data/test/*.rar
@@ -108,5 +134,3 @@ data-files:
 extra-source-files:
   - README.md
   - package.yaml
-  - default.nix
-  - shell.nix

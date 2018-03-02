@@ -29,6 +29,7 @@ module Game.FMAssistant.Magic
        ) where
 
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import Control.Monad.Trans.Resource (runResourceT)
 import qualified Data.ByteString as BS (ByteString, length, take)
 import qualified Data.ByteString.Streaming as S (ByteString, readFile, toStrict_, take)
 import Data.Data
@@ -36,7 +37,6 @@ import Data.Foldable (foldl')
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map (foldlWithKey', fromList, keys)
 import Path (Path, File, toFilePath)
-import Streaming (runResourceT)
 
 zipMagic :: BS.ByteString
 zipMagic = "\x50\x4b\x03\x04"
