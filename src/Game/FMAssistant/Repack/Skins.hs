@@ -21,7 +21,7 @@ module Game.FMAssistant.Repack.Skins
        ) where
 
 import Control.Exception (Exception(..))
-import Control.Monad (forM_)
+import Control.Monad (forM_, when)
 import Control.Monad.Catch (MonadMask, MonadThrow, throwM)
 import Control.Monad.IO.Class (MonadIO)
 import Data.Data
@@ -29,7 +29,13 @@ import Path
        ((</>), Path, Abs, Rel, Dir, File, dirname, filename, mkRelDir,
         mkRelFile)
 import Path.IO
-       (ensureDir, renameDir, renameFile, walkDirAccum, withSystemTempDir)
+  ( doesDirExist
+  , ensureDir
+  , renameDir
+  , renameFile
+  , walkDirAccum
+  , withSystemTempDir
+  )
 
 import Game.FMAssistant.Mod
        (PackAction(CreateFilesInUserDir), packDir, pack)
@@ -41,7 +47,8 @@ import Game.FMAssistant.Types
 import Game.FMAssistant.Util (basename)
 
 -- Skins are identified by a @skin_config.xml@ file and two special
--- subdirectories: @panels/@ and @fonts/@.
+-- subdirectories: @panels/@ and @fonts/@; or, for FM 2018, @panels/@
+-- and @graphics/@.
 
 skinConfigFile :: Path Rel File
 skinConfigFile = $(mkRelFile "skin_config.xml")
@@ -51,6 +58,9 @@ panelsSubDir = $(mkRelDir "panels")
 
 fontsSubDir :: Path Rel Dir
 fontsSubDir = $(mkRelDir "fonts")
+
+graphicsSubDir :: Path Rel Dir
+graphicsSubDir = $(mkRelDir "graphics")
 
 -- Where the skins are stored in the modpack file.
 skinSubDir :: Path Rel Dir
@@ -69,7 +79,10 @@ repackSkin archive@(ArchiveFilePath fn) destDir =
           in do
             ensureDir targetDir
             -- Only store what we need, ignore detritus.
-            renameDir (skinDir </> fontsSubDir) (targetDir </> fontsSubDir)
+            fontsDir <- doesDirExist (skinDir </> fontsSubDir)
+            when fontsDir $ renameDir (skinDir </> fontsSubDir) (targetDir </> fontsSubDir)
+            graphicsDir <- doesDirExist (skinDir </> graphicsSubDir)
+            when graphicsDir $ renameDir (skinDir </> graphicsSubDir) (targetDir </> graphicsSubDir)
             renameDir (skinDir </> panelsSubDir) (targetDir </> panelsSubDir)
             renameFile (skinDir </> skinConfigFile) (targetDir </> skinConfigFile)
         modId <- generateModId archive
@@ -97,8 +110,9 @@ unpackSkins archive unpackDir = do
     collectSkins cwd subdirs files =
       -- Some skins contain detritus.
       if skinConfigFile `elem` map filename files
-         && fontsSubDir `elem` map dirname subdirs
          && panelsSubDir `elem` map dirname subdirs
+         && (fontsSubDir `elem` map dirname subdirs
+             || graphicsSubDir `elem` map dirname subdirs)
          then return [cwd]
          else return mempty
 
