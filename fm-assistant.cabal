@@ -1,8 +1,8 @@
--- This file has been generated from package.yaml by hpack version 0.21.2.
+-- This file has been generated from package.yaml by hpack version 0.27.0.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0eb52704590c412bd6d0fc1e6d9c043001c803045a0ae8325515d60237e526f3
+-- hash: bb9965dda861952df9d5bb6fe129f98f31f97afbd572c819c17b08370aea6fbf
 
 name:                   fm-assistant
 version:                0.6.0.0
@@ -28,20 +28,9 @@ extra-source-files:
     README.md
 
 data-files:
-    data/test/damaged-test.rar
-    data/test/damaged-test.zip
-    data/test/Dummy kit pack v1.0.rar
-    data/test/Dummy kit pack v1.0.zip
-    data/test/Dummy kit pack v1.1.rar
-    data/test/Dummy kit pack v1.1.zip
-    data/test/Malformed dummy kit pack v1.0.rar
-    data/test/Malformed dummy kit pack v1.0.zip
-    data/test/Silly kits.zip
-    data/test/test.rar
-    data/test/test.tar
-    data/test/test.zip
-    data/test/test_is_actually_rar.zip
-    data/test/test_is_actually_zip.rar
+    data/test/*.rar
+    data/test/*.zip
+    data/test/*.tar
 
 source-repository head
   type: git
