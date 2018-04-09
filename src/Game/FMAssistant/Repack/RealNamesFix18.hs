@@ -44,7 +44,7 @@ supported :: ArchiveFilePath -> Bool
 supported (ArchiveFilePath fn) =
   member (filename fn) $
   fromList
-    [$(mkRelFile "FM18 Real Names Fix Files from sortitoutsi.net v2.0.rar")]
+    [$(mkRelFile "FM18 Real Names Fix Files from sortitoutsi.net v2.1.rar")]
 
 dbVersions :: [Path Rel Dir]
 dbVersions =
